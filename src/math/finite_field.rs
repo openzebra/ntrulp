@@ -1,6 +1,4 @@
-use std::{dbg, println};
-
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq)]
 pub struct GF(i64, i64);
 
 impl GF {
@@ -41,6 +39,13 @@ mod tests {
         let result = a.sub(b);
 
         assert_eq!(result, GF::new(4, 5));
+
+        let p = 654;
+        let a = GF::new(100, p);
+        let b = GF::new(200, p);
+        let result = a.sub(b);
+
+        assert_eq!(result, GF::new(554, p));
     }
 
     #[test]
