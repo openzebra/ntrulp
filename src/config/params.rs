@@ -1,4 +1,4 @@
-type StartParams = (bool, u16, u16, u16);
+pub type StartParams = (bool, u16, u16, u16);
 
 pub const SNTRUP4591761: StartParams = (true, 761, 4591, 286);
 pub const SNTRUP761: StartParams = (false, 761, 4591, 286);

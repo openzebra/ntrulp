@@ -1,10 +1,14 @@
 mod config;
 mod math;
+mod ntru;
 
 #[cfg(test)]
 mod tests {
+    use std::dbg;
+
     use super::*;
     use math::finite_field::GF;
+    use num::BigInt;
 
     #[test]
     fn it_works() {
@@ -28,5 +32,6 @@ mod tests {
         }
 
         let f3 = GF::new(1, 3);
+        let q12 = BigInt::from((q - 1) / 2);
     }
 }
