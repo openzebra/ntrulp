@@ -17,6 +17,14 @@ impl GF {
     pub fn mul(&self, other: Self) -> Self {
         GF::new(self.0.wrapping_mul(other.0), self.1)
     }
+
+    pub fn has(&self, n: i64) -> bool {
+        if self.1 > n && n > 0 {
+            return true;
+        }
+
+        false
+    }
 }
 
 #[cfg(test)]
@@ -61,5 +69,13 @@ mod tests {
         let result = a.mul(b);
 
         assert_eq!(result, GF::new(101, 934));
+    }
+
+    #[test]
+    fn test_has() {
+        let gf_654 = GF::new(1, 654);
+
+        assert!(gf_654.has(100));
+        assert!(!gf_654.has(656));
     }
 }
