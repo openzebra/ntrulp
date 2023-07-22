@@ -1,5 +1,5 @@
 #[derive(Debug, PartialEq)]
-pub struct GF(i64, i64);
+pub struct GF(pub i64, pub i64);
 
 impl GF {
     pub fn new(value: i64, p: i64) -> Self {
@@ -19,7 +19,7 @@ impl GF {
     }
 
     pub fn has(&self, n: i64) -> bool {
-        if self.1 > n && n > 0 {
+        if self.1 > n && n >= 0 {
             return true;
         }
 
@@ -77,5 +77,10 @@ mod tests {
 
         assert!(gf_654.has(100));
         assert!(!gf_654.has(656));
+
+        let ff3 = GF::new(1, 3);
+
+        assert!(ff3.has(0));
+        assert!(!ff3.has(3));
     }
 }
