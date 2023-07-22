@@ -1,9 +1,10 @@
+use std::ops::Add;
 use std::println;
 
 use crate::config;
 use crate::config::params::StartParams;
 use crate::math;
-use crate::math::finite_field;
+use crate::math::finite_field::GF;
 
 pub struct NTRU {
     params: StartParams,
@@ -41,17 +42,11 @@ impl NTRU {
         }
     }
 
-    pub fn zz_from_ff(&self, c: i64, ff: finite_field::GF) -> i32 {
-        println!("{}, {:?}", c, ff);
+    pub fn zz_from_ff(&self, c: i64, ff: &GF) -> i64 {
         assert!(ff.has(c), "Element must be in GF(ff)");
         let pff = ff.1;
 
-        println!("{}", pff);
-
-        // let transformed_c = math::modulo::add_by_modulo(c, m3);
-
-        // transformed_c as i32 - 1
-        0
+        GF::new(c.add(1), pff).0 - 1
     }
 }
 
@@ -62,7 +57,18 @@ mod tests {
     #[test]
     fn zz_from_ff() {
         let ntru = NTRU::from(config::params::SNTRUP4591761);
-        let f3 = finite_field::GF::new(0, 3);
-        let result = ntru.zz_from_ff(0, f3);
+
+        assert!(
+            ntru.zz_from_ff(0, &GF::new(3, 3)) == 0,
+            "ZZ(0) from GF(3) should be 0"
+        );
+        assert!(
+            ntru.zz_from_ff(100, &GF::new(100, 100)) == 100,
+            "ZZ(100) from GF(3) should be 100"
+        );
+        assert!(
+            ntru.zz_from_ff(100, &GF::new(999, 999)) == 100,
+            "ZZ(100) from GF(3) should be 100"
+        );
     }
 }
