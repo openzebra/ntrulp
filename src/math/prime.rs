@@ -5,13 +5,7 @@ use num::FromPrimitive;
 
 pub fn is_prime<T>(n: T) -> bool
 where
-    T: Copy
-        + Div<Output = T>
-        + Rem<Output = T>
-        + Add<Output = T>
-        + PartialOrd<T>
-        + FromPrimitive
-        + std::fmt::Debug,
+    T: Copy + Div<Output = T> + Rem<Output = T> + Add<Output = T> + PartialOrd<T> + FromPrimitive,
 {
     let one = T::from_u8(1).unwrap();
     let two = T::from_u8(2).unwrap();
