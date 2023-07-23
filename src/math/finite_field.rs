@@ -1,8 +1,9 @@
 use std::cmp::PartialOrd;
-use std::ops::Mul;
+use std::ops::{Add, Mul};
 
 use num::traits::Euclid;
-use num::{CheckedAdd, CheckedSub};
+use num::CheckedSub;
+use num::FromPrimitive;
 
 #[derive(Debug, PartialEq)]
 pub struct GF<T> {
@@ -15,9 +16,10 @@ where
     T: Copy
         + Euclid
         + Mul<Output = T>
-        + CheckedAdd<Output = T>
+        + Add<Output = T>
         + CheckedSub<Output = T>
-        + PartialOrd<T>,
+        + PartialOrd<T>
+        + FromPrimitive,
 {
     pub fn new(value: T, p: T) -> Self {
         GF {
@@ -27,17 +29,17 @@ where
     }
 
     pub fn add(&self, other: Self) -> Self {
-        match self.v.checked_add(&other.v) {
-            Some(v) => GF::new(v, self.p),
-            None => GF::new(self.p, self.p),
-        }
+        GF::new(self.v.add(other.v), self.p)
     }
 
     pub fn sub(&self, other: Self) -> Self {
-        match self.v.checked_sub(&other.v) {
-            Some(v) => GF::new(v, self.p),
-            None => GF::new(other.v - other.v, self.p),
-        }
+        let result = if self.v >= other.v {
+            self.v - other.v
+        } else {
+            self.v + (self.p - other.v)
+        };
+
+        GF::new(result, self.p)
     }
 
     pub fn mul(&self, other: Self) -> Self {
@@ -45,7 +47,7 @@ where
     }
 
     pub fn has(&self, n: T) -> bool {
-        self.p > n
+        self.p > n && n >= T::from_u8(0).unwrap()
     }
 }
 
@@ -104,5 +106,48 @@ mod tests {
 
         assert!(ff3.has(0));
         assert!(!ff3.has(3));
+
+        let gf = GF::new(5, 10);
+        assert!(gf.has(0));
+        assert!(gf.has(4));
+        assert!(!gf.has(14));
+        assert!(!gf.has(10));
+    }
+
+    #[test]
+    fn test_new() {
+        let gf = GF::new(5, 10);
+        assert_eq!(gf.v, 5);
+        assert_eq!(gf.p, 10);
+    }
+
+    #[test]
+    fn test_add() {
+        let gf1 = GF::new(5, 10);
+        let gf2 = GF::new(8, 10);
+
+        let result = gf1.add(gf2);
+        assert_eq!(result.v, 3);
+        assert_eq!(result.p, 10);
+    }
+
+    #[test]
+    fn test_sub() {
+        let gf1 = GF::new(5, 10);
+        let gf2 = GF::new(8, 10);
+
+        let result = gf1.sub(gf2);
+        assert_eq!(result.v, 7);
+        assert_eq!(result.p, 10);
+    }
+
+    #[test]
+    fn test_sub_overflow() {
+        let gf1: GF<u8> = GF::new(1, 3);
+        let gf2: GF<u8> = GF::new(2, 3);
+
+        let result = gf1.sub(gf2);
+
+        assert!(result == GF::new(2, 3));
     }
 }
