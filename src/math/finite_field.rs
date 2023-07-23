@@ -1,8 +1,7 @@
 use std::cmp::PartialOrd;
-use std::ops::{Add, Mul};
+use std::ops::{Add, Mul, Sub};
 
 use num::traits::Euclid;
-use num::CheckedSub;
 use num::FromPrimitive;
 
 #[derive(Debug, PartialEq)]
@@ -17,7 +16,7 @@ where
         + Euclid
         + Mul<Output = T>
         + Add<Output = T>
-        + CheckedSub<Output = T>
+        + Sub<Output = T>
         + PartialOrd<T>
         + FromPrimitive,
 {

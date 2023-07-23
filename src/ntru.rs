@@ -11,16 +11,14 @@ pub struct NTRU {
     q12: u16,
 }
 
-pub enum NTRUErrors {}
-
 impl NTRU {
     pub fn from(params: StartParams) -> Self {
         let (round1, p, q, w) = params;
         let hash_bytes = vec![];
         let mut usecache = !round1;
 
-        // assert!(math::prime::is_prime(p));
-        // assert!(math::prime::is_prime(q));
+        assert!(math::prime::is_prime(p));
+        assert!(math::prime::is_prime(q));
         assert!(w > 0);
         assert!(2 * p >= 3 * w);
         assert!(q >= 16 * w + 1);
@@ -71,22 +69,4 @@ impl NTRU {
 #[cfg(test)]
 mod tests {
     use super::*;
-    //
-    // #[test]
-    // fn zz_from_ff() {
-    //     let ntru = NTRU::from(config::params::SNTRUP4591761);
-    //
-    //     assert!(
-    //         ntru.zz_from_ff(0, &GF::new(3, 3)) == 0,
-    //         "ZZ(0) from GF(3) should be 0"
-    //     );
-    //     assert!(
-    //         ntru.zz_from_ff(100, &GF::new(100, 100)) == 100,
-    //         "ZZ(100) from GF(3) should be 100"
-    //     );
-    //     assert!(
-    //         ntru.zz_from_ff(100, &GF::new(999, 999)) == 100,
-    //         "ZZ(100) from GF(3) should be 100"
-    //     );
-    // }
 }
