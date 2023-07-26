@@ -2,8 +2,12 @@ use crate::config;
 use crate::config::params::StartParams;
 use crate::math;
 use crate::math::finite_field::GF;
+use crate::math::poly;
+use crate::math::rings3;
+use rand;
 
 use std::io::{Error, ErrorKind};
+// use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct NTRU {
@@ -65,6 +69,12 @@ impl NTRU {
             fq,
             q12,
         })
+    }
+
+    pub fn gen_key_pair(&self) {
+        // let key_len = self.params.1 as usize;
+        // let mut rng = rand::thread_rng();
+        // let mut g = vec![0i8; key_len];
     }
 }
 
