@@ -52,7 +52,13 @@ impl NtruIntPoly {
     // Add here random method
     pub fn new(n: usize) -> Self {
         let mut rng = thread_rng();
-        let coeffs: Vec<i16> = (0..n).map(|_| rng.gen::<u32>() as i16).collect();
+        let coeffs: Vec<i16> = (0..n)
+            .map(|_| {
+                let entropy = rng.gen::<u32>();
+
+                (entropy % 3) as i16
+            })
+            .collect();
 
         NtruIntPoly { n, coeffs }
     }
