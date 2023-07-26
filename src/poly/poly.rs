@@ -1,6 +1,9 @@
+use rand::prelude::*;
+
+#[derive(Debug)]
 pub struct NtruIntPoly {
-    n: usize,
-    coeffs: Vec<i16>,
+    pub n: usize,
+    pub coeffs: Vec<i16>,
 }
 
 pub fn ntruprime_mult_poly(
@@ -43,4 +46,21 @@ pub fn ntruprime_mult_poly(
     }
 
     true
+}
+
+impl NtruIntPoly {
+    // Add here random method
+    pub fn new(n: usize) -> Self {
+        let mut rng = thread_rng();
+        let coeffs: Vec<i16> = (0..n).map(|_| rng.gen::<u32>() as i16).collect();
+
+        NtruIntPoly { n, coeffs }
+    }
+}
+
+#[test]
+fn test_ntru_poly() {
+    let mut poly = NtruIntPoly::new(761);
+
+    dbg!(poly);
 }

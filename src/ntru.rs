@@ -2,9 +2,6 @@ use crate::config;
 use crate::config::params::StartParams;
 use crate::math;
 use crate::math::finite_field::GF;
-use crate::math::poly;
-use crate::math::rings3;
-use rand;
 
 use std::io::{Error, ErrorKind};
 // use std::sync::Arc;
