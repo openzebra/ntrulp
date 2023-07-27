@@ -1,4 +1,4 @@
-use std::println;
+use std::{println, todo};
 
 use rand::prelude::*;
 
@@ -102,7 +102,72 @@ impl NtruIntPoly {
         NtruIntPoly { n, coeffs }
     }
 
-    pub fn ntruprime_inv_poly() {}
+    pub fn equals_zero(&self) -> bool {
+        let sum: i16 = self.coeffs.iter().sum();
+
+        sum == 0
+    }
+
+    pub fn get_poly_degree(&self) -> usize {
+        for i in (0..=self.n - 1).rev() {
+            if self.coeffs[i] != 0 {
+                return i;
+            }
+        }
+
+        0
+    }
+
+    pub fn get_inv_poly(&self, modulus: u16) {
+        let n = self.n;
+        let im = modulus as i16;
+        let mut inv = NtruIntPoly::from_zero(n);
+        let mut k = 0;
+        let mut b = NtruIntPoly::from_zero(n + 1);
+
+        b.coeffs[0] = 1;
+
+        let mut c = NtruIntPoly::from_zero(n + 1);
+
+        // f = a
+        let mut f = NtruIntPoly::from_zero(n + 1);
+
+        f.coeffs[..n].copy_from_slice(&self.coeffs[..n]);
+        f.coeffs[n] = 0;
+
+        // g = x^p - x - 1
+        let mut g = NtruIntPoly::from_zero(n + 1);
+
+        g.coeffs[0] = im - 1;
+        g.coeffs[1] = im - 1;
+        g.coeffs[n] = 1;
+
+        loop {
+            while f.coeffs[0] == 0 {
+                // f(x) = f(x) / x
+                for i in 1..=n {
+                    f.coeffs[i - 1] = f.coeffs[i];
+                }
+
+                f.coeffs[n] = 0;
+
+                // c(x) = c(x) * x
+                for i in (1..n).rev() {
+                    c.coeffs[i] = c.coeffs[i - 1];
+                }
+
+                c.coeffs[0] = 0;
+                k += 1;
+
+                if f.equals_zero() {
+                    // return None
+                    return ();
+                }
+            }
+
+            //
+        }
+    }
 }
 
 #[test]
@@ -126,4 +191,24 @@ fn ntruprime_inv_int_test() {
     let res = ntruprime_inv_int(a, mod0);
 
     assert!(res == 2885);
+}
+
+#[test]
+fn test_from_zero() {
+    let non_zero_poly = NtruIntPoly::new(761);
+    let zero_poly = NtruIntPoly::from_zero(761);
+
+    assert!(!non_zero_poly.equals_zero());
+    assert!(zero_poly.equals_zero());
+}
+
+#[test]
+fn test_get_poly_degre() {
+    let zero_poly = NtruIntPoly::from_zero(740);
+    let mut non_zero_poly = NtruIntPoly::from_zero(740);
+
+    non_zero_poly.coeffs[non_zero_poly.n - 10] = 9;
+
+    assert!(zero_poly.get_poly_degree() == 0);
+    assert!(non_zero_poly.get_poly_degree() == 730);
 }
