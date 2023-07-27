@@ -124,6 +124,17 @@ impl NtruIntPoly {
         });
     }
 
+    // Reduces a NtruIntPoly modulo x^N-x-1, where N = a->N.
+    pub fn reduce(&self, b: &mut NtruIntPoly, modulus: u64) {
+        let n = self.n - 1;
+
+        b.coeffs[..n].copy_from_slice(&self.coeffs[..n]);
+        b.coeffs[0] = (b.coeffs[0] as u64 + self.coeffs[n] as u64).rem_euclid(modulus) as i16;
+        b.coeffs[1] = (b.coeffs[1] as u64 + self.coeffs[n] as u64).rem_euclid(modulus) as i16;
+        b.coeffs.truncate(n);
+        b.n = n;
+    }
+
     pub fn get_inv_poly(&self, modulus: u16) {
         let n = self.n;
         let im = modulus as i16;
@@ -173,6 +184,9 @@ impl NtruIntPoly {
 
             if f.get_poly_degree() == 0 {
                 let f0_inv = ntruprime_inv_int(f.coeffs[0], modulus);
+
+                // b = b * f[0]^(-1)
+                b.mult_mod(f0_inv as u64, modulus as u64);
             }
             if f.get_poly_degree() < g.get_poly_degree() {}
             //
@@ -233,4 +247,20 @@ fn test_mult_mod() {
     test_poly.mult_mod(3845, 9829);
 
     assert!(test_poly.coeffs == [3845, 7690, 7690, 0, 0, 3845, 7690, 7690, 7690]);
+}
+
+#[test]
+fn test_reduce() {
+    let mut test_poly = NtruIntPoly::from_zero(9);
+    let mut b = NtruIntPoly::from_zero(9);
+    let modulus = 9829;
+
+    test_poly.coeffs = vec![1, 2, 2, 0, 0, 1, 2, 2, 2];
+    b.coeffs = vec![7756, 7841, 1764, 7783, 4731, 2717, 1132, 1042, 273];
+
+    test_poly.n = test_poly.coeffs.len();
+
+    test_poly.reduce(&mut b, modulus);
+
+    assert!(b.coeffs == [3, 4, 2, 0, 0, 1, 2, 2]);
 }
