@@ -1,4 +1,4 @@
-use std::{println, todo};
+use std::{println, todo, vec};
 
 use rand::prelude::*;
 
@@ -43,14 +43,14 @@ pub fn ntruprime_mult_poly(
         if k < n - 1 {
             let ck = c.coeffs[k + 1] as u64 + ck2;
 
-            c.coeffs[k + 1] = (ck % (modulus as u64)) as i16;
+            c.coeffs[k + 1] = (ck.rem_euclid(modulus as u64)) as i16;
         }
     }
 
     true
 }
 
-fn ntruprime_inv_int(mut a: u16, modulus: u16) -> u16 {
+fn ntruprime_inv_int(mut a: i16, modulus: u16) -> u16 {
     let mut x: i16 = 0;
     let mut lastx: i16 = 1;
     let mut y: i16 = 1;
@@ -58,11 +58,11 @@ fn ntruprime_inv_int(mut a: u16, modulus: u16) -> u16 {
     let mut b: i16 = modulus as i16;
 
     while b != 0 {
-        let quotient = (a as i16) / b;
+        let quotient = a / b;
 
         let temp = a as i16;
-        a = b as u16;
-        b = temp % b;
+        a = b;
+        b = temp.rem_euclid(b);
 
         let temp = x;
         x = lastx - quotient * x;
@@ -88,7 +88,7 @@ impl NtruIntPoly {
             .map(|_| {
                 let entropy = rng.gen::<u32>();
 
-                (entropy % 3) as i16
+                entropy.rem_euclid(3) as i16
             })
             .collect();
 
@@ -116,6 +116,12 @@ impl NtruIntPoly {
         }
 
         0
+    }
+
+    pub fn mult_mod(&mut self, factor: u64, modulus: u64) {
+        self.coeffs.iter_mut().for_each(|coeff| {
+            *coeff = ((*coeff as u64 * factor) % modulus) as i16;
+        });
     }
 
     pub fn get_inv_poly(&self, modulus: u16) {
@@ -165,6 +171,10 @@ impl NtruIntPoly {
                 }
             }
 
+            if f.get_poly_degree() == 0 {
+                let f0_inv = ntruprime_inv_int(f.coeffs[0], modulus);
+            }
+            if f.get_poly_degree() < g.get_poly_degree() {}
             //
         }
     }
@@ -186,7 +196,7 @@ fn test_ntruprime_zero() {
 
 #[test]
 fn ntruprime_inv_int_test() {
-    let a: u16 = 7175;
+    let a: i16 = 7175;
     let mod0: u16 = 9829;
     let res = ntruprime_inv_int(a, mod0);
 
@@ -211,4 +221,16 @@ fn test_get_poly_degre() {
 
     assert!(zero_poly.get_poly_degree() == 0);
     assert!(non_zero_poly.get_poly_degree() == 730);
+}
+
+#[test]
+fn test_mult_mod() {
+    let mut test_poly = NtruIntPoly::from_zero(9);
+
+    test_poly.coeffs = vec![1, 2, 2, 0, 0, 1, 2, 2, 2];
+    test_poly.n = test_poly.coeffs.len();
+
+    test_poly.mult_mod(3845, 9829);
+
+    assert!(test_poly.coeffs == [3845, 7690, 7690, 0, 0, 3845, 7690, 7690, 7690]);
 }
