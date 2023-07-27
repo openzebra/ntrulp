@@ -153,7 +153,20 @@ impl NtruIntPoly {
             .rem_euclid(modulus) as i16
     }
 
-    pub fn get_inv_poly(&self, modulus: u16) {
+    pub fn subtract_multiple(&mut self, b: &NtruIntPoly, u: u64, modulus: u64) {
+        let n = if b.n > self.n { b.n } else { self.n };
+
+        for i in 0..n {
+            let mut ai = self.coeffs[i] as u64;
+            let dim = u.wrapping_mul(modulus.wrapping_sub(b.coeffs[i] as u64));
+
+            ai = ai.wrapping_add(dim);
+
+            self.coeffs[i] = ai.rem_euclid(modulus) as i16;
+        }
+    }
+
+    pub fn get_inv_poly(&self, modulus: u16) -> bool {
         let n = self.n;
         let im = modulus as i16;
         let mut inv = NtruIntPoly::from_zero(n);
@@ -196,7 +209,7 @@ impl NtruIntPoly {
 
                 if f.equals_zero() {
                     // return None
-                    return ();
+                    return false;
                 }
             }
 
@@ -209,27 +222,55 @@ impl NtruIntPoly {
 
                 // b = b * x^(-k)
                 for _ in 0..k {
-                    // ntruprime_div_x(inv, modulus);
+                    inv.div_x(modulus as u64);
                 }
+
+                return true;
             }
-            if f.get_poly_degree() < g.get_poly_degree() {}
-            //
+            if f.get_poly_degree() < g.get_poly_degree() {
+                // exchange f and g
+                let temp = f;
+                f = g;
+                g = temp;
+
+                /* exchange b and c */
+                let temp = b;
+                b = c;
+                c = temp;
+            }
+
+            // u = f[0] * g[0]^(-1)
+            let g0_inv = ntruprime_inv_int(g.coeffs[0], modulus);
+            let u = (f.coeffs[0] as u64)
+                .wrapping_mul(g0_inv as u64)
+                .rem_euclid(modulus as u64);
+
+            // f = f - u * g
+            f.subtract_multiple(&g, u, modulus as u64);
+            // b = b - u * c
+            b.subtract_multiple(&c, u, modulus as u64);
         }
     }
 }
 
 #[test]
 fn test_ntru_poly() {
-    let mut poly = NtruIntPoly::new(761);
+    let poly = NtruIntPoly::new(761);
 
-    // dbg!(poly);
+    assert!(poly.n == 761);
+    assert!(poly.coeffs.len() == 761);
+    assert!(poly.n == poly.coeffs.len());
+    assert!(!poly.equals_zero());
 }
 
 #[test]
 fn test_ntruprime_zero() {
     let poly = NtruIntPoly::from_zero(761);
 
-    // dbg!(poly);
+    assert!(poly.n == 761);
+    assert!(poly.coeffs.len() == 761);
+    assert!(poly.n == poly.coeffs.len());
+    assert!(poly.equals_zero());
 }
 
 #[test]
@@ -302,4 +343,30 @@ fn test_div_x() {
     }
 
     assert!(test_poly.coeffs == [5018, 6408, 7987, 4832, 1047, 387, 1857, 4668, 2577]);
+}
+
+#[test]
+fn test_subtract_multiple() {
+    let modulus = 9829;
+    let mut f = NtruIntPoly::from_zero(9);
+    let mut c = NtruIntPoly::from_zero(9);
+    let mut g = NtruIntPoly::from_zero(9);
+
+    f.coeffs = vec![756, 741, 0, 78, 470, 7, 0, 0, 273];
+    f.n = f.coeffs.len();
+
+    c.coeffs = vec![4543, 877, 0, 22, 0, 700, 12, 204, 83];
+    c.n = c.coeffs.len();
+
+    g.coeffs = vec![1, 44, 99, 112, 193, 1235, 908, 285, 9475];
+    g.n = g.coeffs.len();
+
+    let g0_inv = ntruprime_inv_int(g.coeffs[0], modulus);
+    let u = (f.coeffs[0] as u64)
+        .wrapping_mul(g0_inv as u64)
+        .rem_euclid(modulus as u64);
+
+    f.subtract_multiple(&g, u, modulus as u64);
+
+    assert!(f.coeffs == [0, 6793, 3788, 3867, 1997, 102, 1582, 778, 2514]);
 }
