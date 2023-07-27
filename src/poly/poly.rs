@@ -129,10 +129,28 @@ impl NtruIntPoly {
         let n = self.n - 1;
 
         b.coeffs[..n].copy_from_slice(&self.coeffs[..n]);
-        b.coeffs[0] = (b.coeffs[0] as u64 + self.coeffs[n] as u64).rem_euclid(modulus) as i16;
-        b.coeffs[1] = (b.coeffs[1] as u64 + self.coeffs[n] as u64).rem_euclid(modulus) as i16;
+        b.coeffs[0] = (b.coeffs[0] as u64)
+            .wrapping_add(self.coeffs[n] as u64)
+            .rem_euclid(modulus) as i16;
+        b.coeffs[1] = (b.coeffs[1] as u64)
+            .wrapping_add(self.coeffs[n] as u64)
+            .rem_euclid(modulus) as i16;
         b.coeffs.truncate(n);
         b.n = n;
+    }
+
+    // Multiplies a polynomial by x^(-1) in (Z/qZ)[x][x^p-x-1] where p=a->N, q=modulus
+    pub fn div_x(&mut self, modulus: u64) {
+        let n = self.n;
+        let a0 = self.coeffs[0];
+
+        self.coeffs.rotate_left(1);
+        self.coeffs[n - 1] = a0;
+
+        self.coeffs[0] = (self.coeffs[0] as u64)
+            .wrapping_sub(a0 as u64)
+            .wrapping_add(modulus)
+            .rem_euclid(modulus) as i16
     }
 
     pub fn get_inv_poly(&self, modulus: u16) {
@@ -187,6 +205,12 @@ impl NtruIntPoly {
 
                 // b = b * f[0]^(-1)
                 b.mult_mod(f0_inv as u64, modulus as u64);
+                b.reduce(&mut inv, modulus as u64);
+
+                // b = b * x^(-k)
+                for _ in 0..k {
+                    // ntruprime_div_x(inv, modulus);
+                }
             }
             if f.get_poly_degree() < g.get_poly_degree() {}
             //
@@ -263,4 +287,19 @@ fn test_reduce() {
     test_poly.reduce(&mut b, modulus);
 
     assert!(b.coeffs == [3, 4, 2, 0, 0, 1, 2, 2]);
+}
+
+#[test]
+fn test_div_x() {
+    let mut test_poly = NtruIntPoly::from_zero(9);
+    let k = 1475;
+
+    test_poly.coeffs = vec![7756, 7841, 1764, 7783, 4731, 2717, 1132, 1042, 273];
+    test_poly.n = test_poly.coeffs.len();
+
+    for _ in 0..k {
+        test_poly.div_x(9829);
+    }
+
+    assert!(test_poly.coeffs == [5018, 6408, 7987, 4832, 1047, 387, 1857, 4668, 2577]);
 }
