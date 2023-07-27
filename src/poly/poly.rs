@@ -166,7 +166,7 @@ impl NtruIntPoly {
         }
     }
 
-    pub fn get_inv_poly(&self, modulus: u16) -> bool {
+    pub fn get_inv_poly(&self, modulus: u16) -> Option<NtruIntPoly> {
         let n = self.n;
         let im = modulus as i16;
         let mut inv = NtruIntPoly::from_zero(n);
@@ -208,8 +208,7 @@ impl NtruIntPoly {
                 k += 1;
 
                 if f.equals_zero() {
-                    // return None
-                    return false;
+                    return None;
                 }
             }
 
@@ -225,7 +224,7 @@ impl NtruIntPoly {
                     inv.div_x(modulus as u64);
                 }
 
-                return true;
+                return Some(inv);
             }
             if f.get_poly_degree() < g.get_poly_degree() {
                 // exchange f and g
