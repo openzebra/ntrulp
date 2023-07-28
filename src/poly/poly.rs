@@ -1,5 +1,3 @@
-use std::{println, todo, vec};
-
 use rand::prelude::*;
 
 #[derive(Debug)]
@@ -368,4 +366,29 @@ fn test_subtract_multiple() {
     f.subtract_multiple(&g, u, modulus as u64);
 
     assert!(f.coeffs == [0, 6793, 3788, 3867, 1997, 102, 1582, 778, 2514]);
+}
+
+#[test]
+fn test_get_inv_poly() {
+    let q = 4591;
+    let mut k = 0;
+    let mut g = NtruIntPoly::from_zero(9);
+
+    g.coeffs = vec![1, 44, 99, 112, 193, 1235, 908, 285, 9475];
+    g.n = g.coeffs.len();
+
+    loop {
+        k += 1;
+        match g.get_inv_poly(q) {
+            Some(g_inv) => {
+                println!("inv={:?}", g_inv);
+                assert!(g_inv.coeffs == [2745, 2258, 3329, 2984, 1550, 2900, 700, 3283, 2267]);
+                break;
+            }
+            None => {
+                assert!(k < 100, "Incorrect inv poly!");
+                continue;
+            }
+        }
+    }
 }
