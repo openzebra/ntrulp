@@ -6,48 +6,6 @@ pub struct NtruIntPoly {
     pub coeffs: Vec<i16>,
 }
 
-fn ntruprime_mult_poly(
-    a: &NtruIntPoly,
-    b: &NtruIntPoly,
-    c: &mut NtruIntPoly,
-    modulus: u16,
-) -> bool {
-    let n = a.n;
-
-    if n != b.n {
-        return false;
-    }
-
-    c.n = n;
-    c.coeffs = vec![0; n];
-
-    for k in 0..n {
-        let mut ck1 = 0;
-
-        for i in 0..=k {
-            ck1 += (a.coeffs[i] as u64) * (b.coeffs[k - i] as u64);
-        }
-
-        let mut ck2 = 0;
-
-        for i in (k + 1)..n {
-            ck2 += (a.coeffs[i] as u64) * (b.coeffs[k + n - i] as u64);
-        }
-
-        let ck = c.coeffs[k] as u64 + ck1 + ck2;
-
-        c.coeffs[k] = (ck % (modulus as u64)) as i16;
-
-        if k < n - 1 {
-            let ck = c.coeffs[k + 1] as u64 + ck2;
-
-            c.coeffs[k + 1] = (ck.rem_euclid(modulus as u64)) as i16;
-        }
-    }
-
-    true
-}
-
 fn ntruprime_inv_int(mut a: i16, modulus: u16) -> u16 {
     let mut x: i16 = 0;
     let mut lastx: i16 = 1;
@@ -93,12 +51,18 @@ impl NtruIntPoly {
         NtruIntPoly { n, coeffs }
     }
 
-    pub fn fisher_yates_shuffle(n: usize, w: usize) -> Self {
-        let mut poly = NtruIntPoly::from_zero(n);
+    pub fn empty() -> Self {
+        let n = 0;
+        let coeffs = vec![];
+
+        NtruIntPoly { n, coeffs }
+    }
+
+    pub fn fisher_yates_shuffle(n: usize) -> Self {
+        let mut poly = NtruIntPoly::empty();
         let mut rng = thread_rng();
-        let size = 2 * w;
-        let mut coeffs: Vec<u8> = vec![0; size];
-        let part_size = size / 3;
+        let mut coeffs: Vec<u8> = vec![0; n];
+        let part_size = n / 3;
 
         for i in 0..part_size {
             coeffs[i] = 0;
@@ -108,21 +72,22 @@ impl NtruIntPoly {
             coeffs[i] = 1;
         }
 
-        for i in 2 * part_size..size {
+        for i in 2 * part_size..n {
             coeffs[i] = 2;
         }
 
-        let rand_indices: Vec<u32> = (0..size).map(|_| rng.gen::<u32>()).collect();
+        let rand_indices: Vec<u32> = (0..n).map(|_| rng.gen::<u32>()).collect();
         let mut rand_idx = 0;
 
-        for i in (1..size).rev() {
+        for i in (1..n).rev() {
             let j = rand_indices[rand_idx] % (i + 1) as u32;
 
             coeffs.swap(i, j as usize);
             rand_idx += 1;
         }
 
-        poly.coeffs = coeffs[size - n..size].iter().map(|el| *el as i16).collect();
+        poly.coeffs = coeffs.iter().map(|el| *el as i16).collect();
+        poly.n = n;
 
         poly
     }
@@ -200,6 +165,43 @@ impl NtruIntPoly {
 
             self.coeffs[i] = ai.rem_euclid(modulus) as i16;
         }
+    }
+
+    pub fn ntruprime_mult_poly(&mut self, a: &NtruIntPoly, b: &NtruIntPoly, modulus: u16) -> bool {
+        let n = a.n;
+
+        if n != b.n {
+            return false;
+        }
+
+        self.n = n;
+        self.coeffs = vec![0; n];
+
+        for k in 0..n {
+            let mut ck1 = 0;
+
+            for i in 0..=k {
+                ck1 += (a.coeffs[i] as u64) * (b.coeffs[k - i] as u64);
+            }
+
+            let mut ck2 = 0;
+
+            for i in (k + 1)..n {
+                ck2 += (a.coeffs[i] as u64) * (b.coeffs[k + n - i] as u64);
+            }
+
+            let ck = self.coeffs[k] as u64 + ck1 + ck2;
+
+            self.coeffs[k] = (ck % (modulus as u64)) as i16;
+
+            if k < n - 1 {
+                let ck = self.coeffs[k + 1] as u64 + ck2;
+
+                self.coeffs[k + 1] = (ck.rem_euclid(modulus as u64)) as i16;
+            }
+        }
+
+        true
     }
 
     pub fn get_inv_poly(&self, modulus: u16) -> Option<NtruIntPoly> {
@@ -309,7 +311,7 @@ fn test_ntru_poly() {
 
 #[test]
 fn test_ntru_poly_wrandom() {
-    let poly = NtruIntPoly::fisher_yates_shuffle(739, 2040);
+    let poly = NtruIntPoly::fisher_yates_shuffle(739);
 
     for c in &poly.coeffs {
         assert!(*c <= 2);

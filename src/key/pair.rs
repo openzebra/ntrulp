@@ -25,12 +25,22 @@ impl NtruPrimeKeyPair {
             }
         };
         let priv_key = NtruPrimePrivKey {
-            p: 8,
-            f: NtruIntPoly::random(p as usize),
-            g_inv: NtruIntPoly::random(p as usize),
+            g_inv,
+            p: 8, // TODO: remove magic number
+            f: NtruIntPoly::fisher_yates_shuffle(p as usize),
         };
-
-        // println!("{:?}", priv_key);
+        // let pub_key = NtruPrimePubKey {
+        //     p: 8, // TODO: remove magic number
+        //     h: NtruIntPoly::empty(),
+        // };
+        // let f_inv = loop {
+        //     match priv_key.f.get_inv_poly(q) {
+        //         Some(inv) => {
+        //             break inv;
+        //         }
+        //         None => continue,
+        //     }
+        // };
     }
 }
 
