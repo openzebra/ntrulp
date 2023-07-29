@@ -6,7 +6,7 @@ pub struct NtruIntPoly {
     pub coeffs: Vec<i16>,
 }
 
-pub fn ntruprime_mult_poly(
+fn ntruprime_mult_poly(
     a: &NtruIntPoly,
     b: &NtruIntPoly,
     c: &mut NtruIntPoly,
@@ -80,7 +80,7 @@ fn ntruprime_inv_int(mut a: i16, modulus: u16) -> u16 {
 
 impl NtruIntPoly {
     // Add here random method
-    pub fn new(n: usize) -> Self {
+    pub fn random(n: usize) -> Self {
         let mut rng = thread_rng();
         let coeffs: Vec<i16> = (0..n)
             .map(|_| {
@@ -91,6 +91,40 @@ impl NtruIntPoly {
             .collect();
 
         NtruIntPoly { n, coeffs }
+    }
+
+    pub fn fisher_yates_shuffle(n: usize, w: usize) -> Self {
+        let mut poly = NtruIntPoly::from_zero(n);
+        let mut rng = thread_rng();
+        let size = 2 * w;
+        let mut coeffs: Vec<u8> = vec![0; size];
+        let part_size = size / 3;
+
+        for i in 0..part_size {
+            coeffs[i] = 0;
+        }
+
+        for i in part_size..2 * part_size {
+            coeffs[i] = 1;
+        }
+
+        for i in 2 * part_size..size {
+            coeffs[i] = 2;
+        }
+
+        let rand_indices: Vec<u32> = (0..size).map(|_| rng.gen::<u32>()).collect();
+        let mut rand_idx = 0;
+
+        for i in (1..size).rev() {
+            let j = rand_indices[rand_idx] % (i + 1) as u32;
+
+            coeffs.swap(i, j as usize);
+            rand_idx += 1;
+        }
+
+        poly.coeffs = coeffs[size - n..size].iter().map(|el| *el as i16).collect();
+
+        poly
     }
 
     pub fn from_zero(n: usize) -> Self {
@@ -256,12 +290,35 @@ impl NtruIntPoly {
 
 #[test]
 fn test_ntru_poly() {
-    let poly = NtruIntPoly::new(761);
+    let poly = NtruIntPoly::random(761);
 
     assert!(poly.n == 761);
     assert!(poly.coeffs.len() == 761);
     assert!(poly.n == poly.coeffs.len());
     assert!(!poly.equals_zero());
+
+    for c in &poly.coeffs {
+        assert!(*c <= 2);
+        assert!(*c >= 0);
+    }
+
+    assert!(&poly.coeffs.contains(&2));
+    assert!(&poly.coeffs.contains(&1));
+    assert!(&poly.coeffs.contains(&0));
+}
+
+#[test]
+fn test_ntru_poly_wrandom() {
+    let poly = NtruIntPoly::fisher_yates_shuffle(739, 2040);
+
+    for c in &poly.coeffs {
+        assert!(*c <= 2);
+        assert!(*c >= 0);
+    }
+
+    assert!(&poly.coeffs.contains(&2));
+    assert!(&poly.coeffs.contains(&1));
+    assert!(&poly.coeffs.contains(&0));
 }
 
 #[test]
@@ -285,7 +342,7 @@ fn ntruprime_inv_int_test() {
 
 #[test]
 fn test_from_zero() {
-    let non_zero_poly = NtruIntPoly::new(761);
+    let non_zero_poly = NtruIntPoly::random(761);
     let zero_poly = NtruIntPoly::from_zero(761);
 
     assert!(!non_zero_poly.equals_zero());

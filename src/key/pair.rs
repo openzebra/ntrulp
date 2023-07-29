@@ -15,7 +15,7 @@ impl NtruPrimeKeyPair {
 
     pub fn generate(params: StartParams) {
         let (p, q, w) = params;
-        let g = NtruIntPoly::new(p as usize);
+        let g = NtruIntPoly::random(p as usize);
         let g_inv = loop {
             match g.get_inv_poly(q) {
                 Some(inv) => {
@@ -24,8 +24,13 @@ impl NtruPrimeKeyPair {
                 None => continue,
             }
         };
+        let priv_key = NtruPrimePrivKey {
+            p: 8,
+            f: NtruIntPoly::random(p as usize),
+            g_inv: NtruIntPoly::random(p as usize),
+        };
 
-        println!("{:?}", g_inv);
+        // println!("{:?}", priv_key);
     }
 }
 

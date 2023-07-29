@@ -2,7 +2,7 @@ use crate::poly::poly::NtruIntPoly;
 
 #[derive(Debug)]
 pub struct NtruPrimePrivKey {
-    p: u16,
-    f: NtruIntPoly,
-    g_inv: NtruIntPoly,
+    pub p: u16,
+    pub f: NtruIntPoly,
+    pub g_inv: NtruIntPoly,
 }
