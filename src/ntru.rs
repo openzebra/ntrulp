@@ -10,16 +10,14 @@ use std::io::{Error, ErrorKind};
 pub struct NTRU {
     pub params: StartParams,
     hash_bytes: Vec<u8>, // TODO: change to ARC<[u8]>
-    usecache: bool,
     fq: GF<u64>,
     q12: u16,
 }
 
 impl NTRU {
     pub fn from(params: StartParams) -> Result<Self, Error> {
-        let (round1, p, q, w) = params;
+        let (p, q, w) = params;
         let hash_bytes = vec![];
-        let mut usecache = !round1;
 
         if !math::prime::is_prime(p) {
             return Err(Error::new(ErrorKind::Other, "p must be prime number"));
@@ -45,24 +43,12 @@ impl NTRU {
             return Err(Error::new(ErrorKind::Other, "p mod 4 should be = 1"));
         }
 
-        if round1 {
-            // encodings defined only for (761,4591)
-            usecache = false;
-            if !(p == config::params::SNTRUP4591761.1) {
-                return Err(Error::new(ErrorKind::Other, "for round1 p should be 761"));
-            }
-            if !(q == config::params::SNTRUP4591761.2) {
-                return Err(Error::new(ErrorKind::Other, "for round1 p should be 4591"));
-            }
-        }
-
         let fq = GF::new(1, q as u64);
         let q12 = (q - 1) / 2;
 
         Ok(NTRU {
             params,
             hash_bytes,
-            usecache,
             fq,
             q12,
         })
@@ -81,8 +67,6 @@ mod tests {
 
     #[test]
     fn test_valid_params() {
-        let result = NTRU::from(config::params::SNTRUP4591761);
-        assert!(result.is_ok());
         let result = NTRU::from(config::params::SNTRUP761);
         assert!(result.is_ok());
         let result = NTRU::from(config::params::SNTRUP653);
@@ -99,42 +83,42 @@ mod tests {
 
     #[test]
     fn test_invalid_p_not_prime() {
-        let invalid_params: StartParams = (false, 15, 4591, 135);
+        let invalid_params: StartParams = (15, 4591, 135);
         let result = NTRU::from(invalid_params);
         assert!(result.is_err());
     }
 
     #[test]
     fn test_invalid_q_not_prime() {
-        let invalid_params: StartParams = (false, 761, 20, 135);
+        let invalid_params: StartParams = (761, 20, 135);
         let result = NTRU::from(invalid_params);
         assert!(result.is_err());
     }
 
     #[test]
     fn test_invalid_w_negative() {
-        let invalid_params: StartParams = (false, 761, 4591, 0);
+        let invalid_params: StartParams = (761, 4591, 0);
         let result = NTRU::from(invalid_params);
         assert!(result.is_err());
     }
 
     #[test]
     fn test_invalid_2p_not_greater_than_3w() {
-        let invalid_params: StartParams = (false, 10, 8, 4);
+        let invalid_params: StartParams = (10, 8, 4);
         let result = NTRU::from(invalid_params);
         assert!(result.is_err());
     }
 
     #[test]
     fn test_invalid_q_mod_6_not_1() {
-        let invalid_params: StartParams = (false, 761, 4590, 135);
+        let invalid_params: StartParams = (761, 4590, 135);
         let result = NTRU::from(invalid_params);
         assert!(result.is_err());
     }
 
     #[test]
     fn test_invalid_p_mod_4_not_1() {
-        let invalid_params: StartParams = (false, 14, 4591, 135);
+        let invalid_params: StartParams = (14, 4591, 135);
         let result = NTRU::from(invalid_params);
         assert!(result.is_err());
     }

@@ -101,9 +101,13 @@ impl NtruIntPoly {
     }
 
     pub fn equals_zero(&self) -> bool {
-        let sum: i16 = self.coeffs.iter().sum();
+        for item in self.coeffs.iter() {
+            if *item > 0 {
+                return false;
+            }
+        }
 
-        sum == 0
+        true
     }
 
     pub fn get_poly_degree(&self) -> usize {
@@ -381,7 +385,6 @@ fn test_get_inv_poly() {
         k += 1;
         match g.get_inv_poly(q) {
             Some(g_inv) => {
-                println!("inv={:?}", g_inv);
                 assert!(g_inv.coeffs == [2745, 2258, 3329, 2984, 1550, 2900, 700, 3283, 2267]);
                 break;
             }
