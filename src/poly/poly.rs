@@ -167,7 +167,7 @@ impl NtruIntPoly {
         }
     }
 
-    pub fn ntruprime_mult_poly(&mut self, a: &NtruIntPoly, b: &NtruIntPoly, modulus: u16) -> bool {
+    pub fn mult_poly(&mut self, a: &NtruIntPoly, b: &NtruIntPoly, modulus: u16) -> bool {
         let n = a.n;
 
         if n != b.n {
