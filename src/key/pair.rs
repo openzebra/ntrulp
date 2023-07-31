@@ -1,6 +1,6 @@
 use crate::{
     config::params::{StartParams, SNTRUP761},
-    key::{private::NtruPrimePrivKey, public::NtruPrimePubKey},
+    key::{self, private::NtruPrimePrivKey, public::NtruPrimePubKey},
     poly::poly::NtruIntPoly,
 };
 
@@ -13,7 +13,7 @@ pub struct NtruPrimeKeyPair {
 impl NtruPrimeKeyPair {
     pub fn from() {}
 
-    pub fn generate(params: &StartParams) -> Self {
+    pub fn gen(params: &StartParams) -> Self {
         let g = NtruIntPoly::random(params.0 as usize);
         let f = NtruIntPoly::fisher_yates_shuffle(params.0 as usize);
 
@@ -54,11 +54,37 @@ impl NtruPrimeKeyPair {
 }
 
 #[test]
-fn test_key_pair_generate() {
-    let pair = NtruPrimeKeyPair::generate(&SNTRUP761);
+fn test_key_pair_gen() {
+    let pair = NtruPrimeKeyPair::gen(&SNTRUP761);
 
     assert!(pair.private.f.n == SNTRUP761.0 as usize);
     assert!(pair.private.f.coeffs.contains(&0));
     assert!(pair.private.f.coeffs.contains(&1));
     assert!(pair.private.f.coeffs.contains(&2));
+}
+
+#[test]
+fn test_gen_from_seed() {
+    let params: StartParams = (9, 4591, 286);
+    let mut seed_f = NtruIntPoly::empty();
+    let mut seed_g = NtruIntPoly::empty();
+
+    seed_f.coeffs = vec![1, 2, 2, 0, 0, 1, 2, 2, 2];
+    seed_f.n = seed_f.coeffs.len();
+
+    seed_g.coeffs = vec![2, 0, 1, 1, 2, 0, 0, 1, 1];
+    seed_g.n = seed_g.coeffs.len();
+
+    let key_pair = NtruPrimeKeyPair::gen_from_seed(&params, seed_g, seed_f);
+
+    assert!(key_pair.private.f.n == 9);
+    assert!(key_pair.private.f.coeffs == [1, 2, 2, 0, 0, 1, 2, 2, 2]);
+
+    assert!(key_pair.private.g_inv.n == 9);
+    assert!(
+        key_pair.private.g_inv.coeffs == [1381, 2493, 3083, 1045, 3427, 2565, 1249, 3648, 1274]
+    );
+
+    assert!(key_pair.public.h.n == 9);
+    assert!(key_pair.public.h.coeffs == [3848, 1822, 557, 1204, 4198, 2245, 2292, 587, 1275]);
 }
