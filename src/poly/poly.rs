@@ -1,3 +1,5 @@
+use std::println;
+
 use rand::prelude::*;
 
 #[derive(Debug)]
@@ -99,6 +101,16 @@ impl NtruIntPoly {
         NtruIntPoly { n, coeffs }
     }
 
+    pub fn equals_one(&self) -> bool {
+        for i in 1..self.coeffs.len() {
+            if self.coeffs[i] != 0 {
+                return false;
+            }
+        }
+
+        self.coeffs[0] == 1
+    }
+
     pub fn equals_zero(&self) -> bool {
         for item in self.coeffs.iter() {
             if *item > 0 {
@@ -121,7 +133,7 @@ impl NtruIntPoly {
 
     pub fn mult_mod(&mut self, factor: u64, modulus: u64) {
         self.coeffs.iter_mut().for_each(|coeff| {
-            *coeff = ((*coeff as u64 * factor) % modulus) as i16;
+            *coeff = ((*coeff as u64 * factor).rem_euclid(modulus)) as i16;
         });
     }
 
@@ -192,7 +204,7 @@ impl NtruIntPoly {
 
             let ck = self.coeffs[k] as u64 + ck1 + ck2;
 
-            self.coeffs[k] = (ck % (modulus as u64)) as i16;
+            self.coeffs[k] = (ck.rem_euclid(modulus as u64)) as i16;
 
             if k < n - 1 {
                 let ck = self.coeffs[k + 1] as u64 + ck2;

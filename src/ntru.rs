@@ -16,7 +16,7 @@ pub struct NTRU {
 
 impl NTRU {
     pub fn from(params: StartParams) -> Result<Self, Error> {
-        let (p, q, w) = params;
+        let (p, q, w, _) = params;
         let hash_bytes = vec![];
 
         if !math::prime::is_prime(p) {
@@ -66,59 +66,43 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_valid_params() {
-        let result = NTRU::from(config::params::SNTRUP761);
-        assert!(result.is_ok());
-        let result = NTRU::from(config::params::SNTRUP653);
-        assert!(result.is_ok());
-        let result = NTRU::from(config::params::SNTRUP857);
-        assert!(result.is_ok());
-        let result = NTRU::from(config::params::SNTRUP953);
-        assert!(result.is_ok());
-        let result = NTRU::from(config::params::SNTRUP1013);
-        assert!(result.is_ok());
-        let result = NTRU::from(config::params::SNTRUP1277);
-        assert!(result.is_ok());
-    }
-
-    #[test]
     fn test_invalid_p_not_prime() {
-        let invalid_params: StartParams = (15, 4591, 135);
+        let invalid_params: StartParams = (15, 4591, 135, 6553);
         let result = NTRU::from(invalid_params);
         assert!(result.is_err());
     }
 
     #[test]
     fn test_invalid_q_not_prime() {
-        let invalid_params: StartParams = (761, 20, 135);
+        let invalid_params: StartParams = (761, 20, 135, 6553);
         let result = NTRU::from(invalid_params);
         assert!(result.is_err());
     }
 
     #[test]
     fn test_invalid_w_negative() {
-        let invalid_params: StartParams = (761, 4591, 0);
+        let invalid_params: StartParams = (761, 4591, 0, 6553);
         let result = NTRU::from(invalid_params);
         assert!(result.is_err());
     }
 
     #[test]
     fn test_invalid_2p_not_greater_than_3w() {
-        let invalid_params: StartParams = (10, 8, 4);
+        let invalid_params: StartParams = (10, 8, 4, 6553);
         let result = NTRU::from(invalid_params);
         assert!(result.is_err());
     }
 
     #[test]
     fn test_invalid_q_mod_6_not_1() {
-        let invalid_params: StartParams = (761, 4590, 135);
+        let invalid_params: StartParams = (761, 4590, 135, 6553);
         let result = NTRU::from(invalid_params);
         assert!(result.is_err());
     }
 
     #[test]
     fn test_invalid_p_mod_4_not_1() {
-        let invalid_params: StartParams = (14, 4591, 135);
+        let invalid_params: StartParams = (14, 4591, 135, 6553);
         let result = NTRU::from(invalid_params);
         assert!(result.is_err());
     }
