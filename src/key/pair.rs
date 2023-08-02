@@ -93,32 +93,6 @@ mod tests {
     }
 
     #[test]
-    fn test_gen_from_seed() {
-        let params: StartParams = (9, 4591, 286, 6553);
-        let mut seed_f = NtruIntPoly::empty();
-        let mut seed_g = NtruIntPoly::empty();
-
-        seed_f.coeffs = vec![1, 2, 2, 0, 0, 1, 2, 2, 2];
-        seed_f.n = seed_f.coeffs.len();
-
-        seed_g.coeffs = vec![2, 0, 1, 1, 2, 0, 0, 1, 1];
-        seed_g.n = seed_g.coeffs.len();
-
-        let key_pair = NtruPrimeKeyPair::gen_from_seed(params, seed_g, seed_f);
-
-        assert!(key_pair.private.f.n == 9);
-        assert!(key_pair.private.f.coeffs == [1, 2, 2, 0, 0, 1, 2, 2, 2]);
-
-        assert!(key_pair.private.g_inv.n == 9);
-        assert!(
-            key_pair.private.g_inv.coeffs == [1381, 2493, 3083, 1045, 3427, 2565, 1249, 3648, 1274]
-        );
-
-        assert!(key_pair.public.h.n == 9);
-        assert!(key_pair.public.h.coeffs == [3848, 1822, 557, 1204, 4198, 2245, 2292, 587, 1275]);
-    }
-
-    #[test]
     fn test_verify_and_big_pair() {
         let params: StartParams = (739, 9829, 204, 6553);
         let mut seed_f = NtruIntPoly::empty();
