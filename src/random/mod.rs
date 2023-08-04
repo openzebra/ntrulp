@@ -1,5 +1,5 @@
 use rand::prelude::*;
-use std::io::Error;
+use std::io::{Error, ErrorKind};
 
 pub trait CommonRandom {
     fn random_small_vec(&mut self, n: usize) -> Vec<i8>;
@@ -70,16 +70,26 @@ impl CommonRandom for NTRURandom {
     }
 
     fn small_fisher_yates_shuffle(&mut self, n: usize) -> Result<Vec<i8>, Error> {
-        let part_size = n / 3;
+        if n < 9 {
+            return Err(Error::new(ErrorKind::Other, "n should be >= 9"));
+        }
+
+        let total_chunks = 3;
+        let part_size = n / total_chunks;
+        let remainder = n % total_chunks;
         let chunk1 = vec![0i8; part_size];
-        let chunk2 = vec![1i8; part_size * 2];
-        let chunk3 = vec![-1i8; part_size * 2 - n];
+        let chunk2 = vec![1i8; part_size];
+        let chunk3 = vec![-1i8; part_size];
         let rand_indices: Vec<u32> = (0..n).map(|_| self.random_u32()).collect();
         let mut coeffs: Vec<i8> = Vec::with_capacity(n);
 
         coeffs.extend(chunk1);
         coeffs.extend(chunk2);
         coeffs.extend(chunk3);
+
+        for _ in 0..remainder {
+            coeffs.push((self.random_range_3() as i8) - 1);
+        }
 
         let mut rand_idx = 0;
 
@@ -91,5 +101,53 @@ impl CommonRandom for NTRURandom {
         }
 
         Ok(coeffs)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_random_u32() {
+        let mut random = NTRURandom::new();
+
+        let r = random.random_u32();
+
+        assert!(r <= std::u32::MAX)
+    }
+
+    #[test]
+    fn test_random_small_vec() {
+        let mut random = NTRURandom::new();
+
+        let r = random.random_small_vec(9000);
+
+        assert!(r.len() == 9000)
+    }
+
+    #[test]
+    fn test_random_range_3() {
+        let mut random = NTRURandom::new();
+        let r = random.random_range_3();
+
+        assert!(r <= 2);
+    }
+
+    #[test]
+    fn test_small_fisher_yates_shuffle() {
+        for size in 100..1000 {
+            let mut random = NTRURandom::new();
+            let r = random.small_fisher_yates_shuffle(size);
+
+            assert!(r.is_ok());
+
+            let r = r.unwrap();
+
+            assert!(r.len() == size);
+            assert!(r.contains(&1));
+            assert!(r.contains(&-1));
+            assert!(r.contains(&0));
+        }
     }
 }

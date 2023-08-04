@@ -91,9 +91,7 @@ mod tests {
     #[test]
     fn test_random_u32() {
         let ntrup = NTRUPrime::from(config::params::SNTRP_1277).unwrap();
-        let r = ntrup.small_random();
+        // let r = ntrup.small_random();
         // let r = ntrup.randomrange3();
-
-        dbg!(r);
     }
 }
