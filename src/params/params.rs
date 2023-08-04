@@ -5,9 +5,3 @@ pub struct NTRUParams {
     pub w: usize,
     // TODO: Add lrp other params
 }
-
-impl NTRUParams {
-    pub fn from(p: usize, q: usize, w: usize) -> Self {
-        NTRUParams { p, q, w }
-    }
-}
