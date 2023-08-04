@@ -12,7 +12,13 @@ pub struct NtruPrimeKeyPair {
 }
 
 impl NtruPrimeKeyPair {
-    pub fn from() {}
+    pub fn empty(params: StartParams) -> Self {
+        NtruPrimeKeyPair {
+            params,
+            private: NtruPrimePrivKey::empty(),
+            public: NtruPrimePubKey::empty(),
+        }
+    }
 
     pub fn gen(params: StartParams) -> Self {
         let g = NtruIntPoly::random(params.0 as usize);
