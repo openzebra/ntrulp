@@ -1,4 +1,5 @@
 use crate::math;
+use crate::math::finite_field::GF;
 use crate::params::params::NTRUParams;
 use rand::Rng;
 use std::io::{Error, ErrorKind};
@@ -7,6 +8,7 @@ use std::sync::Arc;
 #[derive(Debug)]
 pub struct NTRUPrime {
     pub params: NTRUParams,
+    r: GF<i8>,
 }
 
 impl NTRUPrime {
@@ -31,7 +33,9 @@ impl NTRUPrime {
             return Err(Error::new(ErrorKind::Other, "q mod 6 should be = 1"));
         }
 
-        Ok(NTRUPrime { params })
+        let r: GF<i8> = GF::new(1, 3);
+
+        Ok(NTRUPrime { params, r })
     }
 
     pub fn encrypt(&self, msg: &[u8]) {}
@@ -59,13 +63,22 @@ impl NTRUPrime {
         (((r & 0x3fffffff) * 3) >> 30) as i8
     }
 
-    fn small_random(&self) {
-        let r: Vec<i8> = (0..self.params.p)
-            .into_iter()
+    fn is_small(&self, r: &[i8]) -> bool {
+        r.iter().all(|&value| value.abs() <= 1 && self.r.has(value))
+    }
+
+    fn small_random(&self) -> Option<Vec<i8>> {
+        // TODO: Make it async.
+        let r: Vec<i8> = vec![0u8; self.params.p]
+            .iter_mut()
             .map(|_| self.randomrange3() - 1)
             .collect();
 
-        println!("r={:?}", r);
+        if self.is_small(&r) {
+            return Some(r);
+        } else {
+            return None;
+        }
     }
 }
 
@@ -78,7 +91,9 @@ mod tests {
     #[test]
     fn test_random_u32() {
         let ntrup = NTRUPrime::from(config::params::SNTRP_1277).unwrap();
-        ntrup.small_random();
+        let r = ntrup.small_random();
         // let r = ntrup.randomrange3();
+
+        dbg!(r);
     }
 }

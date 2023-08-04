@@ -46,7 +46,7 @@ where
     }
 
     pub fn has(&self, n: T) -> bool {
-        self.p > n && n >= T::from_u8(0).unwrap()
+        self.p > n
     }
 }
 
