@@ -52,8 +52,14 @@ impl NTRUPrime {
                 break g;
             }
         };
+        let f = loop {
+            match self.ntru_rng.short_random(self.params.p, self.params.w) {
+                Ok(result) => break PolyInt::from(&result),
+                Err(_) => continue,
+            };
+        };
 
-        // dbg!(g.coeffs);
+        dbg!(f.coeffs);
     }
 }
 
