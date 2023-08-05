@@ -3,6 +3,7 @@ use std::io::{Error, ErrorKind};
 
 pub trait CommonRandom {
     fn random_small_vec(&mut self, n: usize) -> Vec<i8>;
+    fn short_random(&mut self, p: usize, w: usize) -> Result<Vec<i8>, Error>;
     fn small_fisher_yates_shuffle(&mut self, n: usize) -> Result<Vec<i8>, Error>;
     fn random_u32(&mut self) -> u32;
     fn random_range_3(&mut self) -> u8;
@@ -74,6 +75,7 @@ impl CommonRandom for NTRURandom {
             return Err(Error::new(ErrorKind::Other, "n should be >= 9"));
         }
 
+        // split chunks by 3 and fill it -1, 0, 1.
         let total_chunks = 3;
         let part_size = n / total_chunks;
         let remainder = n % total_chunks;
@@ -102,11 +104,70 @@ impl CommonRandom for NTRURandom {
 
         Ok(coeffs)
     }
+
+    fn short_random(&mut self, p: usize, w: usize) -> Result<Vec<i8>, Error> {
+        let mut list: Vec<u32> = (0..p)
+            .map(|i| {
+                let value = <NTRURandom as CommonRandom>::random_u32(self);
+
+                if i < w {
+                    value & !1
+                } else {
+                    (value & !3) | 1
+                }
+            })
+            .collect();
+
+        if !list.iter().take(w).all(|&value| value % 2 == 0) {
+            return Err(Error::new(
+                ErrorKind::Other,
+                "value should be value % 2 == 0",
+            ));
+        }
+        if !list.iter().skip(w).all(|&value| value % 4 == 1) {
+            return Err(Error::new(
+                ErrorKind::Other,
+                "value should be value % 4 == 1",
+            ));
+        }
+
+        list.sort();
+
+        let mut list: Vec<i32> = list.iter().map(|&v| v as i32).collect();
+        let mut sum = 0;
+
+        for element in list.iter_mut() {
+            let new_value = element.rem_euclid(4) as i32 - 1;
+
+            if new_value > 1 {
+                return Err(Error::new(ErrorKind::Other, "one of value more then one"));
+            }
+
+            *element = new_value;
+
+            sum += new_value.abs();
+        }
+
+        if sum as usize != w {
+            return Err(Error::new(ErrorKind::Other, "sum of values is not eq w"));
+        }
+
+        Ok(list.iter().map(|&v| v as i8).collect())
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::config::params::SNTRP_761;
+
+    #[test]
+    fn test_seed() {
+        let mut random = NTRURandom::from_u64(9999);
+        let r = random.random_u32();
+
+        assert!(r == 3688594871);
+    }
 
     #[test]
     fn test_random_u32() {
@@ -136,8 +197,9 @@ mod tests {
 
     #[test]
     fn test_small_fisher_yates_shuffle() {
+        let mut random = NTRURandom::new();
+
         for size in 100..1000 {
-            let mut random = NTRURandom::new();
             let r = random.small_fisher_yates_shuffle(size);
 
             assert!(r.is_ok());
@@ -149,5 +211,17 @@ mod tests {
             assert!(r.contains(&-1));
             assert!(r.contains(&0));
         }
+    }
+
+    #[test]
+    fn test_shot_random() {
+        let mut random = NTRURandom::new();
+        let values = random.short_random(SNTRP_761.p, SNTRP_761.w);
+
+        assert!(values.is_ok());
+
+        let values = values.unwrap();
+
+        assert!(values.len() == SNTRP_761.p);
     }
 }

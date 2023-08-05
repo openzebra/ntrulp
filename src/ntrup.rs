@@ -1,14 +1,14 @@
 use crate::math;
 use crate::math::finite_field::GF;
 use crate::params::params::NTRUParams;
+use crate::poly::PolyInt;
+use crate::random::{CommonRandom, NTRURandom};
 use rand::Rng;
 use std::io::{Error, ErrorKind};
-use std::sync::Arc;
 
-#[derive(Debug)]
 pub struct NTRUPrime {
     pub params: NTRUParams,
-    r: GF<i8>,
+    pub ntru_rng: NTRURandom,
 }
 
 impl NTRUPrime {
@@ -33,52 +33,27 @@ impl NTRUPrime {
             return Err(Error::new(ErrorKind::Other, "q mod 6 should be = 1"));
         }
 
-        let r: GF<i8> = GF::new(1, 3);
+        let ntru_rng = NTRURandom::new();
 
-        Ok(NTRUPrime { params, r })
+        Ok(NTRUPrime { params, ntru_rng })
     }
 
     pub fn encrypt(&self, msg: &[u8]) {}
 
     pub fn decrypt(&self) {}
 
-    pub fn key_pair_gen(&self) {
-        // let g = Arc::new([0u8, 2000]);
-    }
+    pub fn key_pair_gen(&mut self) {
+        // TODO: Add counter, if specific random return error.
+        let g = loop {
+            let r = self.ntru_rng.random_small_vec(self.params.p);
+            let g: PolyInt<i8> = PolyInt::from(&r);
 
-    fn random_u32(&self) -> u32 {
-        let mut rng = rand::thread_rng();
-        // rng.gen::<u8>()
-        let c0 = 1; //rng.gen::<u8>() as u32;
-        let c1 = 2; //rng.gen::<u8>() as u32;
-        let c2 = 3; //rng.gen::<u8>() as u32;
-        let c3 = 4; //rng.gen::<u8>() as u32;
+            if r.contains(&0) && r.contains(&1) && r.contains(&-1) && g.is_small() {
+                break g;
+            }
+        };
 
-        c0 + 256 * c1 + 65536 * c2 + 16777216 * c3
-    }
-
-    fn randomrange3(&self) -> i8 {
-        let r: u32 = self.random_u32();
-
-        (((r & 0x3fffffff) * 3) >> 30) as i8
-    }
-
-    fn is_small(&self, r: &[i8]) -> bool {
-        r.iter().all(|&value| value.abs() <= 1 && self.r.has(value))
-    }
-
-    fn small_random(&self) -> Option<Vec<i8>> {
-        // TODO: Make it async.
-        let r: Vec<i8> = vec![0u8; self.params.p]
-            .iter_mut()
-            .map(|_| self.randomrange3() - 1)
-            .collect();
-
-        if self.is_small(&r) {
-            return Some(r);
-        } else {
-            return None;
-        }
+        // dbg!(g.coeffs);
     }
 }
 
@@ -89,9 +64,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_random_u32() {
-        let ntrup = NTRUPrime::from(config::params::SNTRP_1277).unwrap();
-        // let r = ntrup.small_random();
-        // let r = ntrup.randomrange3();
+    fn test_key_pair_gen() {
+        let mut ntru = NTRUPrime::from(config::params::SNTRP_761).unwrap();
+
+        ntru.key_pair_gen();
     }
 }
