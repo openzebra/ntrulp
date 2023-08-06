@@ -2,10 +2,9 @@ use num::traits::Euclid;
 use num::FromPrimitive;
 use std::cmp::PartialOrd;
 use std::ops::{Add, Deref, Mul, Sub};
-use std::sync::Arc;
 
 pub struct PolyInt<T> {
-    pub coeffs: Arc<Vec<T>>,
+    pub coeffs: Vec<T>,
 }
 
 impl<T> PolyInt<T>
@@ -19,14 +18,14 @@ where
         + FromPrimitive,
 {
     pub fn empty() -> Self {
-        let coeffs = Arc::new(vec![]);
+        let coeffs = vec![];
 
         PolyInt { coeffs }
     }
 
     pub fn from(coeffs: &[T]) -> Self {
         PolyInt {
-            coeffs: Arc::new(Vec::from(coeffs)),
+            coeffs: Vec::from(coeffs),
         }
     }
 
@@ -35,5 +34,9 @@ where
             .deref()
             .iter()
             .all(|&value| value <= T::from_i8(1).unwrap() && value >= T::from_i8(-1).unwrap())
+    }
+
+    pub fn mul_int(&mut self, n: T) {
+        self.coeffs = self.coeffs.iter_mut().map(|v| *v * n).collect();
     }
 }

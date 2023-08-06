@@ -38,7 +38,7 @@ impl NTRUPrime {
         Ok(NTRUPrime { params, ntru_rng })
     }
 
-    pub fn encrypt(&self, msg: &[u8]) {}
+    pub fn encrypt(&self) {}
 
     pub fn decrypt(&self) {}
 
