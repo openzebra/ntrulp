@@ -209,6 +209,15 @@ mod tests {
         assert!(result.coeffs == expected_result);
     }
 
+    #[test]
+    fn test_mult_poly_int() {
+        let polynomial1 = [1, -1, 0, -1, 1];
+        let expected_result = [1 * 3, -1 * 3, 0 * 3, -1 * 3, 1 * 3];
+        let result = PolyInt::from(&polynomial1).mult_int(3);
+
+        assert!(result.coeffs == expected_result);
+    }
+
     // #[test]
     // fn test_create_factor_ring() {
     //     let coefficients = [
