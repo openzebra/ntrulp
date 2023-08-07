@@ -43,8 +43,22 @@ where
         }
     }
 
-    pub fn mul_int(&mut self, n: T) {
+    pub fn mult_int(&mut self, n: T) {
         self.coeffs = self.coeffs.iter_mut().map(|v| *v * n).collect();
+    }
+
+    pub fn mult_poly(&mut self, p2: &[T]) {
+        let len_result = self.coeffs.len() + p2.len() - 1;
+        let mut result: Vec<T> = Vec::with_capacity(len_result);
+
+        for (i, &c1) in self.coeffs.iter().enumerate() {
+            for (j, &c2) in p2.iter().enumerate() {
+                result[i + j] += c1 * c2;
+            }
+        }
+
+        self.coeffs.clear();
+        self.coeffs.extend_from_slice(&result);
     }
 
     pub fn add_poly(&mut self, p2: &[T]) {
