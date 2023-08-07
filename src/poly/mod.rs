@@ -3,6 +3,7 @@ use num::FromPrimitive;
 use std::cmp::PartialOrd;
 use std::ops::{AddAssign, Div, Mul, SubAssign};
 
+#[derive(Clone)]
 pub struct PolyInt<T> {
     pub coeffs: Vec<T>,
 }
@@ -36,25 +37,34 @@ where
             .all(|&value| value <= T::from_i8(1).unwrap() && value >= T::from_i8(-1).unwrap())
     }
 
-    pub fn mod_poly(&mut self, modulus: T) {
+    // Modifies a polynomial by taking each coefficient modulo the given modulus.
+    pub fn mod_poly(&mut self, modulus: T) -> Self {
         self.coeffs = self
             .coeffs
             .iter_mut()
             .map(|coeff| coeff.rem_euclid(&modulus))
             .collect();
+
+        self.to_owned()
     }
 
-    pub fn sub_poly(&mut self, poly: &[T]) {
+    // Subtracts one polynomial from another coefficient-wise.
+    pub fn sub_poly(&mut self, poly: &[T]) -> Self {
         for (c1, &c2) in self.coeffs.iter_mut().zip(poly.iter()) {
             *c1 -= c2;
         }
+
+        self.to_owned()
     }
 
-    pub fn mult_int(&mut self, n: T) {
+    pub fn mult_int(&mut self, n: T) -> Self {
         self.coeffs = self.coeffs.iter_mut().map(|v| *v * n).collect();
+
+        self.to_owned()
     }
 
-    pub fn mult_poly(&mut self, poly: &[T]) {
+    // Multiplies two polynomials using convolution of coefficients.
+    pub fn mult_poly(&mut self, poly: &[T]) -> Self {
         let len_result = self.coeffs.len() + poly.len() - 1;
         let mut result: Vec<T> = Vec::with_capacity(len_result);
 
@@ -66,17 +76,23 @@ where
 
         self.coeffs.clear();
         self.coeffs.extend_from_slice(&result);
+
+        self.to_owned()
     }
 
-    pub fn add_poly(&mut self, poly: &[T]) {
+    // Adds polynomials coefficient-wise.
+    pub fn add_poly(&mut self, poly: &[T]) -> Self {
         for (c1, &c2) in self.coeffs.iter_mut().zip(poly.iter()) {
             *c1 += c2;
         }
+
+        self.to_owned()
     }
 
-    pub fn div_mod_poly(&mut self, poly: &[T]) {
+    // Performs polynomial division with remainder.
+    pub fn div_mod_poly(&mut self, poly: &[T]) -> Self {
         if self.coeffs.len() > poly.len() {
-            return;
+            return self.to_owned();
         }
 
         let mut p1_clone = poly.to_vec();
@@ -101,5 +117,80 @@ where
 
         self.coeffs.clear();
         self.coeffs.extend_from_slice(&p2_clone);
+
+        self.to_owned()
+    }
+
+    // create factor rint for poly x^p - x - 1
+    pub fn create_factor_ring(&self, x: &[T], modulus: T) -> PolyInt<T> {
+        let x_deg1: PolyInt<T> = PolyInt::from(&x);
+        let mut x_deg_p: PolyInt<T> = PolyInt::from(&[T::from_u8(1).unwrap()]);
+        let modulus_poly = self.clone().mod_poly(modulus);
+
+        for &coeff in &self.coeffs {
+            x_deg_p = x_deg_p.mult_poly(&x_deg1.coeffs);
+            x_deg_p = x_deg_p.mod_poly(modulus);
+
+            let mut one_times_coeff_deg = PolyInt::from(&[coeff]);
+
+            one_times_coeff_deg.mult_poly(&x_deg1.coeffs);
+            one_times_coeff_deg.mod_poly(modulus);
+
+            x_deg_p.add_poly(&one_times_coeff_deg.coeffs);
+            x_deg_p.mod_poly(modulus);
+        }
+
+        x_deg_p.div_mod_poly(&modulus_poly.coeffs);
+
+        x_deg_p
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::vec;
+
+    use super::*;
+
+    #[test]
+    fn test_create_factor_ring() {
+        let coefficients = [
+            -1, 1, 0, 1, -1, 0, 0, 1, 1, -1, 0, 1, -1, 1, -1, -1, 0, -1, 0, -1, -1, -1, 0, 0, 0,
+            -1, -1, -1, 1, 0, 0, 0, 1, 0, -1, 0, 1, 0, -1, -1, 0, -1, 0, 1, -1, 1, 1, -1, 1, 1, -1,
+            0, -1, 0, 1, -1, -1, 1, 1, 0, 1, -1, 0, 1, -1, 1, -1, 0, 1, -1, 0, 0, 0, 1, -1, -1, 1,
+            1, 0, 0, -1, 1, -1, 0, 0, 0, 1, -1, 0, -1, -1, 0, -1, -1, 1, -1, -1, 0, 0, -1, 1, 1, 0,
+            -1, -1, 0, -1, 1, -1, -1, 0, 1, 1, 1, 1, -1, 0, 0, -1, -1, 0, 0, 1, 1, -1, -1, 0, 0, 0,
+            0, 1, 0, 1, 1, -1, -1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1, 0, 1, -1, -1, -1, 0, 0, 0,
+            -1, -1, 1, 0, 1, -1, 0, 0, 1, 0, 0, 0, -1, 0, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, 0,
+            -1, 1, 1, -1, 0, -1, 1, 0, 0, -1, 0, -1, 1, -1, 1, 0, -1, 1, -1, 1, -1, -1, -1, 1, 0,
+            0, 0, -1, -1, -1, 1, 0, 0, 0, 1, 1, -1, -1, -1, 1, -1, 1, 0, 1, -1, -1, 0, 1, 1, 1, 0,
+            1, 1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 0, -1, 1, -1, 1, 0, 0,
+            -1, -1, -1, 1, -1, -1, -1, 1, 1, 0, 0, -1, 0, -1, 1, 0, 1, -1, 1, -1, 1, -1, 0, 1, 0,
+            -1, 1, -1, 0, -1, 1, -1, 0, 0, 0, -1, 1, 1, 0, -1, 1, 0, -1, 1, 0, -1, 1, 0, -1, 0, -1,
+            -1, -1, 0, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, -1, 0, 0, 1, 0, 0, -1, -1, 0, 1, 0, -1, 0, 1,
+            1, 1, 0, 1, -1, 0, 0, -1, 0, 1, 1, -1, 1, 0, -1, -1, -1, 0, 0, -1, -1, -1, -1, 0, -1,
+            0, 0, -1, -1, -1, -1, -1, -1, 0, 0, 0, -1, 1, 0, -1, 0, 1, -1, -1, 0, -1, -1, 0, 0, 0,
+            0, 1, 0, -1, 1, 1, 0, -1, 1, 0, -1, 1, 0, 1, -1, 0, -1, 1, 0, 1, 1, 1, 0, -1, 1, 1, -1,
+            1, -1, -1, 0, -1, 1, 1, -1, -1, 1, -1, -1, 1, 1, 1, -1, -1, 1, 0, 1, -1, -1, -1, 0, 1,
+            1, 1, -1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, -1, 0, 0, 1, 0, 1, 0, 1, -1, -1, -1, -1, 1, 1,
+            0, 1, 0, -1, -1, -1, 0, -1, 0, 1, 0, -1, 0, -1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, -1, 1,
+            -1, -1, 0, -1, 0, 0, -1, 0, 1, -1, 0, 1, 1, -1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, -1, -1,
+            0, 0, 0, -1, 1, 1, -1, -1, -1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, -1, 1, 0, 1, -1, 0, 0, 1,
+            0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, -1, -1, 1, 1, 1, -1, -1, 0, -1, 0, -1, -1, 0, -1,
+            0, 0, 0, 0, -1, 1, 1, -1, 1, 1, 0, -1, -1, 0, -1, -1, -1, 0, -1, 1, 0, -1, 0, 0, 1, 0,
+            -1, 1, -1, 0, -1, -1, 1, -1, 1, -1, -1, -1, -1, -1, 1, -1, 0, -1, -1, 0, -1, -1, 1, 0,
+            0, -1, -1, 0, -1, 0, -1, -1, -1, 0, 1, 1, -1, 1, 0, -1, 1, 1, -1, 0, -1, 0, 1, 1, -1,
+            0, 0, 1, 0, -1, 0, 0, 0, 0, 0, -1, 1, -1, 0, 0, 1, 0, 0, 0, -1, 1, 0, -1, 0, 1, -1, 1,
+            1, 0, -1, 0, 0, -1, 0, -1, -1, -1, 1, -1, -1, -1, 0, 0, -1, 0, 0, 1, 1, -1, 0, -1, -1,
+            1, 0, -1, 1, 0, 1, -1, 1, 1, 0, -1, -1, -1, -1, 1, -1, -1, 1, 1, 0, -1, -1, 0, 0, -1,
+            -1, -1, 0, 0, 1, 1, 0, 1, 1, 1, 1, -1, 0, 0, 1, 1, -1, 0, 0, 1, 1, -1, -1, -1, -1, 1,
+            -1, 1, 1, 1, -1, 1, -1, 1, -1, 0, 0, -1, 0, -1, 0, 1,
+        ];
+        let poly: PolyInt<i16> = PolyInt::from(&coefficients);
+        let x: Vec<i16> = vec![0, 1];
+        let modulus: i16 = 4591;
+        let fq_ring = poly.create_factor_ring(&x, modulus);
+
+        dbg!(fq_ring.coeffs);
     }
 }

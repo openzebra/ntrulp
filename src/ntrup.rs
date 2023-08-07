@@ -1,9 +1,7 @@
 use crate::math;
-use crate::math::finite_field::GF;
 use crate::params::params::NTRUParams;
 use crate::poly::PolyInt;
 use crate::random::{CommonRandom, NTRURandom};
-use rand::Rng;
 use std::io::{Error, ErrorKind};
 
 pub struct NTRUPrime {
@@ -58,20 +56,16 @@ impl NTRUPrime {
                 Err(_) => continue,
             };
         };
+        let f3 = f.clone().mult_int(3);
 
-        let gq = self.rq_from_r(&g);
-
-        dbg!(gq);
+        // dbg!(f3.coeffs);
 
         // dbg!(f.coeffs);
     }
 
-    fn rq_from_r<F>(&self, r: &PolyInt<F>) -> Vec<F>
-    where
-        F: Clone,
-    {
+    fn rq_from_r<F>(&self, r: &PolyInt<F>) {
+        // TODO: Makte error handler
         assert!(r.coeffs.len() >= self.params.p);
-        r.coeffs.iter().take(self.params.p).cloned().collect()
     }
 }
 
