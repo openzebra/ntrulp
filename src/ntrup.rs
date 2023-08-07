@@ -44,7 +44,7 @@ impl NTRUPrime {
         // TODO: Add counter, if specific random return error.
         let g = loop {
             let r = self.ntru_rng.random_small_vec(self.params.p);
-            let g: PolyInt<i8> = PolyInt::from(&r);
+            let g: PolyInt<i16> = PolyInt::from(&r);
 
             if r.contains(&0) && r.contains(&1) && r.contains(&-1) && g.is_small() {
                 break g;
@@ -56,16 +56,13 @@ impl NTRUPrime {
                 Err(_) => continue,
             };
         };
+        let x: Vec<i16> = vec![0, 1];
         let f3 = f.clone().mult_int(3);
+        let gq = g.create_factor_ring(&x, self.params.q as i16);
 
+        dbg!(gq);
         // dbg!(f3.coeffs);
-
         // dbg!(f.coeffs);
-    }
-
-    fn rq_from_r<F>(&self, r: &PolyInt<F>) {
-        // TODO: Makte error handler
-        assert!(r.coeffs.len() >= self.params.p);
     }
 }
 

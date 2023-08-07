@@ -1,8 +1,12 @@
+use num::FromPrimitive;
 use rand::prelude::*;
 use std::io::{Error, ErrorKind};
+use std::ops::Sub;
 
 pub trait CommonRandom {
-    fn random_small_vec(&mut self, n: usize) -> Vec<i8>;
+    fn random_small_vec<T>(&mut self, n: usize) -> Vec<T>
+    where
+        T: Sub<Output = T> + FromPrimitive + std::clone::Clone;
     fn short_random(&mut self, p: usize, w: usize) -> Result<Vec<i8>, Error>;
     fn small_fisher_yates_shuffle(&mut self, n: usize) -> Result<Vec<i8>, Error>;
     fn random_u32(&mut self) -> u32;
@@ -61,10 +65,16 @@ impl CommonRandom for NTRURandom {
         (((r & 0x3fffffff) * 3) >> 30) as u8
     }
 
-    fn random_small_vec(&mut self, n: usize) -> Vec<i8> {
-        let r: Vec<i8> = vec![0u8; n]
+    fn random_small_vec<T>(&mut self, n: usize) -> Vec<T>
+    where
+        T: Sub<Output = T> + FromPrimitive + std::clone::Clone,
+    {
+        let r: Vec<T> = vec![T::from_u8(0).unwrap(); n]
             .iter_mut()
-            .map(|_| (<NTRURandom as CommonRandom>::random_range_3(self)) as i8 - 1)
+            .map(|_| {
+                (T::from_u8(<NTRURandom as CommonRandom>::random_range_3(self))).unwrap()
+                    - T::from_u8(1).unwrap()
+            })
             .collect();
 
         r
@@ -182,7 +192,7 @@ mod tests {
     fn test_random_small_vec() {
         let mut random = NTRURandom::new();
 
-        let r = random.random_small_vec(9000);
+        let r: Vec<i16> = random.random_small_vec(9000);
 
         assert!(r.len() == 9000)
     }
