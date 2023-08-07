@@ -1,7 +1,7 @@
 use num::traits::Euclid;
 use num::FromPrimitive;
 use std::cmp::PartialOrd;
-use std::ops::{Add, Deref, Mul, Sub};
+use std::ops::{AddAssign, Mul, SubAssign};
 
 pub struct PolyInt<T> {
     pub coeffs: Vec<T>,
@@ -9,13 +9,7 @@ pub struct PolyInt<T> {
 
 impl<T> PolyInt<T>
 where
-    T: Copy
-        + Euclid
-        + Mul<Output = T>
-        + Add<Output = T>
-        + Sub<Output = T>
-        + PartialOrd<T>
-        + FromPrimitive,
+    T: Copy + Euclid + Mul<Output = T> + AddAssign + SubAssign + PartialOrd<T> + FromPrimitive,
 {
     pub fn empty() -> Self {
         let coeffs = vec![];
@@ -31,7 +25,6 @@ where
 
     pub fn is_small(&self) -> bool {
         self.coeffs
-            .deref()
             .iter()
             .all(|&value| value <= T::from_i8(1).unwrap() && value >= T::from_i8(-1).unwrap())
     }
@@ -44,7 +37,19 @@ where
             .collect();
     }
 
+    pub fn sub_poly(&mut self, p2: &[T]) {
+        for (c1, &c2) in self.coeffs.iter_mut().zip(p2.iter()) {
+            *c1 -= c2;
+        }
+    }
+
     pub fn mul_int(&mut self, n: T) {
         self.coeffs = self.coeffs.iter_mut().map(|v| *v * n).collect();
+    }
+
+    pub fn add_poly(&mut self, p2: &[T]) {
+        for (c1, &c2) in self.coeffs.iter_mut().zip(p2.iter()) {
+            *c1 += c2;
+        }
     }
 }
