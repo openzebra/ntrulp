@@ -3,7 +3,7 @@ use num::FromPrimitive;
 use std::cmp::PartialOrd;
 use std::ops::{AddAssign, Div, Mul, SubAssign};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct PolyInt<T> {
     pub coeffs: Vec<T>,
 }
@@ -17,7 +17,8 @@ where
         + AddAssign
         + SubAssign
         + PartialOrd<T>
-        + FromPrimitive,
+        + FromPrimitive
+        + std::fmt::Debug,
 {
     pub fn empty() -> Self {
         let coeffs = vec![];
@@ -66,7 +67,7 @@ where
     // Multiplies two polynomials using convolution of coefficients.
     pub fn mult_poly(&mut self, poly: &[T]) -> Self {
         let len_result = self.coeffs.len() + poly.len() - 1;
-        let mut result: Vec<T> = Vec::with_capacity(len_result);
+        let mut result: Vec<T> = vec![T::from_u8(0).unwrap(); len_result];
 
         for (i, &c1) in self.coeffs.iter().enumerate() {
             for (j, &c2) in poly.iter().enumerate() {
@@ -194,6 +195,16 @@ mod tests {
         let polynomial2 = [2, -1, 0, 4];
         let expected_result = [5 + 2, 3 - 1, 2 + 0, 1 + 4];
         let result = PolyInt::from(&polynomial1).add_poly(&polynomial2);
+
+        assert!(result.coeffs == expected_result);
+    }
+
+    #[test]
+    fn test_poly_mult() {
+        let polynomial1 = [1, 2, 3]; // x^2 + 2x + 3
+        let polynomial2 = [2, -1]; // 2x - 1
+        let expected_result = [2, 3, 4, -3]; // 2x^3 + 3x^2 + 4x - 3
+        let result = PolyInt::from(&polynomial1).mult_poly(&polynomial2);
 
         assert!(result.coeffs == expected_result);
     }
