@@ -59,7 +59,19 @@ impl NTRUPrime {
             };
         };
 
-        dbg!(f.coeffs);
+        let gq = self.rq_from_r(&g);
+
+        dbg!(gq);
+
+        // dbg!(f.coeffs);
+    }
+
+    fn rq_from_r<F>(&self, r: &PolyInt<F>) -> Vec<F>
+    where
+        F: Clone,
+    {
+        assert!(r.coeffs.len() >= self.params.p);
+        r.coeffs.iter().take(self.params.p).cloned().collect()
     }
 }
 

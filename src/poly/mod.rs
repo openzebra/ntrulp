@@ -36,6 +36,14 @@ where
             .all(|&value| value <= T::from_i8(1).unwrap() && value >= T::from_i8(-1).unwrap())
     }
 
+    pub fn mod_poly(&mut self, modulus: T) {
+        self.coeffs = self
+            .coeffs
+            .iter_mut()
+            .map(|coeff| coeff.rem_euclid(&modulus))
+            .collect();
+    }
+
     pub fn mul_int(&mut self, n: T) {
         self.coeffs = self.coeffs.iter_mut().map(|v| *v * n).collect();
     }
