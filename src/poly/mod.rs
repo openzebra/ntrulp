@@ -153,6 +153,34 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_init_empty_poly() {
+        let empty: PolyInt<u8> = PolyInt::empty();
+
+        assert!(empty.coeffs.len() == 0);
+    }
+
+    #[test]
+    fn test_init_from_coeffs() {
+        let coefficients = [0, -1, -2, 2];
+        let test_poly = PolyInt::from(&coefficients);
+
+        assert!(test_poly.coeffs == coefficients);
+    }
+
+    #[test]
+    fn test_is_small() {
+        let coefficients_big = [0, -1, -2, 2];
+        let coefficients_small = [0, -1, -1, 1];
+
+        let poly = PolyInt::from(&coefficients_big);
+
+        assert!(!poly.is_small());
+
+        let poly = PolyInt::from(&coefficients_small);
+        assert!(poly.is_small());
+    }
+
+    #[test]
     fn test_create_factor_ring() {
         let coefficients = [
             -1, 1, 0, 1, -1, 0, 0, 1, 1, -1, 0, 1, -1, 1, -1, -1, 0, -1, 0, -1, -1, -1, 0, 0, 0,
