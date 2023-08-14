@@ -1,11 +1,38 @@
 use num::traits::Euclid;
 use num::FromPrimitive;
 use std::cmp::PartialOrd;
-use std::ops::{AddAssign, Div, Mul, SubAssign};
+use std::ops::{AddAssign, Div, Mul, Sub, SubAssign};
+use std::string::ToString;
 
 #[derive(Clone, Debug)]
 pub struct PolyInt<T> {
     pub coeffs: Vec<T>,
+}
+
+impl<T> ToString for PolyInt<T>
+where
+    T: Copy + Ord + FromPrimitive + std::fmt::Display + std::fmt::Debug,
+{
+    fn to_string(&self) -> String {
+        let mut coeffs = self.coeffs.to_vec();
+        let p = coeffs.len();
+        let mut result = String::new();
+
+        coeffs.sort();
+
+        for (i, c) in coeffs.iter().enumerate() {
+            if *c == T::from_u8(0).unwrap() {
+                continue;
+            }
+            if *c < T::from_u8(0).unwrap() && i != 0 {
+                result.push('-');
+            }
+
+            result.push_str(&format!("{}xp~^{}", c, i));
+        }
+
+        result
+    }
 }
 
 impl<T> PolyInt<T>
@@ -14,6 +41,7 @@ where
         + Euclid
         + Mul<Output = T>
         + Div<Output = T>
+        + Sub<Output = T>
         + AddAssign
         + SubAssign
         + PartialOrd<T>
@@ -110,6 +138,39 @@ where
         }
 
         modulus_poly
+    }
+
+    // a * x ≡ 1 (mod modulo)
+    fn num_mod_inverse(&self, a: T, modulo: T) -> T {
+        let zero = T::from_u8(0).unwrap();
+        let mut x = zero;
+        let mut y = T::from_u8(1).unwrap();
+        let mut last_x = T::from_u8(1).unwrap();
+        let mut last_y = zero;
+        let mut a = a;
+        let mut b = modulo;
+
+        while b != zero {
+            let quotient = a / b;
+            let remainder = a % b;
+
+            a = b;
+            b = remainder;
+
+            let tmp = x;
+            x = last_x - quotient * x;
+            last_x = tmp;
+
+            let tmp = y;
+            y = last_y - quotient * y;
+            last_y = tmp;
+        }
+
+        if last_x < zero {
+            last_x += modulo;
+        }
+
+        last_x
     }
 }
 
@@ -212,5 +273,25 @@ mod tests {
         let fq_ring: PolyInt<i64> = poly.create_factor_ring(&x, modulus);
 
         assert!(fq_ring.coeffs == [503, 1479, 1579, 78, 3197, 2677, 505, 2546, 3305, 872, 1093]);
+    }
+
+    #[test]
+    fn test_to_string() {
+        // let coefficients = [1, -1, -2, -3, -6, -8];
+        // let poly: PolyInt<i16> = PolyInt::from(&coefficients);
+
+        // dbg!(poly.to_string());
+    }
+
+    #[test]
+    fn test_num_mod_inverse() {
+        let poly: PolyInt<i16> = PolyInt::empty();
+
+        // Test cases for num_mod_inverse function
+        assert_eq!(poly.num_mod_inverse(7175, 9829), 2885); // 7175 * 2885 ≡ 1 (mod 9829)
+        assert_eq!(poly.num_mod_inverse(2, 5), 3); // 2 * 3 ≡ 1 (mod 5)
+        assert_eq!(poly.num_mod_inverse(3, 7), 5); // 3 * 5 ≡ 1 (mod 7)
+        assert_eq!(poly.num_mod_inverse(4, 11), 3); // 4 * 3 ≡ 1 (mod 11)
+        assert_eq!(poly.num_mod_inverse(5, 17), 7); // 5 * 7 ≡ 1 (mod 17)
     }
 }

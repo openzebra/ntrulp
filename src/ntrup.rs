@@ -60,7 +60,7 @@ impl NTRUPrime {
         let f3 = f.clone().mult_int(3);
         let gq = g.create_factor_ring(&x, self.params.q as i16);
 
-        dbg!(gq);
+        // dbg!(gq);
         // dbg!(f3.coeffs);
         // dbg!(f.coeffs);
     }
