@@ -6,6 +6,8 @@ pub struct PrivKey {
     pub g_inv: PolyInt<i16>,
 }
 
+// TODO: make ToString impl
+
 impl PrivKey {
     pub fn empty() -> Self {
         let f = PolyInt::empty();

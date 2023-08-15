@@ -5,13 +5,13 @@ use crate::poly::PolyInt;
 use crate::random::{CommonRandom, NTRURandom};
 use std::io::{Error, ErrorKind};
 
-pub struct NTRUPrime {
+pub struct NTRUPrime<'a> {
     pub params: NTRUParams,
     pub ntru_rng: NTRURandom,
-    pub key_pair: Option<KeyPair>,
+    pub key_pair: Option<KeyPair<'a>>,
 }
 
-impl NTRUPrime {
+impl NTRUPrime<'_> {
     pub fn from(params: NTRUParams) -> Result<Self, Error> {
         if !math::prime::is_prime(params.p) {
             return Err(Error::new(ErrorKind::Other, "p must be prime number"));
