@@ -1,3 +1,4 @@
+use crate::key::pair::KeyPair;
 use crate::math;
 use crate::params::params::NTRUParams;
 use crate::poly::PolyInt;
@@ -7,6 +8,7 @@ use std::io::{Error, ErrorKind};
 pub struct NTRUPrime {
     pub params: NTRUParams,
     pub ntru_rng: NTRURandom,
+    pub key_pair: Option<KeyPair>,
 }
 
 impl NTRUPrime {
@@ -33,7 +35,11 @@ impl NTRUPrime {
 
         let ntru_rng = NTRURandom::new();
 
-        Ok(NTRUPrime { params, ntru_rng })
+        Ok(NTRUPrime {
+            params,
+            ntru_rng,
+            key_pair: None,
+        })
     }
 
     pub fn encrypt(&self) {}
@@ -56,13 +62,7 @@ impl NTRUPrime {
                 Err(_) => continue,
             };
         };
-        let x: Vec<i16> = vec![0, 1];
-        let f3 = f.clone().mult_int(3);
-        let gq = g.create_factor_ring(&x, self.params.q as i16);
-
-        // dbg!(gq);
-        // dbg!(f3.coeffs);
-        // dbg!(f.coeffs);
+        let key_pair = KeyPair::from_seed(&self.params, g, f);
     }
 }
 

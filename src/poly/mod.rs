@@ -140,19 +140,38 @@ where
         modulus_poly
     }
 
+    pub fn inverse_poly(&self, modulus: T) -> PolyInt<T> {
+        let coeffs_len = self.coeffs.len();
+        let mut inverse_coeffs = vec![T::from_u8(0).unwrap(); coeffs_len];
+
+        inverse_coeffs[0] = self.num_mod_inverse(self.coeffs[0], modulus);
+
+        for i in 1..coeffs_len {
+            // let mut term = T::from_u8(0).unwrap();
+            //
+            // for j in 1..=i {
+            //     term = (term - inverse_coeffs[j] * self.coeffs[i - j]).rem_euclid(&modulus);
+            // }
+
+            inverse_coeffs[i] = self.num_mod_inverse(self.coeffs[0], modulus);
+        }
+
+        PolyInt::from(&inverse_coeffs)
+    }
+
     // a * x ≡ 1 (mod modulo)
-    fn num_mod_inverse(&self, a: T, modulo: T) -> T {
+    fn num_mod_inverse(&self, a: T, modulus: T) -> T {
         let zero = T::from_u8(0).unwrap();
         let mut x = zero;
         let mut y = T::from_u8(1).unwrap();
         let mut last_x = T::from_u8(1).unwrap();
         let mut last_y = zero;
         let mut a = a;
-        let mut b = modulo;
+        let mut b = modulus;
 
         while b != zero {
             let quotient = a / b;
-            let remainder = a % b;
+            let remainder = a.rem_euclid(&b);
 
             a = b;
             b = remainder;
@@ -167,7 +186,7 @@ where
         }
 
         if last_x < zero {
-            last_x += modulo;
+            last_x += modulus;
         }
 
         last_x
@@ -287,11 +306,64 @@ mod tests {
     fn test_num_mod_inverse() {
         let poly: PolyInt<i16> = PolyInt::empty();
 
-        // Test cases for num_mod_inverse function
         assert_eq!(poly.num_mod_inverse(7175, 9829), 2885); // 7175 * 2885 ≡ 1 (mod 9829)
         assert_eq!(poly.num_mod_inverse(2, 5), 3); // 2 * 3 ≡ 1 (mod 5)
         assert_eq!(poly.num_mod_inverse(3, 7), 5); // 3 * 5 ≡ 1 (mod 7)
         assert_eq!(poly.num_mod_inverse(4, 11), 3); // 4 * 3 ≡ 1 (mod 11)
         assert_eq!(poly.num_mod_inverse(5, 17), 7); // 5 * 7 ≡ 1 (mod 17)
+        assert_eq!(poly.num_mod_inverse(-1, 3), 2); //  2 * (-1) = -2 ≡ 1 (mod 3)
+    }
+
+    #[test]
+    fn test_inverse_poly() {
+        let polynomial_coeffs1 = vec![1, 2, 3]; // x^2 + 2x + 3
+        let expected_inverse1 = vec![1, 3, 4]; // x^2 + 3x + 4
+
+        let polynomial_coeffs2 = vec![1, 1, 1, 1]; // x^3 + x^2 + x + 1
+        let expected_inverse2 = vec![1, 6, 3, 5]; // x^3 + 6x^2 + 3x + 5
+        let polynomial_coeffs3 = vec![-1, -1, 0, 2, -1];
+
+        // let inverse_coeffs1 = PolyInt::from(&polynomial_coeffs1).inverse_poly(5);
+        // let inverse_coeffs2 = PolyInt::from(&polynomial_coeffs2).inverse_poly(7);
+        // let inverse_coeffs3 = PolyInt::from(&polynomial_coeffs3).inverse_poly(3);
+        let inverse_coeffs4 = PolyInt::from(&[
+            1, -1, -1, -1, 1, 0, -1, 1, 1, 0, 0, -1, 1, 0, 0, 1, 0, -1, 1, 0, -1, 0, 0, 0, 1, 0, 1,
+            1, 0, 1, -1, 0, -1, -1, 1, 0, 0, 1, -1, 0, 1, 1, 0, -1, 0, -1, 0, -1, -1, 1, 1, 0, 1,
+            0, 1, 0, 0, -1, 1, 1, 1, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 1, 1, 0, -1, 0, 0, -1, -1, 1,
+            1, 0, -1, 0, -1, -1, 1, 1, -1, 1, -1, -1, 1, 1, 0, -1, 0, 0, 1, 1, -1, 0, 0, -1, 0, 0,
+            -1, 0, -1, 0, -1, -1, 1, 1, 1, 0, -1, 0, 1, 1, 0, 1, -1, 0, -1, 0, 0, 1, 0, 0, 0, 0,
+            -1, 0, -1, 0, -1, 0, 1, -1, 0, 0, -1, 0, 1, 1, 0, 1, -1, 0, 0, 1, 1, 0, 0, -1, 1, 1, 0,
+            -1, 1, 0, -1, 0, -1, -1, -1, -1, 1, -1, 1, 1, 0, -1, -1, 1, 0, 0, 0, 1, 0, -1, 0, 0,
+            -1, 1, 0, -1, 1, 1, -1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, -1, 0, 0, 1, 1, -1, -1, 1, 1,
+            -1, 1, 0, 1, 0, 0, -1, -1, -1, -1, -1, -1, 0, 0, -1, 0, 1, -1, -1, -1, 0, 0, 1, 0, 1,
+            -1, 0, 1, 0, 0, -1, -1, 1, 1, 0, 0, 1, 0, -1, 1, 1, -1, 1, 0, 0, -1, -1, -1, 1, 0, 1,
+            -1, -1, 0, 0, 1, 1, 0, 1, 0, 1, 1, -1, -1, -1, -1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0,
+            0, 0, 0, 0, 1, -1, 1, 0, -1, -1, 0, 0, 0, 1, 1, 0, -1, 1, 1, 0, -1, 1, 0, 0, 1, -1, 1,
+            0, 0, 0, 1, 1, 0, 0, -1, 1, 1, 0, 0, 0, -1, -1, 1, 1, -1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1,
+            0, 0, -1, 0, -1, 1, -1, 0, -1, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, -1, -1, 1, 0, 0,
+            -1, 1, -1, -1, 0, 1, -1, 0, -1, 1, 0, -1, 1, 1, -1, 1, -1, -1, 1, -1, 0, 1, 0, 1, 1,
+            -1, 1, 1, -1, 0, 0, 1, 0, 1, 1, -1, 0, 0, 1, 0, -1, -1, 1, 1, -1, 1, 1, -1, 1, 1, 0, 1,
+            1, 1, 0, 1, 1, -1, 1, 1, -1, 1, 0, 0, 1, 1, 1, -1, 0, 0, 0, 0, -1, 0, -1, 0, 1, 1, -1,
+            0, 0, 1, 0, 0, 0, 0, 0, 1, 1, -1, -1, 1, 0, 1, 0, 0, 1, 1, -1, 0, 0, 0, 0, -1, -1, -1,
+            -1, 0, -1, -1, 0, 1, 0, 1, 0, -1, -1, 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, -1, 1, -1, -1,
+            0, 0, 1, 1, 1, 0, 1, -1, 1, 0, 0, 1, 1, -1, -1, 1, 0, -1, -1, 1, 1, 0, 1, 0, -1, 0, 0,
+            0, -1, -1, 1, 1, 1, 0, 1, -1, -1, 0, 0, -1, -1, -1, -1, -1, -1, 1, 0, 1, 0, -1, 0, 0,
+            1, -1, -1, -1, 0, 0, 1, 0, -1, 0, 1, 1, 1, 0, 1, 1, -1, -1, -1, -1, 0, 0, 0, 1, 0, 0,
+            0, -1, 1, 0, 0, 0, -1, 1, 1, 1, -1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, -1, -1, 0, 1,
+            -1, 1, -1, 1, 1, -1, -1, 0, -1, 1, 0, -1, 0, -1, 1, 1, 0, 1, -1, 0, -1, 0, -1, 0, 0, 1,
+            1, 1, 1, 1, -1, 0, 1, 0, 0, 1, 0, 0, -1, 0, 0, 0, -1, -1, -1, 0, 0, 1, 1, 1, -1, -1, 0,
+            0, -1, -1, 0, 0, -1, -1, -1, -1, 0, 0, -1, -1, 0, 1, -1, 1, 1, 1, 1, -1, 0, -1, -1, -1,
+            -1, 0, -1, 0, 1, 0, 1, -1, -1, 1, -1, -1, -1, -1, 0, 0, 1, 0, 1, -1, 0, 0, -1, 0, 1, 0,
+            -1, 1, -1, 1, 1, 1, 0, 1, 0, -1, 1, 1, 1, 1, 0, -1, -1, -1, 1, -1, -1, 1, 1, 0, -1, -1,
+            0, 1, 0, 0, -1, 1, -1, 0, 0, 1, 0, 0, 1, 1, 0, -1, 0, 0, 1, 0, -1, -1, 1, -1,
+        ])
+        .inverse_poly(3);
+
+        // assert!(vec![2, 0, 0, 0, 0] == inverse_coeffs3.coeffs);
+        // assert_eq!(inverse_coeffs1.coeffs, expected_inverse1);
+        // assert_eq!(inverse_coeffs2.coeffs, expected_inverse2);
+
+        dbg!(inverse_coeffs4);
+        // assert!(inverse_coeffs4.coeffs == [2745, 2258, 3329, 2984, 1550, 2900, 700, 3283, 2267]);
     }
 }
