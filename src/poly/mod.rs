@@ -1,5 +1,6 @@
+use crate::math::euclid_inv_num::euclid_num_mod_inverse;
 use num::traits::Euclid;
-use num::FromPrimitive;
+use num::{CheckedSub, FromPrimitive};
 use std::cmp::PartialOrd;
 use std::ops::{Add, AddAssign, Div, Mul, Sub, SubAssign};
 use std::string::ToString;
@@ -43,6 +44,7 @@ where
         + Div<Output = T>
         + Sub<Output = T>
         + Add<Output = T>
+        + CheckedSub
         + AddAssign
         + SubAssign
         + PartialOrd<T>
@@ -94,6 +96,21 @@ where
         }
 
         0
+    }
+
+    pub fn subtract_multiple(&mut self, b: &PolyInt<T>, u: T, modulus: T) {
+        let len_b = b.coeffs.len();
+        let len_self = self.coeffs.len();
+        let n = if len_b > len_self { len_b } else { len_self };
+
+        for i in 0..n {
+            let mut ai = self.coeffs[i];
+            let dim = u.mul(modulus.sub(b.coeffs[i]));
+
+            ai = ai.add(dim);
+
+            self.coeffs[i] = ai.rem_euclid(&modulus);
+        }
     }
 
     pub fn equals_zero(&self) -> bool {
@@ -185,43 +202,10 @@ where
                 term = (term - inverse_coeffs[j] * self.coeffs[i - j]).rem_euclid(&modulus);
             }
 
-            inverse_coeffs[i] = self.num_mod_inverse(self.coeffs[0], modulus);
+            inverse_coeffs[i] = euclid_num_mod_inverse(self.coeffs[0], modulus);
         }
 
         PolyInt::from(&inverse_coeffs)
-    }
-
-    // a * x ≡ 1 (mod modulo)
-    fn num_mod_inverse(&self, a: T, modulus: T) -> T {
-        let zero = T::from_u8(0).unwrap();
-        let mut x = zero;
-        let mut y = T::from_u8(1).unwrap();
-        let mut last_x = T::from_u8(1).unwrap();
-        let mut last_y = zero;
-        let mut a = a;
-        let mut b = modulus;
-
-        while b != zero {
-            let quotient = a / b;
-            let remainder = a.rem_euclid(&b);
-
-            a = b;
-            b = remainder;
-
-            let tmp = x;
-            x = last_x - quotient * x;
-            last_x = tmp;
-
-            let tmp = y;
-            y = last_y - quotient * y;
-            last_y = tmp;
-        }
-
-        if last_x < zero {
-            last_x += modulus;
-        }
-
-        last_x
     }
 }
 
@@ -335,18 +319,6 @@ mod tests {
     }
 
     #[test]
-    fn test_num_mod_inverse() {
-        let poly: PolyInt<i16> = PolyInt::empty();
-
-        assert_eq!(poly.num_mod_inverse(7175, 9829), 2885); // 7175 * 2885 ≡ 1 (mod 9829)
-        assert_eq!(poly.num_mod_inverse(2, 5), 3); // 2 * 3 ≡ 1 (mod 5)
-        assert_eq!(poly.num_mod_inverse(3, 7), 5); // 3 * 5 ≡ 1 (mod 7)
-        assert_eq!(poly.num_mod_inverse(4, 11), 3); // 4 * 3 ≡ 1 (mod 11)
-        assert_eq!(poly.num_mod_inverse(5, 17), 7); // 5 * 7 ≡ 1 (mod 17)
-        assert_eq!(poly.num_mod_inverse(-1, 3), 2); //  2 * (-1) = -2 ≡ 1 (mod 3)
-    }
-
-    #[test]
     fn test_is_zeros() {
         let coeffs = vec![0; 716];
         let mut poly = PolyInt::from(&coeffs);
@@ -371,6 +343,20 @@ mod tests {
 
         assert!(zero_poly.get_poly_degree() == 0);
         assert!(non_zero_poly.get_poly_degree() == 730);
+    }
+
+    #[test]
+    fn test_subtract_multiple() {
+        let modulus = 9829;
+        let mut f: PolyInt<u64> = PolyInt::from(&[756, 741, 0, 78, 470, 7, 0, 0, 273]);
+        let g: PolyInt<u64> = PolyInt::from(&[1, 44, 99, 112, 193, 1235, 908, 285, 9475]);
+
+        let g0_inv = euclid_num_mod_inverse(g.coeffs[0], modulus);
+        let u = (f.coeffs[0]).mul(g0_inv).rem_euclid(modulus);
+
+        f.subtract_multiple(&g, u, modulus);
+
+        assert!(f.coeffs == [0, 6793, 3788, 3867, 1997, 102, 1582, 778, 2514]);
     }
 
     #[test]
