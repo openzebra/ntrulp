@@ -1,7 +1,7 @@
 use num::traits::Euclid;
 use num::FromPrimitive;
 use std::cmp::PartialOrd;
-use std::ops::{AddAssign, Div, Mul, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Div, Mul, Sub, SubAssign};
 use std::string::ToString;
 
 #[derive(Clone, Debug)]
@@ -42,6 +42,7 @@ where
         + Mul<Output = T>
         + Div<Output = T>
         + Sub<Output = T>
+        + Add<Output = T>
         + AddAssign
         + SubAssign
         + PartialOrd<T>
@@ -144,14 +145,15 @@ where
         let coeffs_len = self.coeffs.len();
         let mut inverse_coeffs = vec![T::from_u8(0).unwrap(); coeffs_len];
 
-        inverse_coeffs[0] = self.num_mod_inverse(self.coeffs[0], modulus);
+        // inverse_coeffs[0] = self.num_mod_inverse(self.coeffs[0], modulus);
+        inverse_coeffs[0] = T::from_u8(1).unwrap();
 
         for i in 1..coeffs_len {
-            // let mut term = T::from_u8(0).unwrap();
-            //
-            // for j in 1..=i {
-            //     term = (term - inverse_coeffs[j] * self.coeffs[i - j]).rem_euclid(&modulus);
-            // }
+            let mut term = T::from_i8(0).unwrap();
+
+            for j in 1..=i {
+                term = (term - inverse_coeffs[j] * self.coeffs[i - j]).rem_euclid(&modulus);
+            }
 
             inverse_coeffs[i] = self.num_mod_inverse(self.coeffs[0], modulus);
         }
@@ -322,11 +324,12 @@ mod tests {
         let polynomial_coeffs2 = vec![1, 1, 1, 1]; // x^3 + x^2 + x + 1
         let expected_inverse2 = vec![1, 6, 3, 5]; // x^3 + 6x^2 + 3x + 5
         let polynomial_coeffs3 = vec![-1, -1, 0, 2, -1];
+        let x: Vec<i64> = vec![0, 1];
 
         // let inverse_coeffs1 = PolyInt::from(&polynomial_coeffs1).inverse_poly(5);
         // let inverse_coeffs2 = PolyInt::from(&polynomial_coeffs2).inverse_poly(7);
         // let inverse_coeffs3 = PolyInt::from(&polynomial_coeffs3).inverse_poly(3);
-        let inverse_coeffs4 = PolyInt::from(&[
+        let ring_f3: PolyInt<i64> = PolyInt::from(&[
             1, -1, -1, -1, 1, 0, -1, 1, 1, 0, 0, -1, 1, 0, 0, 1, 0, -1, 1, 0, -1, 0, 0, 0, 1, 0, 1,
             1, 0, 1, -1, 0, -1, -1, 1, 0, 0, 1, -1, 0, 1, 1, 0, -1, 0, -1, 0, -1, -1, 1, 1, 0, 1,
             0, 1, 0, 0, -1, 1, 1, 1, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 1, 1, 0, -1, 0, 0, -1, -1, 1,
@@ -357,13 +360,14 @@ mod tests {
             -1, 1, -1, 1, 1, 1, 0, 1, 0, -1, 1, 1, 1, 1, 0, -1, -1, -1, 1, -1, -1, 1, 1, 0, -1, -1,
             0, 1, 0, 0, -1, 1, -1, 0, 0, 1, 0, 0, 1, 1, 0, -1, 0, 0, 1, 0, -1, -1, 1, -1,
         ])
-        .inverse_poly(3);
+        .create_factor_ring(&x, 3);
+        let inv_f3 = ring_f3.inverse_poly(761);
 
         // assert!(vec![2, 0, 0, 0, 0] == inverse_coeffs3.coeffs);
         // assert_eq!(inverse_coeffs1.coeffs, expected_inverse1);
         // assert_eq!(inverse_coeffs2.coeffs, expected_inverse2);
 
-        dbg!(inverse_coeffs4);
+        dbg!(inv_f3);
         // assert!(inverse_coeffs4.coeffs == [2745, 2258, 3329, 2984, 1550, 2900, 700, 3283, 2267]);
     }
 }
