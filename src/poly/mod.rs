@@ -15,7 +15,7 @@ where
 {
     fn to_string(&self) -> String {
         let mut coeffs = self.coeffs.to_vec();
-        let p = coeffs.len();
+        // let p = coeffs.len();
         let mut result = String::new();
 
         coeffs.sort();
@@ -61,6 +61,13 @@ where
         }
     }
 
+    pub fn from_zero(n: usize) -> Self {
+        // Zeros a polynomial and sets the number of coefficients
+        let coeffs = vec![T::from_u8(0).unwrap(); n];
+
+        PolyInt { coeffs }
+    }
+
     pub fn is_small(&self) -> bool {
         self.coeffs
             .iter()
@@ -76,6 +83,17 @@ where
             .collect();
 
         self.to_owned()
+    }
+
+    pub fn get_poly_degree(&self) -> usize {
+        let n = self.coeffs.len();
+        for i in (0..=n - 1).rev() {
+            if self.coeffs[i] != T::from_u8(0).unwrap() {
+                return i;
+            }
+        }
+
+        0
     }
 
     pub fn equals_zero(&self) -> bool {
@@ -342,6 +360,17 @@ mod tests {
         poly.coeffs[1] = -1;
 
         assert!(!poly.equals_zero());
+    }
+
+    #[test]
+    fn test_get_poly_degre() {
+        let zero_poly: PolyInt<u8> = PolyInt::from_zero(740);
+        let mut non_zero_poly = PolyInt::from_zero(740);
+
+        non_zero_poly.coeffs[730] = 9;
+
+        assert!(zero_poly.get_poly_degree() == 0);
+        assert!(non_zero_poly.get_poly_degree() == 730);
     }
 
     #[test]
