@@ -78,6 +78,18 @@ where
         self.to_owned()
     }
 
+    pub fn equals_zero(&self) -> bool {
+        for item in self.coeffs.iter() {
+            if *item == T::from_u8(0).unwrap() {
+                continue;
+            } else {
+                return false;
+            }
+        }
+
+        true
+    }
+
     // Subtracts one polynomial from another coefficient-wise.
     pub fn sub_poly(&mut self, poly: &[T]) -> Self {
         for (c1, &c2) in self.coeffs.iter_mut().zip(poly.iter()) {
@@ -317,14 +329,31 @@ mod tests {
     }
 
     #[test]
+    fn test_is_zeros() {
+        let coeffs = vec![0; 716];
+        let mut poly = PolyInt::from(&coeffs);
+
+        assert!(poly.equals_zero());
+
+        poly.coeffs[1] = 1;
+
+        assert!(!poly.equals_zero());
+
+        poly.coeffs[1] = -1;
+
+        assert!(!poly.equals_zero());
+    }
+
+    #[test]
     fn test_inverse_poly() {
+        let x: Vec<i64> = vec![0, 1]; // x^p - x - 1
+
         let polynomial_coeffs1 = vec![1, 2, 3]; // x^2 + 2x + 3
         let expected_inverse1 = vec![1, 3, 4]; // x^2 + 3x + 4
 
         let polynomial_coeffs2 = vec![1, 1, 1, 1]; // x^3 + x^2 + x + 1
         let expected_inverse2 = vec![1, 6, 3, 5]; // x^3 + 6x^2 + 3x + 5
         let polynomial_coeffs3 = vec![-1, -1, 0, 2, -1];
-        let x: Vec<i64> = vec![0, 1];
 
         // let inverse_coeffs1 = PolyInt::from(&polynomial_coeffs1).inverse_poly(5);
         // let inverse_coeffs2 = PolyInt::from(&polynomial_coeffs2).inverse_poly(7);
@@ -367,7 +396,7 @@ mod tests {
         // assert_eq!(inverse_coeffs1.coeffs, expected_inverse1);
         // assert_eq!(inverse_coeffs2.coeffs, expected_inverse2);
 
-        dbg!(inv_f3);
+        // dbg!(inv_f3);
         // assert!(inverse_coeffs4.coeffs == [2745, 2258, 3329, 2984, 1550, 2900, 700, 3283, 2267]);
     }
 }
