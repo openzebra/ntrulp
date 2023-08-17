@@ -93,30 +93,15 @@ where
         });
     }
 
-    pub fn get_poly_degree(&self) -> usize {
+    // Multiplies a polynomial by x^(-1) in (Z/qZ)[x][x^p-x-1] where p=a->N, q=modulus
+    pub fn div_x(&mut self, modulus: T) {
         let n = self.coeffs.len();
-        for i in (0..=n - 1).rev() {
-            if self.coeffs[i] != T::from_u8(0).unwrap() {
-                return i;
-            }
-        }
+        let a0 = self.coeffs[0];
 
-        0
-    }
+        self.coeffs.rotate_left(1);
+        self.coeffs[n - 1] = a0;
 
-    pub fn subtract_multiple(&mut self, b: &PolyInt<T>, u: T, modulus: T) {
-        let len_b = b.coeffs.len();
-        let len_self = self.coeffs.len();
-        let n = if len_b > len_self { len_b } else { len_self };
-
-        for i in 0..n {
-            let mut ai = self.coeffs[i];
-            let dim = u.mul(modulus.sub(b.coeffs[i]));
-
-            ai = ai.add(dim);
-
-            self.coeffs[i] = ai.rem_euclid(&modulus);
-        }
+        self.coeffs[0] = self.coeffs[0].sub(a0).add(modulus).rem_euclid(&modulus)
     }
 
     pub fn equals_zero(&self) -> bool {
@@ -194,99 +179,23 @@ where
         modulus_poly
     }
 
-    // Reduces a PolyInt modulo x^N-x-1, where N = a->N.
-    pub fn reduce(&self, b: &mut PolyInt<T>, modulus: T) {
-        let n = self.coeffs.len() - 1;
-
-        b.coeffs[..n].copy_from_slice(&self.coeffs[..n]);
-        b.coeffs[0] = b.coeffs[0].add(self.coeffs[n]).rem_euclid(&modulus);
-        b.coeffs[1] = b.coeffs[1].add(self.coeffs[n]).rem_euclid(&modulus);
-        b.coeffs.truncate(n);
-    }
-
-    pub fn get_inv_poly(&self, modulus: T) -> Option<PolyInt<T>> {
+    pub fn newton_inversion(&self) -> PolyInt<T> {
         let one = T::from_u8(1).unwrap();
-        let zero = T::from_u8(0).unwrap();
-        let n = self.coeffs.len();
-        let im = modulus;
-        let mut inv: PolyInt<T> = PolyInt::from_zero(n);
-        let mut k = 0;
-        let mut b: PolyInt<T> = PolyInt::from_zero(n + 1);
+        let n = self.coeffs.len() - 1;
+        let mut inv = PolyInt::from_zero(n + 1);
 
-        b.coeffs[0] = one;
+        inv.coeffs[0] = one.div(self.coeffs[0]);
 
-        let mut c = PolyInt::from_zero(n + 1);
+        for _ in 1..=n + 1 {
+            let mut self_times_inv = self.clone().mult_poly(&inv.coeffs);
+            let one_minus_self_times_inv = self_times_inv.sub_poly(&[T::from_u8(1).unwrap()]);
 
-        // f = a
-        let mut f = PolyInt::from_zero(n + 1);
+            let clone_inv = inv.clone().mult_poly(&one_minus_self_times_inv.coeffs);
 
-        f.coeffs[..n].copy_from_slice(&self.coeffs[..n]);
-        f.coeffs[n] = zero;
-
-        // g = x^p - x - 1
-        let mut g = PolyInt::from_zero(n + 1);
-
-        g.coeffs[0] = im - one;
-        g.coeffs[1] = im - one;
-        g.coeffs[n] = one;
-
-        loop {
-            while f.coeffs[0] == zero {
-                // f(x) = f(x) / x
-                for i in 1..=n {
-                    f.coeffs[i - 1] = f.coeffs[i];
-                }
-
-                f.coeffs[n] = zero;
-
-                // c(x) = c(x) * x
-                for i in (1..n).rev() {
-                    c.coeffs[i] = c.coeffs[i - 1];
-                }
-
-                c.coeffs[0] = zero;
-                k += 1;
-
-                if f.equals_zero() {
-                    return None;
-                }
-            }
-
-            if f.get_poly_degree() == 0 {
-                let f0_inv = euclid_num_mod_inverse(f.coeffs[0], modulus);
-
-                // b = b * f[0]^(-1)
-                b.mult_mod(f0_inv, modulus);
-                b.reduce(&mut inv, modulus);
-
-                // b = b * x^(-k)
-                // for _ in 0..k {
-                //     inv.div_x(modulus as u64);
-                // }
-
-                return Some(inv);
-            }
-            if f.get_poly_degree() < g.get_poly_degree() {
-                // exchange f and g
-                let temp = f;
-                f = g;
-                g = temp;
-
-                /* exchange b and c */
-                let temp = b;
-                b = c;
-                c = temp;
-            }
-
-            // u = f[0] * g[0]^(-1)
-            let g0_inv = euclid_num_mod_inverse(g.coeffs[0], modulus);
-            let u = (f.coeffs[0]).mul(g0_inv).rem_euclid(&modulus);
-
-            // f = f - u * g
-            f.subtract_multiple(&g, u, modulus);
-            // b = b - u * c
-            b.subtract_multiple(&c, u, modulus);
+            inv = inv.sub_poly(&clone_inv.coeffs);
         }
+
+        inv
     }
 }
 
@@ -416,48 +325,50 @@ mod tests {
     }
 
     #[test]
-    fn test_get_poly_degre() {
-        let zero_poly: PolyInt<u8> = PolyInt::from_zero(740);
-        let mut non_zero_poly = PolyInt::from_zero(740);
-
-        non_zero_poly.coeffs[730] = 9;
-
-        assert!(zero_poly.get_poly_degree() == 0);
-        assert!(non_zero_poly.get_poly_degree() == 730);
-    }
-
-    #[test]
-    fn test_subtract_multiple() {
-        let modulus = 9829;
-        let mut f: PolyInt<u64> = PolyInt::from(&[756, 741, 0, 78, 470, 7, 0, 0, 273]);
-        let g: PolyInt<u64> = PolyInt::from(&[1, 44, 99, 112, 193, 1235, 908, 285, 9475]);
-
-        let g0_inv = euclid_num_mod_inverse(g.coeffs[0], modulus);
-        let u = (f.coeffs[0]).mul(g0_inv).rem_euclid(modulus);
-
-        f.subtract_multiple(&g, u, modulus);
-
-        assert!(f.coeffs == [0, 6793, 3788, 3867, 1997, 102, 1582, 778, 2514]);
-    }
-
-    #[test]
-    fn test_reduce() {
-        let test_poly = PolyInt::from(&[1, 2, 2, 0, 0, 1, 2, 2, 2]);
-        let mut b = PolyInt::from(&[7756, 7841, 1764, 7783, 4731, 2717, 1132, 1042, 273]);
-        let modulus = 9829;
-
-        test_poly.reduce(&mut b, modulus);
-
-        assert_eq!(b.coeffs, [3, 4, 2, 0, 0, 1, 2, 2]);
-    }
-
-    #[test]
     fn test_mult_mod() {
         let mut test_poly = PolyInt::from(&[1, 2, 2, 0, 0, 1, 2, 2, 2]);
 
         test_poly.mult_mod(3845, 9829);
 
         assert!(test_poly.coeffs == [3845, 7690, 7690, 0, 0, 3845, 7690, 7690, 7690]);
+    }
+
+    #[test]
+    fn test_div_x() {
+        let mut test_poly = PolyInt::from(&[7756, 7841, 1764, 7783, 4731, 2717, 1132, 1042, 273]);
+        let k = 1475;
+
+        for _ in 0..k {
+            test_poly.div_x(9829);
+        }
+
+        assert!(test_poly.coeffs == [5018, 6408, 7987, 4832, 1047, 387, 1857, 4668, 2577]);
+    }
+
+    #[test]
+    fn test_get_inv_poly() {
+        let q = 4591;
+        let mut k = 0;
+        let g: PolyInt<i128> = PolyInt::from(&[1, 44, 99, 112, 193, 1235, 908, 285, 9475]);
+
+        dbg!(g.newton_inversion().mult_poly(&g.coeffs));
+
+        // loop {
+        //     k += 1;
+        //     match g.get_inv_poly(q) {
+        //         Some(g_inv) => {
+        //             assert_eq!(
+        //                 g_inv.coeffs,
+        //                 [2745, 2258, 3329, 2984, 1550, 2900, 700, 3283, 2267]
+        //             );
+        //             break;
+        //         }
+        //         None => {
+        //             assert!(k < 100, "Incorrect inv poly!");
+        //             continue;
+        //         }
+        //     }
+        // }
     }
 
     #[test]
