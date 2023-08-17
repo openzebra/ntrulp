@@ -23,6 +23,7 @@ where
     let mut last_y = zero;
     let mut a = a;
     let mut b = modulus;
+    let zero = T::from_u8(0).unwrap();
 
     while b != zero {
         let quotient = a / b;
@@ -33,15 +34,11 @@ where
 
         let tmp = x;
 
-        x = last_x
-            .checked_sub(&(quotient * x))
-            .unwrap_or(T::from_u8(0).unwrap());
+        x = last_x.checked_sub(&(quotient * x)).unwrap_or(zero);
         last_x = tmp;
 
         let tmp = y;
-        y = last_y
-            .checked_sub(&(quotient * y))
-            .unwrap_or(T::from_u8(0).unwrap());
+        y = last_y.checked_sub(&(quotient * y)).unwrap_or(zero);
         last_y = tmp;
     }
 
