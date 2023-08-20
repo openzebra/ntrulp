@@ -74,8 +74,11 @@ where
 impl<N, const SIZE: usize> PolyInt<N, SIZE>
 where
     N: Sized
+        + Default
         + Zero
+        + One
         + Copy
+        + Neg<Output = N>
         + Mul<Output = N>
         + AddAssign
         + Euclid
@@ -124,6 +127,59 @@ where
 
         self.coeffs[..SIZE].clone_from_slice(&fg[..SIZE]);
     }
+
+    pub fn mult_int(&mut self, n: N) {
+        for i in 0..SIZE {
+            self.coeffs[i] = self.coeffs[i] * n;
+        }
+    }
+
+    // pub fn inv(&self) -> PolyInt<N, SIZE> {
+    //     // const loops = N::us
+    //     let loops = 2 * SIZE + 1;
+    //     let mut r = [N::zero(); SIZE];
+    //     let mut f = vec![N::zero(); SIZE + 1];
+    //
+    //     f[0] = -N::one();
+    //     f[1] = -N::one();
+    //     f[761] = N::one();
+    //
+    //     let mut g = vec![N::zero(); SIZE + 1];
+    //
+    //     for i in 0..SIZE {
+    //         g[i] = 3 * s[i];
+    //     }
+    //
+    //     let mut d = 761;
+    //     let mut e = 761;
+    //     let mut u = [0i16; LOOPS + 1];
+    //     let mut v = [0i16; LOOPS + 1];
+    //
+    //     v[0] = 1;
+    //
+    //     for _ in 0..LOOPS {
+    //         let c = modq::quotient(g[761], f[761]);
+    //         vector::minus_product(&mut g, 761 + 1, &f, c);
+    //         vector::shift(&mut g, 761 + 1);
+    //         vector::minus_product(&mut v, LOOPS + 1, &u, c);
+    //         vector::shift(&mut v, LOOPS + 1);
+    //         e -= 1;
+    //         let m = smaller_mask(e, d) & modq::mask_set(g[761]);
+    //         let (e_tmp, d_tmp) = swap_int(e, d, m);
+    //         e = e_tmp;
+    //         d = d_tmp;
+    //         vector::swap(&mut f, &mut g, 761 + 1, m);
+    //         vector::swap(&mut u, &mut v, LOOPS + 1, m);
+    //     }
+    //
+    //     vector::product(&mut r, 761, &u[761..], modq::reciprocal(f[761]));
+    //
+    //     smaller_mask(0, d);
+    //
+    //     r;
+    //
+    //     PolyInt::from(r)
+    // }
 
     fn plus(&self, a: N, b: N, c: N) -> N {
         let a32 = N::to_i32(&a).expect("a: cannot convert to i32");
@@ -186,6 +242,16 @@ mod test_poly_v2 {
         poly.coeffs[1] = -1;
 
         assert!(!poly.equals_zero());
+    }
+
+    #[test]
+    fn test_mult_poly_int() {
+        let expected_result = [1 * 3, -1 * 3, 0 * 3, -1 * 3, 1 * 3];
+        let mut poly = PolyInt::from([1, -1, 0, -1, 1]);
+
+        poly.mult_int(3);
+
+        assert_eq!(poly.get_coeffs(), &expected_result);
     }
 
     #[test]
