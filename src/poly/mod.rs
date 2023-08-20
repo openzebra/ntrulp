@@ -9,6 +9,7 @@ pub struct PolyInt<T> {
     coeffs: Vec<T>,
 }
 
+pub mod traits;
 pub mod v2;
 
 impl<T> ToString for PolyInt<T>
