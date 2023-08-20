@@ -134,53 +134,6 @@ where
         }
     }
 
-    // pub fn inv(&self) -> PolyInt<N, SIZE> {
-    //     // const loops = N::us
-    //     let loops = 2 * SIZE + 1;
-    //     let mut r = [N::zero(); SIZE];
-    //     let mut f = vec![N::zero(); SIZE + 1];
-    //
-    //     f[0] = -N::one();
-    //     f[1] = -N::one();
-    //     f[761] = N::one();
-    //
-    //     let mut g = vec![N::zero(); SIZE + 1];
-    //
-    //     for i in 0..SIZE {
-    //         g[i] = 3 * s[i];
-    //     }
-    //
-    //     let mut d = 761;
-    //     let mut e = 761;
-    //     let mut u = [0i16; LOOPS + 1];
-    //     let mut v = [0i16; LOOPS + 1];
-    //
-    //     v[0] = 1;
-    //
-    //     for _ in 0..LOOPS {
-    //         let c = modq::quotient(g[761], f[761]);
-    //         vector::minus_product(&mut g, 761 + 1, &f, c);
-    //         vector::shift(&mut g, 761 + 1);
-    //         vector::minus_product(&mut v, LOOPS + 1, &u, c);
-    //         vector::shift(&mut v, LOOPS + 1);
-    //         e -= 1;
-    //         let m = smaller_mask(e, d) & modq::mask_set(g[761]);
-    //         let (e_tmp, d_tmp) = swap_int(e, d, m);
-    //         e = e_tmp;
-    //         d = d_tmp;
-    //         vector::swap(&mut f, &mut g, 761 + 1, m);
-    //         vector::swap(&mut u, &mut v, LOOPS + 1, m);
-    //     }
-    //
-    //     vector::product(&mut r, 761, &u[761..], modq::reciprocal(f[761]));
-    //
-    //     smaller_mask(0, d);
-    //
-    //     r;
-    //
-    //     PolyInt::from(r)
-    // }
-
     fn plus(&self, a: N, b: N, c: N) -> N {
         let a32 = N::to_i32(&a).expect("a: cannot convert to i32");
         let b32 = N::to_i32(&b).expect("b: cannot convert to i32");
