@@ -2,6 +2,8 @@ use crate::poly::traits::TryFrom;
 use num::{traits::Euclid, FromPrimitive, One, ToPrimitive, Zero};
 use std::ops::{AddAssign, Mul, Neg};
 
+use super::traits::ConversionError;
+
 #[derive(Debug)]
 pub struct PolyInt<N: Sized, const SIZE: usize> {
     coeffs: [N; SIZE],
@@ -83,12 +85,26 @@ where
 
 impl<N, const SIZE: usize> PolyInt<N, SIZE>
 where
-    N: Copy + Sized + Mul<Output = N>,
+    N: Copy + Sized + Mul<Output = N> + ToPrimitive + FromPrimitive,
 {
     pub fn mult_int(&mut self, n: N) {
         for i in 0..SIZE {
             self.coeffs[i] = self.coeffs[i] * n;
         }
+    }
+
+    pub fn mult_mod(&mut self, factor: N, modulus: N) -> Result<(), ConversionError> {
+        let factor64 = N::to_u64(&factor).ok_or(ConversionError::Overflow)?;
+        let modulus64 = N::to_u64(&modulus).ok_or(ConversionError::Overflow)?;
+
+        for i in 0..self.len() {
+            let coeff64 = N::to_u64(&self.coeffs[i]).ok_or(ConversionError::Overflow)?;
+            let value = (coeff64 * factor64).rem_euclid(modulus64);
+
+            self.coeffs[i] = N::from_u64(value).ok_or(ConversionError::Overflow)?;
+        }
+
+        Ok(())
     }
 }
 
@@ -158,5 +174,14 @@ mod test_poly_v2 {
         let none_one_poly = PolyInt::from([1, 0, 0, 0, -1, 1]);
 
         assert!(!none_one_poly.equals_one());
+    }
+
+    #[test]
+    fn test_mult_mod() {
+        let mut test_poly: PolyInt<u16, 9> = PolyInt::from([1, 2, 2, 0, 0, 1, 2, 2, 2]);
+
+        test_poly.mult_mod(3845, 9829).unwrap();
+
+        assert!(test_poly.coeffs == [3845, 7690, 7690, 0, 0, 3845, 7690, 7690, 7690]);
     }
 }
