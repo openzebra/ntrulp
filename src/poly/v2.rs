@@ -1,6 +1,6 @@
-use crate::poly::traits::TryFrom;
-use num::{traits::Euclid, FromPrimitive, One, ToPrimitive, Zero};
-use std::ops::{AddAssign, Mul, Neg};
+use crate::math::euclid_inv_num::euclid_num_mod_inverse;
+use num::{FromPrimitive, One, ToPrimitive, Zero};
+use std::ops::Mul;
 
 use super::traits::ConversionError;
 
@@ -92,24 +92,27 @@ where
     N: Copy
         + Sized
         + Zero
+        + One
         + Default
         + Mul<Output = N>
+        + PartialEq
+        + PartialOrd
         + ToPrimitive
         + FromPrimitive
         + std::fmt::Debug,
 {
+    const ASSOC: usize = SIZE;
+
     pub fn mult_int(&mut self, n: N) {
         for i in 0..SIZE {
             self.coeffs[i] = self.coeffs[i] * n;
         }
     }
 
-    pub fn mult_mod(&mut self, factor: N, modulus: u64) -> Result<(), ConversionError> {
-        let factor64 = N::to_u64(&factor).ok_or(ConversionError::Overflow)?;
-
+    pub fn mult_mod(&mut self, factor: u64, modulus: u64) -> Result<(), ConversionError> {
         for i in 0..self.len() {
             let coeff64 = N::to_u64(&self.coeffs[i]).ok_or(ConversionError::Overflow)?;
-            let value = (coeff64 * factor64).rem_euclid(modulus);
+            let value = (coeff64 * factor).rem_euclid(modulus);
 
             self.coeffs[i] = N::from_u64(value).ok_or(ConversionError::Overflow)?;
         }
@@ -156,20 +159,108 @@ where
         Ok(result)
     }
 
-    pub fn subtract_multiple(
+    pub fn inv_poly<const EX_SIZE: usize>(&self, modulus: u64) -> Result<Self, ConversionError> {
+        let im = modulus;
+        let mut inv: PolyInt<N, SIZE> = PolyInt::new();
+        let mut b: PolyInt<N, EX_SIZE> = PolyInt::new();
+        let mut k = 0;
+
+        b.coeffs[0] = N::one();
+
+        let mut c: PolyInt<N, EX_SIZE> = PolyInt::new();
+
+        // f = a
+        let mut f: PolyInt<N, EX_SIZE> = PolyInt::new();
+
+        f.coeffs[..SIZE].copy_from_slice(&self.coeffs[..SIZE]);
+        f.coeffs[SIZE] = N::zero();
+
+        // g = x^p - x - 1
+        let mut g: PolyInt<N, EX_SIZE> = PolyInt::new();
+
+        g.coeffs[0] = N::from_u64(im - 1).ok_or(ConversionError::Overflow)?;
+        g.coeffs[1] = N::from_u64(im - 1).ok_or(ConversionError::Overflow)?;
+        g.coeffs[SIZE] = N::one();
+
+        loop {
+            // Find Roots
+            while f.coeffs[0] == N::zero() {
+                // f(x) = f(x) / x
+                for i in 1..=SIZE {
+                    f.coeffs[i - 1] = f.coeffs[i];
+                }
+
+                f.coeffs[SIZE] = N::zero();
+
+                // c(x) = c(x) * x
+                for i in (1..SIZE).rev() {
+                    c.coeffs[i] = c.coeffs[i - 1];
+                }
+
+                c.coeffs[0] = N::zero();
+                k += 1;
+
+                if f.equals_zero() {
+                    // TODO: make Errors enums
+                    return Err(ConversionError::Overflow);
+                }
+            }
+
+            if f.get_poly_degree() == 0 {
+                let fzero64 = N::to_u64(&f.coeffs[0]).ok_or(ConversionError::Overflow)?;
+                let f0_inv = euclid_num_mod_inverse(fzero64, modulus);
+
+                // b = b * f[0]^(-1)
+                b.mult_mod(f0_inv, modulus)?;
+                b.reduce(&mut inv, modulus)?;
+
+                // b = b * x^(-k)
+                for _ in 0..k {
+                    inv.div_x(modulus)?;
+                }
+
+                return Ok(inv);
+            }
+
+            if f.get_poly_degree() < g.get_poly_degree() {
+                // exchange f and g
+                let temp = f;
+
+                f = g;
+                g = temp;
+
+                /* exchange b and c */
+                let temp = b;
+                b = c;
+                c = temp;
+            }
+
+            // u = f[0] * g[0]^(-1)
+            let gzero64 = N::to_u64(&g.coeffs[0]).ok_or(ConversionError::Overflow)?;
+            let fzero64 = N::to_u64(&f.coeffs[0]).ok_or(ConversionError::Overflow)?;
+            let g0_inv = euclid_num_mod_inverse(gzero64, modulus);
+            let u = (fzero64 * g0_inv) % modulus;
+
+            // f = f - u * g
+            f.subtract_multiple(&g, u, modulus)?;
+            // b = b - u * c
+            b.subtract_multiple(&c, u, modulus)?;
+        }
+    }
+
+    pub fn subtract_multiple<const B_SIZE: usize>(
         &mut self,
-        b: &PolyInt<N, SIZE>,
+        b: &PolyInt<N, B_SIZE>,
         u: u64,
         modulus: u64,
     ) -> Result<(), ConversionError> {
-        let n = if b.len() > self.len() {
-            b.len()
-        } else {
-            self.len()
-        };
+        let n = if B_SIZE > SIZE { B_SIZE } else { SIZE };
 
         for i in 0..n {
-            let mut ai = N::to_u64(&self.coeffs[i]).ok_or(ConversionError::Overflow)?;
+            let mut ai = match self.coeffs.get(i) {
+                Some(ai) => N::to_u64(&ai).ok_or(ConversionError::Overflow)?,
+                None => continue,
+            };
             let bi = N::to_u64(&b.coeffs[i]).ok_or(ConversionError::Overflow)?;
             let dim = u * (modulus - bi);
 
@@ -198,7 +289,11 @@ where
     }
 
     // Reduces a NtruIntPoly modulo x^p-x-1, where p = Fp.
-    fn reduce(&mut self, b: &PolyInt<N, SIZE>, modulus: u64) -> Result<(), ConversionError> {
+    fn reduce<const B_SIZE: usize>(
+        &mut self,
+        b: &PolyInt<N, B_SIZE>,
+        modulus: u64,
+    ) -> Result<(), ConversionError> {
         let n = SIZE - 1;
 
         self.coeffs[..n].copy_from_slice(&b.coeffs[..n]);
@@ -324,7 +419,7 @@ mod test_poly_v2 {
     fn test_subtract_multiple() {
         let modulus = 9829;
         let mut f: PolyInt<u16, 9> = PolyInt::from([756, 741, 0, 78, 470, 7, 0, 0, 273]);
-        let g: PolyInt<u16, 9> = PolyInt::from([1, 44, 99, 112, 193, 1235, 908, 285, 9475]);
+        let g: PolyInt<u16, 10> = PolyInt::from([1, 44, 99, 112, 193, 1235, 908, 285, 9475, 0]);
 
         let g0_inv = euclid_num_mod_inverse(g.coeffs[0], modulus);
         let u = (f.coeffs[0] * g0_inv) % modulus; // 756;
@@ -346,5 +441,29 @@ mod test_poly_v2 {
             res.get_coeffs(),
             &[5991, 8083, 8262, 8760, 4616, 8326, 4855, 6082, 8069]
         );
+    }
+
+    #[test]
+    fn test_inv_poly() {
+        const SIZE: usize = 9;
+        const EX_SIZE: usize = SIZE + 1;
+        let q = 4591;
+        let mut k = 0;
+        let g: PolyInt<u16, SIZE> = PolyInt::from([1, 44, 99, 112, 193, 1235, 908, 285, 9475]);
+
+        loop {
+            k += 1;
+
+            match g.inv_poly::<EX_SIZE>(q) {
+                Ok(g_inv) => {
+                    assert!(g_inv.coeffs == [2745, 2258, 3329, 2984, 1550, 2900, 700, 3283, 2267]);
+                    break;
+                }
+                Err(err) => {
+                    assert!(k < 100, "Incorrect inv poly!, {:?}", err);
+                    continue;
+                }
+            }
+        }
     }
 }
