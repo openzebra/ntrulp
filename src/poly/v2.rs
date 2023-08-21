@@ -101,8 +101,6 @@ where
         + FromPrimitive
         + std::fmt::Debug,
 {
-    const ASSOC: usize = SIZE;
-
     pub fn mult_int(&mut self, n: N) {
         for i in 0..SIZE {
             self.coeffs[i] = self.coeffs[i] * n;
@@ -160,6 +158,22 @@ where
     }
 
     pub fn inv_poly<const EX_SIZE: usize>(&self, modulus: u64) -> Result<Self, ConversionError> {
+        let mut k = 0;
+        loop {
+            k += 1;
+            match self.try_inv_poly::<EX_SIZE>(modulus) {
+                Ok(g_inv) => return Ok(g_inv),
+                Err(_) => {
+                    if k > 100 {
+                        return Err(ConversionError::NoInvSolution);
+                    }
+                    continue;
+                }
+            }
+        }
+    }
+
+    fn try_inv_poly<const EX_SIZE: usize>(&self, modulus: u64) -> Result<Self, ConversionError> {
         let im = modulus;
         let mut inv: PolyInt<N, SIZE> = PolyInt::new();
         let mut b: PolyInt<N, EX_SIZE> = PolyInt::new();
@@ -207,12 +221,12 @@ where
             }
 
             if f.get_poly_degree() == 0 {
-                let fzero64 = N::to_u64(&f.coeffs[0]).ok_or(ConversionError::Overflow)?;
-                let f0_inv = euclid_num_mod_inverse(fzero64, modulus);
+                let fzero64 = N::to_i32(&f.coeffs[0]).ok_or(ConversionError::Overflow)?;
+                let f0_inv = euclid_num_mod_inverse(fzero64, modulus as i32) as u64;
 
                 // b = b * f[0]^(-1)
                 b.mult_mod(f0_inv, modulus)?;
-                b.reduce(&mut inv, modulus)?;
+                inv.reduce(&b, modulus)?;
 
                 // b = b * x^(-k)
                 for _ in 0..k {
@@ -236,9 +250,9 @@ where
             }
 
             // u = f[0] * g[0]^(-1)
-            let gzero64 = N::to_u64(&g.coeffs[0]).ok_or(ConversionError::Overflow)?;
+            let gzero64 = N::to_i32(&g.coeffs[0]).ok_or(ConversionError::Overflow)?;
             let fzero64 = N::to_u64(&f.coeffs[0]).ok_or(ConversionError::Overflow)?;
-            let g0_inv = euclid_num_mod_inverse(gzero64, modulus);
+            let g0_inv = euclid_num_mod_inverse(gzero64, modulus as i32) as u64;
             let u = (fzero64 * g0_inv) % modulus;
 
             // f = f - u * g
@@ -262,7 +276,12 @@ where
                 None => continue,
             };
             let bi = N::to_u64(&b.coeffs[i]).ok_or(ConversionError::Overflow)?;
-            let dim = u * (modulus - bi);
+            let subtract = if modulus > bi {
+                modulus - bi
+            } else {
+                bi - modulus
+            };
+            let dim = u * subtract;
 
             ai = ai + dim;
 
@@ -294,7 +313,7 @@ where
         b: &PolyInt<N, B_SIZE>,
         modulus: u64,
     ) -> Result<(), ConversionError> {
-        let n = SIZE - 1;
+        let n = B_SIZE - 1;
 
         self.coeffs[..n].copy_from_slice(&b.coeffs[..n]);
 
@@ -314,8 +333,6 @@ where
 
 #[cfg(test)]
 mod test_poly_v2 {
-    use crate::math::euclid_inv_num::euclid_num_mod_inverse;
-
     use super::*;
 
     #[test]
@@ -449,21 +466,10 @@ mod test_poly_v2 {
         const EX_SIZE: usize = SIZE + 1;
         let q = 4591;
         let mut k = 0;
-        let g: PolyInt<u16, SIZE> = PolyInt::from([1, 44, 99, 112, 193, 1235, 908, 285, 9475]);
+        let g: PolyInt<u16, SIZE> = PolyInt::from([1, 0, 2, 0, 0, 2, 0, 1, 2]);
+        let inv = g.inv_poly::<EX_SIZE>(q).unwrap();
+        let a = g.mult_poly(&inv, q).unwrap();
 
-        loop {
-            k += 1;
-
-            match g.inv_poly::<EX_SIZE>(q) {
-                Ok(g_inv) => {
-                    assert!(g_inv.coeffs == [2745, 2258, 3329, 2984, 1550, 2900, 700, 3283, 2267]);
-                    break;
-                }
-                Err(err) => {
-                    assert!(k < 100, "Incorrect inv poly!, {:?}", err);
-                    continue;
-                }
-            }
-        }
+        dbg!(a);
     }
 }

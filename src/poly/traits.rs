@@ -1,6 +1,7 @@
 #[derive(Debug)]
 pub enum ConversionError {
     Overflow,
+    NoInvSolution,
 }
 
 pub trait TryFrom: Sized {

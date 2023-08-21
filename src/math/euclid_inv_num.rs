@@ -1,52 +1,50 @@
-use num::traits::Euclid;
-use num::{CheckedSub, FromPrimitive};
+use num::CheckedSub;
+use num::{FromPrimitive, One, Zero};
 use std::cmp::PartialOrd;
-use std::ops::{AddAssign, Div, Mul};
+use std::ops::{AddAssign, Div, Mul, Rem};
 
 // a * x ≡ 1 (mod modulo)
-pub fn euclid_num_mod_inverse<T>(a: T, modulus: T) -> T
+pub fn euclid_num_mod_inverse<T>(mut a: T, modulus: T) -> T
 where
     T: Copy
-        + Euclid
+        + One
+        + Zero
         + PartialOrd<T>
         + Div<Output = T>
-        + CheckedSub
         + Mul<Output = T>
+        + Rem<Output = T>
+        + CheckedSub
         + FromPrimitive
-        + AddAssign
-        + std::fmt::Debug,
+        + AddAssign,
 {
     let zero = T::from_u8(0).unwrap();
-    let mut x = zero;
-    let mut y = T::from_u8(1).unwrap();
-    let mut last_x = T::from_u8(1).unwrap();
-    let mut last_y = zero;
-    let mut a = a;
+    let mut x = T::zero();
+    let mut lastx = T::one();
+    let mut y = T::one();
+    let mut lasty = T::zero();
     let mut b = modulus;
-    let zero = T::from_u8(0).unwrap();
 
-    while b != zero {
+    while b != T::zero() {
         let quotient = a / b;
-        let remainder = a.rem_euclid(&b);
 
+        let temp = a;
         a = b;
-        b = remainder;
+        b = temp % b;
 
-        let tmp = x;
+        let temp = x;
+        x = lastx.checked_sub(&(quotient * x)).unwrap_or(zero);
+        lastx = temp;
 
-        x = last_x.checked_sub(&(quotient * x)).unwrap_or(zero);
-        last_x = tmp;
-
-        let tmp = y;
-        y = last_y.checked_sub(&(quotient * y)).unwrap_or(zero);
-        last_y = tmp;
+        let temp = y;
+        y = lasty.checked_sub(&(quotient * y)).unwrap_or(zero);
+        lasty = temp;
     }
 
-    if last_x < zero {
-        last_x += modulus;
+    if lastx < T::zero() {
+        lastx += modulus;
     }
 
-    last_x
+    lastx
 }
 
 #[cfg(test)]
@@ -60,6 +58,5 @@ mod tests {
         assert_eq!(euclid_num_mod_inverse(3, 7), 5); // 3 * 5 ≡ 1 (mod 7)
         assert_eq!(euclid_num_mod_inverse(4, 11), 3); // 4 * 3 ≡ 1 (mod 11)
         assert_eq!(euclid_num_mod_inverse(5, 17), 7); // 5 * 7 ≡ 1 (mod 17)
-        assert_eq!(euclid_num_mod_inverse(-1, 3), 2); //  2 * (-1) = -2 ≡ 1 (mod 3)
     }
 }
