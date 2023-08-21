@@ -89,7 +89,14 @@ where
 
 impl<N, const SIZE: usize> PolyInt<N, SIZE>
 where
-    N: Copy + Sized + Zero + Mul<Output = N> + ToPrimitive + FromPrimitive + std::fmt::Debug,
+    N: Copy
+        + Sized
+        + Zero
+        + Default
+        + Mul<Output = N>
+        + ToPrimitive
+        + FromPrimitive
+        + std::fmt::Debug,
 {
     pub fn mult_int(&mut self, n: N) {
         for i in 0..SIZE {
@@ -108,6 +115,45 @@ where
         }
 
         Ok(())
+    }
+
+    pub fn mult_poly(&self, b: &PolyInt<N, SIZE>, modulus: u64) -> Result<Self, ConversionError> {
+        let mut result: PolyInt<N, SIZE> = PolyInt::new();
+
+        for k in 0..SIZE {
+            let mut ck1 = 0;
+
+            for i in 0..=k {
+                let ai = N::to_u64(&self.coeffs[i]).ok_or(ConversionError::Overflow)?;
+                let bk = N::to_u64(&b.coeffs[k - i]).ok_or(ConversionError::Overflow)?;
+
+                ck1 += ai * bk;
+            }
+
+            let mut ck2 = 0;
+
+            for i in (k + 1)..SIZE {
+                let ai = N::to_u64(&self.coeffs[i]).ok_or(ConversionError::Overflow)?;
+                let bki = N::to_u64(&b.coeffs[k + SIZE - i]).ok_or(ConversionError::Overflow)?;
+
+                ck2 += ai * bki;
+            }
+
+            let selfk64 = N::to_u64(&result.coeffs[k]).ok_or(ConversionError::Overflow)?;
+            let ck = selfk64 + ck1 + ck2;
+
+            result.coeffs[k] = N::from_u64(ck % modulus).ok_or(ConversionError::Overflow)?;
+
+            if k < SIZE - 1 {
+                let selfk64 = N::to_u64(&result.coeffs[k + 1]).ok_or(ConversionError::Overflow)?;
+                let ck = selfk64 + ck2;
+
+                result.coeffs[k + 1] =
+                    N::from_u64(ck % modulus).ok_or(ConversionError::Overflow)?;
+            }
+        }
+
+        Ok(result)
     }
 
     pub fn subtract_multiple(
@@ -286,5 +332,19 @@ mod test_poly_v2 {
         f.subtract_multiple(&g, u as u64, modulus as u64).unwrap();
 
         assert!(f.coeffs == [0, 6793, 3788, 3867, 1997, 102, 1582, 778, 2514]);
+    }
+
+    #[test]
+    fn test_mult_poly() {
+        let modulus = 9829;
+        let f: PolyInt<u16, 9> = PolyInt::from([756, 741, 0, 78, 470, 7, 0, 0, 273]);
+        let c: PolyInt<u16, 9> = PolyInt::from([4543, 877, 0, 22, 0, 700, 12, 204, 83]);
+
+        let res = f.mult_poly(&c, modulus).unwrap();
+
+        assert_eq!(
+            res.get_coeffs(),
+            &[5991, 8083, 8262, 8760, 4616, 8326, 4855, 6082, 8069]
+        );
     }
 }
