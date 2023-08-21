@@ -110,6 +110,31 @@ where
         Ok(())
     }
 
+    pub fn subtract_multiple(
+        &mut self,
+        b: &PolyInt<N, SIZE>,
+        u: u64,
+        modulus: u64,
+    ) -> Result<(), ConversionError> {
+        let n = if b.len() > self.len() {
+            b.len()
+        } else {
+            self.len()
+        };
+
+        for i in 0..n {
+            let mut ai = N::to_u64(&self.coeffs[i]).ok_or(ConversionError::Overflow)?;
+            let bi = N::to_u64(&b.coeffs[i]).ok_or(ConversionError::Overflow)?;
+            let dim = u * (modulus - bi);
+
+            ai = ai + dim;
+
+            self.coeffs[i] = N::from_u64(ai % modulus).ok_or(ConversionError::Overflow)?;
+        }
+
+        Ok(())
+    }
+
     // Multiplies a polynomial by x^(-1) in (Z/qZ)[x][x^p-x-1] where p=SIZE, q=modulus
     fn div_x(&mut self, modulus: u64) -> Result<(), ConversionError> {
         let a0 = self.coeffs[0];
@@ -148,6 +173,8 @@ where
 
 #[cfg(test)]
 mod test_poly_v2 {
+    use crate::math::euclid_inv_num::euclid_num_mod_inverse;
+
     use super::*;
 
     #[test]
@@ -245,5 +272,19 @@ mod test_poly_v2 {
             test_poly.coeffs,
             [2672, 4340, 2658, 4812, 9587, 6288, 5887, 2572, 6875]
         );
+    }
+
+    #[test]
+    fn test_subtract_multiple() {
+        let modulus = 9829;
+        let mut f: PolyInt<u16, 9> = PolyInt::from([756, 741, 0, 78, 470, 7, 0, 0, 273]);
+        let g: PolyInt<u16, 9> = PolyInt::from([1, 44, 99, 112, 193, 1235, 908, 285, 9475]);
+
+        let g0_inv = euclid_num_mod_inverse(g.coeffs[0], modulus);
+        let u = (f.coeffs[0] * g0_inv) % modulus; // 756;
+
+        f.subtract_multiple(&g, u as u64, modulus as u64).unwrap();
+
+        assert!(f.coeffs == [0, 6793, 3788, 3867, 1997, 102, 1582, 778, 2514]);
     }
 }
