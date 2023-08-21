@@ -43,7 +43,7 @@ where
 
 impl<N, const SIZE: usize> PolyInt<N, SIZE>
 where
-    N: Sized + One + Zero + PartialOrd<N> + Neg<Output = N>,
+    N: Sized + One + Zero + PartialOrd<N>,
 {
     pub fn equals_zero(&self) -> bool {
         for item in self.coeffs.iter() {
@@ -57,12 +57,6 @@ where
         true
     }
 
-    pub fn is_small(&self) -> bool {
-        self.coeffs
-            .iter()
-            .all(|value| *value <= N::one() && *value >= -N::one())
-    }
-
     pub fn equals_one(&self) -> bool {
         for i in 1..self.coeffs.len() {
             if self.coeffs[i] != N::one() {
@@ -71,6 +65,16 @@ where
         }
 
         self.coeffs[0] == N::one()
+    }
+
+    pub fn get_poly_degree(&self) -> usize {
+        for i in (0..=SIZE - 1).rev() {
+            if self.coeffs[i] != N::zero() {
+                return i;
+            }
+        }
+
+        0
     }
 }
 
@@ -85,7 +89,7 @@ where
 
 impl<N, const SIZE: usize> PolyInt<N, SIZE>
 where
-    N: Copy + Sized + Mul<Output = N> + ToPrimitive + FromPrimitive,
+    N: Copy + Sized + Zero + Mul<Output = N> + ToPrimitive + FromPrimitive + std::fmt::Debug,
 {
     pub fn mult_int(&mut self, n: N) {
         for i in 0..SIZE {
@@ -103,6 +107,26 @@ where
 
             self.coeffs[i] = N::from_u64(value).ok_or(ConversionError::Overflow)?;
         }
+
+        Ok(())
+    }
+
+    // Reduces a NtruIntPoly modulo x^p-x-1, where p = Fp.
+    fn reduce(&mut self, b: &PolyInt<N, SIZE>, modulus: N) -> Result<(), ConversionError> {
+        let n = SIZE - 1;
+        let modulus64 = N::to_u64(&modulus).ok_or(ConversionError::Overflow)?;
+
+        self.coeffs[..n].copy_from_slice(&b.coeffs[..n]);
+
+        let self_zero = N::to_u64(&self.coeffs[0]).ok_or(ConversionError::Overflow)?;
+        let self_one = N::to_u64(&self.coeffs[1]).ok_or(ConversionError::Overflow)?;
+        let b_n = N::to_u64(&b.coeffs[n]).ok_or(ConversionError::Overflow)?;
+
+        self.coeffs[0] =
+            N::from_u64((self_zero + b_n) % modulus64).ok_or(ConversionError::Overflow)?;
+
+        self.coeffs[1] =
+            N::from_u64((self_one + b_n) % modulus64).ok_or(ConversionError::Overflow)?;
 
         Ok(())
     }
@@ -124,19 +148,6 @@ mod test_poly_v2 {
         let a: PolyInt<u8, 3> = PolyInt::new();
 
         assert_eq!(a.len(), 3);
-    }
-
-    #[test]
-    fn test_is_small() {
-        let coefficients_big = [0, -1, -2, 2];
-        let coefficients_small = [0, -1, -1, 1];
-
-        let poly = PolyInt::from(coefficients_big);
-
-        assert!(!poly.is_small());
-
-        let poly = PolyInt::from(coefficients_small);
-        assert!(poly.is_small());
     }
 
     #[test]
@@ -183,5 +194,26 @@ mod test_poly_v2 {
         test_poly.mult_mod(3845, 9829).unwrap();
 
         assert!(test_poly.coeffs == [3845, 7690, 7690, 0, 0, 3845, 7690, 7690, 7690]);
+    }
+    #[test]
+    fn test_get_poly_degre() {
+        let zero_poly: PolyInt<u8, 740> = PolyInt::new();
+        let mut non_zero_poly: PolyInt<u8, 740> = PolyInt::new();
+
+        non_zero_poly.coeffs[730] = 9;
+
+        assert_eq!(zero_poly.get_poly_degree(), 0);
+        assert_eq!(non_zero_poly.get_poly_degree(), 730);
+    }
+    #[test]
+    fn test_reduce() {
+        let test_poly: PolyInt<u16, 9> = PolyInt::from([1, 2, 2, 0, 0, 1, 2, 2, 2]);
+        let mut b: PolyInt<u16, 9> =
+            PolyInt::from([7756, 7841, 1764, 7783, 4731, 2717, 1132, 1042, 273]);
+        let modulus = 9829;
+
+        b.reduce(&test_poly, modulus).unwrap();
+
+        assert_eq!(b.get_coeffs(), &[3, 4, 2, 0, 0, 1, 2, 2, 273]);
     }
 }
