@@ -97,13 +97,12 @@ where
         }
     }
 
-    pub fn mult_mod(&mut self, factor: N, modulus: N) -> Result<(), ConversionError> {
+    pub fn mult_mod(&mut self, factor: N, modulus: u64) -> Result<(), ConversionError> {
         let factor64 = N::to_u64(&factor).ok_or(ConversionError::Overflow)?;
-        let modulus64 = N::to_u64(&modulus).ok_or(ConversionError::Overflow)?;
 
         for i in 0..self.len() {
             let coeff64 = N::to_u64(&self.coeffs[i]).ok_or(ConversionError::Overflow)?;
-            let value = (coeff64 * factor64).rem_euclid(modulus64);
+            let value = (coeff64 * factor64).rem_euclid(modulus);
 
             self.coeffs[i] = N::from_u64(value).ok_or(ConversionError::Overflow)?;
         }
@@ -111,10 +110,25 @@ where
         Ok(())
     }
 
+    // Multiplies a polynomial by x^(-1) in (Z/qZ)[x][x^p-x-1] where p=SIZE, q=modulus
+    fn div_x(&mut self, modulus: u64) -> Result<(), ConversionError> {
+        let a0 = self.coeffs[0];
+
+        self.coeffs.rotate_left(1);
+        self.coeffs[SIZE - 1] = a0;
+
+        let zero_self64 = N::to_u64(&self.coeffs[0]).ok_or(ConversionError::Overflow)?;
+        let a0 = N::to_u64(&a0).ok_or(ConversionError::Overflow)?;
+
+        self.coeffs[0] =
+            N::from_u64((modulus - zero_self64 + a0) % modulus).ok_or(ConversionError::Overflow)?;
+
+        Ok(())
+    }
+
     // Reduces a NtruIntPoly modulo x^p-x-1, where p = Fp.
-    fn reduce(&mut self, b: &PolyInt<N, SIZE>, modulus: N) -> Result<(), ConversionError> {
+    fn reduce(&mut self, b: &PolyInt<N, SIZE>, modulus: u64) -> Result<(), ConversionError> {
         let n = SIZE - 1;
-        let modulus64 = N::to_u64(&modulus).ok_or(ConversionError::Overflow)?;
 
         self.coeffs[..n].copy_from_slice(&b.coeffs[..n]);
 
@@ -123,10 +137,10 @@ where
         let b_n = N::to_u64(&b.coeffs[n]).ok_or(ConversionError::Overflow)?;
 
         self.coeffs[0] =
-            N::from_u64((self_zero + b_n) % modulus64).ok_or(ConversionError::Overflow)?;
+            N::from_u64((self_zero + b_n) % modulus).ok_or(ConversionError::Overflow)?;
 
         self.coeffs[1] =
-            N::from_u64((self_one + b_n) % modulus64).ok_or(ConversionError::Overflow)?;
+            N::from_u64((self_one + b_n) % modulus).ok_or(ConversionError::Overflow)?;
 
         Ok(())
     }
@@ -215,5 +229,21 @@ mod test_poly_v2 {
         b.reduce(&test_poly, modulus).unwrap();
 
         assert_eq!(b.get_coeffs(), &[3, 4, 2, 0, 0, 1, 2, 2, 273]);
+    }
+
+    #[test]
+    fn test_div_x() {
+        let mut test_poly: PolyInt<u16, 9> =
+            PolyInt::from([7756, 7841, 1764, 7783, 4731, 2717, 1132, 1042, 273]);
+        let k = 1475;
+
+        for _ in 0..k {
+            test_poly.div_x(9829).unwrap();
+        }
+
+        assert_eq!(
+            test_poly.coeffs,
+            [2672, 4340, 2658, 4812, 9587, 6288, 5887, 2572, 6875]
+        );
     }
 }
