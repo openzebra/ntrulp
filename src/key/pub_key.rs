@@ -1,19 +1,16 @@
 use crate::poly::PolyInt;
 
 #[derive(Debug)]
-pub struct PubKey {
-    pub h: PolyInt<u16>,
+pub struct PubKey<const SIZE: usize> {
+    pub h: PolyInt<u16, SIZE>,
 }
 
 // TODO: make ToString impl
 
-impl PubKey {
-    pub fn from(rqg: &PolyInt<i16>, f: &PolyInt<i8>) -> Self {
-        let rq_f3 = f.clone().mult_int(3);
-        // let h = rqg.pol
-
+impl<const SIZE: usize> PubKey<SIZE> {
+    pub fn new() -> Self {
         PubKey {
-            h: PolyInt::empty(),
+            h: PolyInt::<u16, SIZE>::new(),
         }
     }
 }
