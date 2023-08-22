@@ -1,5 +1,3 @@
-
-
 use num::{FromPrimitive, One, Zero};
 use rand::prelude::*;
 
@@ -13,8 +11,13 @@ pub enum RandomErrors {
 }
 
 pub trait CommonRandom<const SIZE: usize> {
-    fn random_small_vec<N: Copy + Zero + One + FromPrimitive>(&mut self) -> Result<[N; SIZE], RandomErrors>;
-    fn short_random<N: Copy + Zero + One + FromPrimitive>(&mut self, w: usize) -> Result<[N; SIZE], RandomErrors>;
+    fn random_small_vec<N: Copy + Zero + One + FromPrimitive>(
+        &mut self,
+    ) -> Result<[N; SIZE], RandomErrors>;
+    fn short_random<N: Copy + Zero + One + FromPrimitive>(
+        &mut self,
+        w: usize,
+    ) -> Result<[N; SIZE], RandomErrors>;
     fn random_u32(&mut self) -> u32;
     fn random_range_3(&mut self) -> u8;
 }
@@ -37,7 +40,7 @@ pub struct NTRURandom<const SIZE: usize> {
     rng: RngOptions,
 }
 
-impl< const SIZE: usize> NTRURandom<SIZE> {
+impl<const SIZE: usize> NTRURandom<SIZE> {
     pub fn new() -> Self {
         let rng = thread_rng();
 
@@ -57,7 +60,7 @@ impl< const SIZE: usize> NTRURandom<SIZE> {
 
 // where
 //     N: Copy + Zero + One + FromPrimitive,
-impl< const SIZE: usize > CommonRandom< SIZE> for NTRURandom<SIZE>  {
+impl<const SIZE: usize> CommonRandom<SIZE> for NTRURandom<SIZE> {
     fn random_u32(&mut self) -> u32 {
         let c0 = self.rng.gen_u8() as u32;
         let c1 = self.rng.gen_u8() as u32;
@@ -73,11 +76,13 @@ impl< const SIZE: usize > CommonRandom< SIZE> for NTRURandom<SIZE>  {
         (((r & 0x3fffffff) * 3) >> 30) as u8
     }
 
-    fn random_small_vec<N: Copy + Zero + One + FromPrimitive>(&mut self) -> Result<[N; SIZE], RandomErrors> {
+    fn random_small_vec<N: Copy + Zero + One + FromPrimitive>(
+        &mut self,
+    ) -> Result<[N; SIZE], RandomErrors> {
         let mut r = [N::zero(); SIZE];
 
         for i in 0..SIZE {
-            let r3 = <NTRURandom<SIZE> as CommonRandom< SIZE>>::random_range_3(self);
+            let r3 = <NTRURandom<SIZE> as CommonRandom<SIZE>>::random_range_3(self);
 
             r[i] = N::from_u8(r3).ok_or(RandomErrors::OverFlow)?;
         }
@@ -85,11 +90,14 @@ impl< const SIZE: usize > CommonRandom< SIZE> for NTRURandom<SIZE>  {
         Ok(r)
     }
 
-    fn short_random<N: Copy + Zero + One + FromPrimitive>(&mut self, w: usize) -> Result<[N; SIZE], RandomErrors> {
+    fn short_random<N: Copy + Zero + One + FromPrimitive>(
+        &mut self,
+        w: usize,
+    ) -> Result<[N; SIZE], RandomErrors> {
         let mut list = [0u32; SIZE];
 
         for i in 0..SIZE {
-            let value = <NTRURandom<SIZE> as CommonRandom< SIZE>>::random_u32(self);
+            let value = <NTRURandom<SIZE> as CommonRandom<SIZE>>::random_u32(self);
 
             if i < w {
                 list[i] = value & !1
@@ -153,7 +161,7 @@ mod tests {
     #[test]
     fn test_seed() {
         const SIZE: usize = 716;
-        let mut random: NTRURandom< SIZE> = NTRURandom::from_u64(9999);
+        let mut random: NTRURandom<SIZE> = NTRURandom::from_u64(9999);
         let r = random.random_u32();
 
         assert!(r == 3688594871);
@@ -172,7 +180,7 @@ mod tests {
     #[test]
     fn test_random_small_vec() {
         const SIZE: usize = 9000;
-        let mut random: NTRURandom< SIZE> = NTRURandom::new();
+        let mut random: NTRURandom<SIZE> = NTRURandom::new();
 
         let r = random.random_small_vec::<u8>().unwrap();
 

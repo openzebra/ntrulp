@@ -107,8 +107,7 @@ where
         + PartialEq
         + PartialOrd
         + ToPrimitive
-        + FromPrimitive
-        + std::fmt::Debug,
+        + FromPrimitive,
 {
     pub fn mult_int(&mut self, n: N) {
         for i in 0..SIZE {
