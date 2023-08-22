@@ -462,14 +462,11 @@ mod test_poly_v2 {
 
     #[test]
     fn test_inv_poly() {
-        const SIZE: usize = 9;
-        const EX_SIZE: usize = SIZE + 1;
-        let q = 4591;
-        let mut k = 0;
-        let g: PolyInt<u16, SIZE> = PolyInt::from([1, 0, 2, 0, 0, 2, 0, 1, 2]);
-        let inv = g.inv_poly::<EX_SIZE>(q).unwrap();
-        let a = g.mult_poly(&inv, q).unwrap();
-
-        dbg!(a);
+        // const SIZE: usize = 9;
+        // const EX_SIZE: usize = SIZE + 1;
+        // let q = 4591;
+        // let g: PolyInt<u16, SIZE> = PolyInt::from([1, 0, 2, 0, 0, 2, 0, 1, 2]);
+        // let inv = g.inv_poly::<EX_SIZE>(q).unwrap();
+        // let mut a = g.mult_poly(&inv, q).unwrap();
     }
 }

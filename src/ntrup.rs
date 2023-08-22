@@ -7,7 +7,7 @@ use std::io::{Error, ErrorKind};
 
 pub struct NTRUPrime<'a> {
     pub params: NTRUParams,
-    pub ntru_rng: NTRURandom,
+    // pub ntru_rng: NTRURandom,
     pub key_pair: Option<KeyPair<'a>>,
 }
 
@@ -33,11 +33,11 @@ impl NTRUPrime<'_> {
             return Err(Error::new(ErrorKind::Other, "q mod 6 should be = 1"));
         }
 
-        let ntru_rng = NTRURandom::new();
+        // let ntru_rng = NTRURandom::new();
 
         Ok(NTRUPrime {
             params,
-            ntru_rng,
+            // ntru_rng,
             key_pair: None,
         })
     }
@@ -48,21 +48,19 @@ impl NTRUPrime<'_> {
 
     pub fn key_pair_gen(&mut self) {
         // TODO: Add counter, if specific random return error.
-        let g = loop {
-            let r = self.ntru_rng.random_small_vec(self.params.p);
-            let g: PolyInt<i16> = PolyInt::from(&r);
-
-            if r.contains(&0) && r.contains(&1) && r.contains(&-1) && g.is_small() {
-                break g;
-            }
-        };
-        let f = loop {
-            match self.ntru_rng.short_random(self.params.p, self.params.w) {
-                Ok(result) => break PolyInt::from(&result),
-                Err(_) => continue,
-            };
-        };
-        let key_pair = KeyPair::from_seed(&self.params, g, f);
+        // let g = loop {
+        //     let g: PolyInt<i16> = PolyInt::from(&r);
+        //
+        //     if r.contains(&0) && r.contains(&1) && r.contains(&-1) && g.is_small() {
+        //         break g;
+        //     }
+        // };
+        // let f = loop {
+        //     match self.ntru_rng.short_random(self.params.p, self.params.w) {
+        //         Ok(result) => break PolyInt::from(&result),
+        //         Err(_) => continue,
+        //     };
+        // };
     }
 }
 
