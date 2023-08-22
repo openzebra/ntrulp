@@ -62,8 +62,13 @@ where
     }
 
     pub fn equals_one(&self) -> bool {
+        if self.coeffs[0] != N::one() {
+            return false;
+        }
+
         for i in 1..self.coeffs.len() {
-            if self.coeffs[i] != N::one() {
+            // dbg!(self.coeffs[i] > N::zero());
+            if self.coeffs[i] > N::zero() {
                 return false;
             }
         }
@@ -307,7 +312,7 @@ where
         let a0 = N::to_u64(&a0).ok_or(ConversionError::Overflow)?;
 
         self.coeffs[0] =
-            N::from_u64((modulus - zero_self64 + a0) % modulus).ok_or(ConversionError::Overflow)?;
+            N::from_u64((modulus - a0 + zero_self64) % modulus).ok_or(ConversionError::Overflow)?;
 
         Ok(())
     }
@@ -384,11 +389,11 @@ mod test_poly_v2 {
 
     #[test]
     fn test_equals_one() {
-        let one_poly = PolyInt::from([1, 1, 1, 1, 1, 1]);
+        let one_poly = PolyInt::from([1, 0, 0, 0, 0, 0]);
 
         assert!(one_poly.equals_one());
 
-        let none_one_poly = PolyInt::from([1, 0, 0, 0, -1, 1]);
+        let none_one_poly = PolyInt::from([1, 0, 0, 0, 1, 0]);
 
         assert!(!none_one_poly.equals_one());
     }
@@ -435,7 +440,7 @@ mod test_poly_v2 {
 
         assert_eq!(
             test_poly.coeffs,
-            [2672, 4340, 2658, 4812, 9587, 6288, 5887, 2572, 6875]
+            [5018, 6408, 7987, 4832, 1047, 387, 1857, 4668, 2577,]
         );
     }
 
@@ -492,6 +497,6 @@ mod test_poly_v2 {
 
         let b = a.mult_poly(&g_inv, Q).unwrap();
 
-        dbg!(b);
+        assert!(b.equals_one());
     }
 }
