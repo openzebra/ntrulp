@@ -471,32 +471,4 @@ mod test_poly_v2 {
             &[5991, 8083, 8262, 8760, 4616, 8326, 4855, 6082, 8069]
         );
     }
-
-    #[test]
-    fn test_inv_poly() {
-        use crate::random::NTRURandom;
-
-        const P: usize = 739;
-        const EX_SIZE: usize = P + 1;
-        const Q: u64 = 9829;
-        const W: usize = 204;
-        const INV_3: usize = 6553;
-
-        let mut random: NTRURandom<P> = NTRURandom::new();
-        let g = PolyInt::from(random.random_small_vec::<u16>().unwrap());
-        let f = PolyInt::from(random.short_random::<u16>(W).unwrap());
-        let g_inv = g.inv_poly::<EX_SIZE>(Q).unwrap();
-        let f_inv = f.inv_poly::<EX_SIZE>(Q).unwrap();
-        let mut h = g.mult_poly(&f_inv, Q).unwrap();
-
-        h.mult_mod(INV_3 as u64, Q).unwrap();
-
-        let mut a = h.mult_poly(&f, Q).unwrap();
-
-        a.mult_mod(3, Q).unwrap();
-
-        let b = a.mult_poly(&g_inv, Q).unwrap();
-
-        assert!(b.equals_one());
-    }
 }

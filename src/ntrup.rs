@@ -1,10 +1,7 @@
-use crate::key::pair::KeyPair;
 use crate::math;
 use std::io::{Error, ErrorKind};
 
-pub struct NTRUPrime<const P: usize, const Q: usize, const W: usize> {
-    pub key_pair: Option<KeyPair<P>>,
-}
+pub struct NTRUPrime<const P: usize, const Q: usize, const W: usize> {}
 
 impl<const P: usize, const Q: usize, const W: usize> NTRUPrime<P, Q, W> {
     pub fn new() -> Result<Self, Error> {
@@ -28,7 +25,7 @@ impl<const P: usize, const Q: usize, const W: usize> NTRUPrime<P, Q, W> {
             return Err(Error::new(ErrorKind::Other, "q mod 6 should be = 1"));
         }
 
-        Ok(NTRUPrime { key_pair: None })
+        Ok(NTRUPrime {})
     }
 
     pub fn encrypt(&self) {}

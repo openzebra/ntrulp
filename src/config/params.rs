@@ -1,9 +1,9 @@
 use crate::params::params::NTRUParams;
 
 pub const SNTRP_761: NTRUParams = NTRUParams {
-    p: 761,
-    q: 4591,
-    w: 286,
+    p: 857,
+    q: 5167,
+    w: 322,
 };
 pub const SNTRP_653: NTRUParams = NTRUParams {
     p: 653,
