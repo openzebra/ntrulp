@@ -41,9 +41,18 @@ pub fn mult_small<const P: usize>(h: &mut [i16], f: &[i16], g: &[i8]) {
     }
 }
 
+// h = 3f in Rq
+pub fn mult3<const P: usize>(h: &mut [i16], f: &[i16]) {
+    for i in 0..P {
+        let x = (3 * f[i]) as i32;
+
+        h[i] = freeze(x);
+    }
+}
+
 #[cfg(test)]
 mod test_fq {
-    use super::mult_small;
+    use super::*;
 
     #[test]
     fn test_mult_small() {
@@ -55,5 +64,16 @@ mod test_fq {
         mult_small::<P>(&mut h, &f, &g);
 
         assert_eq!(h, [2, 2, -2, 0, -1, 0, -2, 2, 1,])
+    }
+
+    #[test]
+    fn test_mult3() {
+        const P: usize = 9;
+        let f = [0, 0, 1, 0, 0, -1, 0, -1, -1];
+        let mut h = [i16::default(); P];
+
+        mult3::<P>(&mut h, &f);
+
+        assert_eq!(h, [0, 0, 3, 0, 0, -3, 0, -3, -3,])
     }
 }
