@@ -103,12 +103,11 @@ impl<const SIZE: usize> CommonRandom<SIZE> for NTRURandom<SIZE> {
         list.sort();
 
         let mut new_list = [0i32; SIZE];
+        let mut sum = 0;
 
         for i in 0..SIZE {
             new_list[i] = list[i] as i32;
         }
-
-        let mut sum = 0;
 
         for element in new_list.iter_mut() {
             let new_value = element.rem_euclid(4) as i32 - 1;
@@ -129,7 +128,7 @@ impl<const SIZE: usize> CommonRandom<SIZE> for NTRURandom<SIZE> {
         let mut i16_list = [0i16; SIZE];
 
         for i in 0..SIZE {
-            i16_list[i] = (new_list[i] + 1) as i16;
+            i16_list[i] = new_list[i] as i16;
         }
 
         Ok(i16_list)
@@ -139,7 +138,6 @@ impl<const SIZE: usize> CommonRandom<SIZE> for NTRURandom<SIZE> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::params::SNTRP_761;
 
     #[test]
     fn test_seed() {
@@ -162,12 +160,16 @@ mod tests {
 
     #[test]
     fn test_random_small_vec() {
-        // const SIZE: usize = 9000;
-        // let mut random: NTRURandom<SIZE> = NTRURandom::new();
-        //
-        // let r = random.short_random().unwrap();
-        //
-        // assert!(r.len() == 9000)
+        const P: usize = 857;
+        const W: usize = 322;
+        let mut random: NTRURandom<P> = NTRURandom::new();
+
+        for _ in 0..100 {
+            let r = random.short_random(W).unwrap();
+
+            assert!(r.len() == P);
+            assert!(r.contains(&-1) && r.contains(&0) && r.contains(&1));
+        }
     }
 
     #[test]
@@ -180,17 +182,17 @@ mod tests {
             assert!(r <= 1 && r >= -1);
         }
     }
-    //
-    // #[test]
-    // fn test_shot_random() {
-    //     const SIZE: usize = 761;
-    //     let mut random: NTRURandom<SIZE> = NTRURandom::new();
-    // let values = random.short_random::<u8>(SIZE);
-    //
-    //     assert!(values.is_ok());
-    //
-    //     let values = values.unwrap();
-    //
-    //     assert!(values.len() == SNTRP_761.p);
-    // }
+
+    #[test]
+    fn test_shot_random() {
+        const P: usize = 857;
+        let mut random: NTRURandom<P> = NTRURandom::new();
+
+        for _ in 0..1000 {
+            let r = random.random_small().unwrap();
+
+            assert!(r.len() == P);
+            assert!(r.contains(&-1) && r.contains(&0) && r.contains(&1));
+        }
+    }
 }
