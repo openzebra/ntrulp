@@ -12,6 +12,10 @@ impl<const P: usize, const Q: usize, const Q12: usize> Rq<P, Q, Q12> {
         Self { coeffs: [0i16; P] }
     }
 
+    pub fn from(coeffs: [i16; P]) -> Self {
+        Self { coeffs }
+    }
+
     // h = f*g in the ring Rq
     pub fn mult_small(&mut self, f: &[i16], g: &[i8]) {
         // TODO: possible make it on stack.
@@ -58,15 +62,12 @@ impl<const P: usize, const Q: usize, const Q12: usize> Rq<P, Q, Q12> {
         }
     }
 
-    // int i;
-    // for (i = 0; i < p; ++i)
-    //   out[i] = F3_freeze(r[i]);
-    // TODO: make it as R3 Poly
+    // TODO: add return it as R3 Poly
     pub fn r3_from_rq(&self) -> [i8; P] {
-        let out = [0i8; P];
+        let mut out = [0i8; P];
 
         for i in 0..P {
-            // out[i] = f3::freeze(self.coeffs[i])
+            out[i] = f3::freeze(self.coeffs[i])
         }
 
         out
@@ -103,5 +104,17 @@ mod test_rq {
         h.mult3(&f);
 
         assert_eq!(h.coeffs, [0, 0, 3, 0, 0, -3, 0, -3, -3,])
+    }
+
+    #[test]
+    fn test_r3_from_rq() {
+        const Q: usize = 4591;
+        const Q12: usize = (Q - 1) / 2;
+        const P: usize = 9;
+
+        let h: Rq<P, Q, Q12> = Rq::from([0, 0, 1, 0, 0, -1, 0, -1, -1]);
+        let r3 = h.r3_from_rq();
+
+        assert_eq!(r3, [0, 0, 1, 0, 0, -1, 0, -1, -1]);
     }
 }
