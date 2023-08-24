@@ -24,7 +24,7 @@ pub fn uint32_divmod_uint14(x: u32, m: u16) -> (u32, u16) {
     let sub_x = final_x.wrapping_sub(m as u32);
 
     q += 1;
-    mask = if sub_x >> 31 != 0 { 0xFFFFFFFF } else { 0 };
+    mask = if sub_x >> 31 != 0 { u32::MAX } else { 0 };
 
     let added_x = sub_x.wrapping_add(mask & m as u32);
     let final_q = q.wrapping_add(mask);
@@ -41,7 +41,7 @@ pub fn int32_divmod_uint14(x: i32, m: u16) -> (u32, u32) {
     ur = ur.wrapping_sub(ur2 as u32);
     uq = uq.wrapping_sub(uq2);
 
-    let mask: u32 = if ur >> 15 != 0 { 0xFFFFFFFF } else { 0 };
+    let mask: u32 = if ur >> 15 != 0 { u32::MAX } else { 0 };
 
     ur = ur.wrapping_add(mask & m as u32);
     uq = uq.wrapping_add(mask);
