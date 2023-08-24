@@ -1,5 +1,7 @@
 use crate::kem::fq;
 
+use super::f3;
+
 #[derive(Debug)]
 pub struct Rq<const P: usize, const Q: usize, const Q12: usize> {
     coeffs: [i16; P],
@@ -54,6 +56,20 @@ impl<const P: usize, const Q: usize, const Q12: usize> Rq<P, Q, Q12> {
 
             self.coeffs[i] = fq::freeze::<Q12, Q>(x);
         }
+    }
+
+    // int i;
+    // for (i = 0; i < p; ++i)
+    //   out[i] = F3_freeze(r[i]);
+    // TODO: make it as R3 Poly
+    pub fn r3_from_rq(&self) -> [i8; P] {
+        let out = [0i8; P];
+
+        for i in 0..P {
+            // out[i] = f3::freeze(self.coeffs[i])
+        }
+
+        out
     }
 }
 
