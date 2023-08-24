@@ -5,7 +5,7 @@ pub struct Fq<const P: usize> {
     coeffs: [i16; P],
 }
 
-pub fn freeze<const Q12: u16, const Q: u16>(x: i32) -> i16 {
+pub fn freeze<const Q12: usize, const Q: usize>(x: i32) -> i16 {
     let r = int32_mod_uint14(x + Q12 as i32, Q as u16);
 
     (r as i16).wrapping_sub(Q12 as i16)
@@ -15,8 +15,8 @@ pub fn freeze<const Q12: u16, const Q: u16>(x: i32) -> i16 {
 fn test_freeze() {
     use rand::prelude::*;
 
-    const Q: u16 = 4591;
-    const Q12: u16 = (Q - 1) / 2;
+    const Q: usize = 4591;
+    const Q12: usize = (Q - 1) / 2;
 
     let mut rng = thread_rng();
 
