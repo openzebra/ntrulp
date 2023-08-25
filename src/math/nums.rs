@@ -12,6 +12,13 @@ pub fn i16_nonzero_mask(x: i16) -> i16 {
     return if v != 0 { -1 } else { 0 };
 }
 
+pub fn i16_negative_mask(x: i16) -> i16 {
+    let u = x as u16;
+    let u = u >> 15;
+
+    -(u as i16)
+}
+
 pub fn u32_divmod_u14(x: u32, m: u16) -> (u32, u16) {
     let mut v = V;
     let mut qpart;
@@ -91,4 +98,19 @@ fn test_nonzero_mask() {
     assert_eq!(i16_nonzero_mask(-28), -1);
     assert_eq!(i16_nonzero_mask(12345), -1);
     assert_eq!(i16_nonzero_mask(-12345), -1);
+}
+
+#[test]
+fn test_negative_mask() {
+    assert_eq!(i16_negative_mask(42), 0);
+    assert_eq!(i16_negative_mask(-42), -1);
+    assert_eq!(i16_negative_mask(0), 0);
+    assert_eq!(i16_negative_mask(i16::MIN), -1);
+    assert_eq!(i16_negative_mask(i16::MAX), 0);
+    assert_eq!(i16_negative_mask(33), 0);
+    assert_eq!(i16_negative_mask(-33), -1);
+    assert_eq!(i16_negative_mask(28), 0);
+    assert_eq!(i16_negative_mask(-28), -1);
+    assert_eq!(i16_negative_mask(12345), 0);
+    assert_eq!(i16_negative_mask(-12345), -1);
 }
