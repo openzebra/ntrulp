@@ -1,7 +1,7 @@
-use crate::math::nums::int32_mod_uint14;
+use crate::math::nums::i32_mod_u14;
 
 pub fn freeze(x: i16) -> i8 {
-    let r = int32_mod_uint14(x as i32 + 1, 3) as i8;
+    let r = i32_mod_u14(x as i32 + 1, 3) as i8;
 
     r - 1
 }

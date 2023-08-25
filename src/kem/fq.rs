@@ -1,4 +1,4 @@
-use crate::math::nums::int32_mod_uint14;
+use crate::math::nums::i32_mod_u14;
 
 #[derive(Debug)]
 pub struct Fq<const P: usize> {
@@ -6,7 +6,7 @@ pub struct Fq<const P: usize> {
 }
 
 pub fn freeze<const Q12: usize, const Q: usize>(x: i32) -> i16 {
-    let r = int32_mod_uint14(x + Q12 as i32, Q as u16);
+    let r = i32_mod_u14(x + Q12 as i32, Q as u16);
 
     (r as i16).wrapping_sub(Q12 as i16)
 }
