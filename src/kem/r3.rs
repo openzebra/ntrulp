@@ -258,6 +258,7 @@ mod test_r3 {
         const Q: usize = 4591;
         const Q12: usize = (Q - 1) / 2;
 
+        let zero_r3: R3<P, Q, Q12> = R3::new();
         let rq: R3<P, Q, Q12> = R3::from([
             1, 0, 0, 0, 0, 0, 1, 0, -1, -1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0,
             1, 0, -1, 1, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0, 0, 0, 1,
@@ -290,6 +291,8 @@ mod test_r3 {
         ]);
 
         let out = rq.recip3().unwrap();
+
+        assert!(zero_r3.recip3().is_err());
 
         assert_eq!(
             out.get_coeffs(),
