@@ -1,4 +1,4 @@
-use super::f3;
+use super::{f3, r3::R3};
 use crate::kem::fq;
 
 #[derive(Debug)]
@@ -22,8 +22,10 @@ impl<const P: usize, const Q: usize, const Q12: usize> Rq<P, Q, Q12> {
     }
 
     // h = f*g in the ring Rq
-    pub fn mult_small(&mut self, f: &[i16], g: &[i8]) {
+    pub fn mult_small(&mut self, fq: &Rq<P, Q, Q12>, g3: &R3<P, Q, Q12>) {
         // TODO: possible make it on stack.
+        let f = fq.get_coeffs();
+        let g = g3.get_coeffs();
         let mut fg = vec![0i16; P + P - 1];
 
         for i in 0..P {
@@ -89,8 +91,8 @@ mod test_rq {
         const Q12: usize = (Q - 1) / 2;
         const P: usize = 9;
 
-        let f = [0, 0, 1, 0, 0, -1, 0, -1, -1];
-        let g = [-1, 0, -1, 1, -1, 0, 1, 0, 0];
+        let f: Rq<P, Q, Q12> = Rq::from([0, 0, 1, 0, 0, -1, 0, -1, -1]);
+        let g: R3<P, Q, Q12> = R3::from([-1, 0, -1, 1, -1, 0, 1, 0, 0]);
         let mut h: Rq<P, Q, Q12> = Rq::new();
 
         h.mult_small(&f, &g);
