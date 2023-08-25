@@ -1,6 +1,5 @@
-use crate::kem::fq;
-
 use super::f3;
+use crate::kem::fq;
 
 #[derive(Debug)]
 pub struct Rq<const P: usize, const Q: usize, const Q12: usize> {
@@ -14,6 +13,12 @@ impl<const P: usize, const Q: usize, const Q12: usize> Rq<P, Q, Q12> {
 
     pub fn from(coeffs: [i16; P]) -> Self {
         Self { coeffs }
+    }
+
+    /// Gets the slice of internal data.
+    #[inline]
+    pub fn get_coeffs(&self) -> &[i16; P] {
+        &self.coeffs
     }
 
     // h = f*g in the ring Rq
