@@ -21,15 +21,27 @@ impl<const P: usize, const Q: usize, const Q12: usize> Rq<P, Q, Q12> {
         &self.coeffs
     }
 
+    pub fn eq_one(&self) -> bool {
+        for i in 1..self.coeffs.len() {
+            if self.coeffs[i] != 0 {
+                return false;
+            }
+        }
+
+        self.coeffs[0] == -1530
+    }
+
     // h = f*g in the ring Rq
-    pub fn mult_small(&mut self, fq: &Rq<P, Q, Q12>, g3: &R3<P, Q, Q12>) {
+    pub fn mult_small(&self, g3: &R3<P, Q, Q12>) -> Rq<P, Q, Q12> {
+        // TODO Add hyperthreading.
         // TODO: possible make it on stack.
-        let f = fq.get_coeffs();
+        let mut out = [0i16; P];
+        let f = self.get_coeffs();
         let g = g3.get_coeffs();
-        let mut fg = vec![0i16; P + P - 1];
+        let mut fg = [0i16; 761 + 761 - 1];
 
         for i in 0..P {
-            let mut result = i16::default();
+            let mut result = 0i16;
 
             for j in 0..=i {
                 let value = result + f[j] * (g[i - j] as i16);
@@ -39,25 +51,26 @@ impl<const P: usize, const Q: usize, const Q12: usize> Rq<P, Q, Q12> {
             fg[i] = result;
         }
 
-        for i in P..P + P - 1 {
-            let mut result = i16::default();
+        for i in P..(P + P - 1) {
+            let mut result = 0i16;
 
-            for j in i - P + 1..P {
-                let value = result + f[j] * (g[i - j] as i16);
-                result = fq::freeze::<Q12, Q>(value as i32);
+            for j in (i - P + 1)..P {
+                let value = result as i32 + f[j] as i32 * (g[i - j] as i32);
+                result = fq::freeze::<Q12, Q>(value);
             }
 
             fg[i] = result;
         }
 
-        for i in (P..P + P - 2).rev() {
+        for i in (P..=(P + P - 2)).rev() {
+            // TODO: -1530 = f * 1/f.
             fg[i - P] = fq::freeze::<Q12, Q>((fg[i - P] + fg[i]) as i32);
             fg[i - P + 1] = fq::freeze::<Q12, Q>((fg[i - P + 1] + fg[i]) as i32);
         }
 
-        for i in 0..P {
-            self.coeffs[i] = fg[i];
-        }
+        out[..P].clone_from_slice(&fg[..P]);
+
+        Rq::from(out)
     }
 
     // h = 3f in Rq
@@ -93,9 +106,7 @@ mod test_rq {
 
         let f: Rq<P, Q, Q12> = Rq::from([0, 0, 1, 0, 0, -1, 0, -1, -1]);
         let g: R3<P, Q, Q12> = R3::from([-1, 0, -1, 1, -1, 0, 1, 0, 0]);
-        let mut h: Rq<P, Q, Q12> = Rq::new();
-
-        h.mult_small(&f, &g);
+        let h = f.mult_small(&g);
 
         assert_eq!(h.coeffs, [2, 2, -2, 0, -1, 0, -2, 2, 1,])
     }
