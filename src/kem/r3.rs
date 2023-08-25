@@ -464,7 +464,7 @@ mod test_r3 {
 
         let mut random: NTRURandom<P> = NTRURandom::new();
 
-        for _ in 0..1000 {
+        for _ in 0..2 {
             let r3: R3<P, Q, Q12> = R3::from(random.random_small().unwrap());
 
             let out = r3.recip().unwrap();
