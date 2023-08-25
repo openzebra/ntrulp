@@ -70,14 +70,14 @@ impl<const P: usize, const Q: usize, const Q12: usize> Rq<P, Q, Q12> {
     }
 
     // TODO: add return it as R3 Poly
-    pub fn r3_from_rq(&self) -> [i8; P] {
+    pub fn r3_from_rq(&self) -> R3<P, Q, Q12> {
         let mut out = [0i8; P];
 
         for i in 0..P {
             out[i] = f3::freeze(self.coeffs[i])
         }
 
-        out
+        R3::from(out)
     }
 }
 
@@ -122,6 +122,6 @@ mod test_rq {
         let h: Rq<P, Q, Q12> = Rq::from([0, 0, 1, 0, 0, -1, 0, -1, -1]);
         let r3 = h.r3_from_rq();
 
-        assert_eq!(r3, [0, 0, 1, 0, 0, -1, 0, -1, -1]);
+        assert_eq!(r3.get_coeffs(), &[0, 0, 1, 0, 0, -1, 0, -1, -1]);
     }
 }

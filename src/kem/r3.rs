@@ -25,7 +25,10 @@ impl<const P: usize, const Q: usize, const Q12: usize> R3<P, Q, Q12> {
     }
 
     // h = f*g in the ring R3
-    pub fn r3_mult(&mut self, f: &[i8; P], g: &[i8; P]) {
+    pub fn mult(&self, g3: &R3<P, Q, Q12>) -> R3<P, Q, Q12> {
+        let f = self.coeffs;
+        let g = g3.get_coeffs();
+        let mut out = [0i8; P];
         let mut fg = vec![0i8; P * 2 - 1];
 
         for i in 0..P {
@@ -54,7 +57,20 @@ impl<const P: usize, const Q: usize, const Q12: usize> R3<P, Q, Q12> {
             fg[i - P + 1] = f3::freeze(x1 as i16);
         }
 
-        self.coeffs[..P].clone_from_slice(&fg[..P]);
+        out[..P].clone_from_slice(&fg[..P]);
+
+        R3::from(out)
+    }
+
+    pub fn eq_one(&self) -> bool {
+        for i in 1..self.coeffs.len() {
+            if self.coeffs[i] != 0 {
+                dbg!(self.coeffs[i]);
+                return false;
+            }
+        }
+
+        self.coeffs[0] == 1
     }
 
     pub fn recip(&self) -> Result<R3<P, Q, Q12>, KemErrors> {
@@ -228,7 +244,10 @@ mod test_r3 {
     #[test]
     fn test_r3_mult() {
         const P: usize = 761;
-        let f: [i8; P] = [
+        const Q: usize = 4591;
+        const Q12: usize = (Q - 1) / 2;
+
+        let f: R3<P, Q, Q12> = R3::from([
             1, 0, -1, 0, 1, -1, 0, 0, -1, 0, -1, 1, -1, -1, 0, 1, 1, 0, 0, 0, 0, -1, 0, -1, 0, 1,
             0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, -1, -1, 1, 0, 0, 0, -1, 0, 0, 1, 1, 1, -1, 1, 1, 1, 1,
             0, 0, 1, -1, 0, 0, -1, 1, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 1, -1, -1, -1, 0,
@@ -257,8 +276,8 @@ mod test_r3 {
             -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, -1, 0, -1, 1, 1, 0, 0, 1, 0, 1, -1, -1, 0, 1,
             -1, -1, 0, 0, 0, 0, -1, 1, 0, 0, -1, -1, 0, 0, 1, 0, -1, 0, 0, 0, 0, 0, 0, 1, -1, 1, 0,
             0, 0, 1, 1, 1, 0, 0, -1, 0, 0, -1, 0, 0, 0, 1, -1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0,
-        ];
-        let g: [i8; P] = [
+        ]);
+        let g: R3<P, Q, Q12> = R3::from([
             -1, 1, -1, 0, 0, -1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, -1,
             -1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1,
             -1, 0, -1, -1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, -1, 0, 0, 1, 1, 0, 0, -1, -1,
@@ -287,10 +306,8 @@ mod test_r3 {
             1, -1, 0, 0, 1, 0, 0, 0, 1, -1, 0, -1, 0, -1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, -1, 0,
             0, 0, 1, 1, 1, -1, -1, -1, 0, 0, 0, 0, 1, -1, 1, 0, 0, 0, 0, 0, 1, 0, -1, 0, 1, -1, 0,
             0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, -1, 1,
-        ];
-        let mut h: R3<P, 1, 1> = R3::new();
-
-        h.r3_mult(&f, &g);
+        ]);
+        let h = f.mult(&g);
 
         assert_eq!(
             h.coeffs,
@@ -474,6 +491,9 @@ mod test_r3 {
         ]);
 
         let out = r3.recip().unwrap();
+        let one = out.mult(&r3);
+
+        assert!(one.eq_one());
 
         assert_eq!(
             out.get_coeffs(),
