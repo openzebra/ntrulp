@@ -51,7 +51,7 @@ impl<const P: usize, const Q: usize, const Q12: usize> Rq<P, Q, Q12> {
         let mut out = [0i16; P];
         let f = self.get_coeffs();
         let g = gq.get_coeffs();
-        let mut fg = [0i16; 761 + 761 - 1];
+        let mut fg = vec![0i16; P + P - 1];
 
         for i in 0..P {
             let mut result = 0i16;

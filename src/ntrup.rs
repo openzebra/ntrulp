@@ -117,12 +117,26 @@ mod tests {
 
     #[test]
     fn test_gen_key_pair() {
-        const P: usize = 761;
-        const Q: usize = 4591;
-        const W: usize = 286;
-        const Q12: usize = (Q - 1) / 2;
+        let ntrup = NTRUPrime::<761, 4591, 286, 4590>::new().unwrap();
 
-        let ntrup: NTRUPrime<P, Q, W, Q12> = NTRUPrime::new().unwrap();
+        assert!(ntrup.key_pair.verify());
+
+        let ntrup = NTRUPrime::<857, 5167, 322, 5166>::new().unwrap();
+
+        assert!(ntrup.key_pair.verify());
+
+        let ntrup = NTRUPrime::<653, 4621, 288, 4620>::new().unwrap();
+
+        assert!(ntrup.key_pair.verify());
+
+        let ntrup = NTRUPrime::<953, 6343, 396, 6342>::new().unwrap();
+
+        assert!(ntrup.key_pair.verify());
+
+        let ntrup = NTRUPrime::<1013, 7177, 448, 7176>::new().unwrap();
+
+        assert!(ntrup.key_pair.verify());
+        let ntrup = NTRUPrime::<1277, 7879, 492, 7878>::new().unwrap();
 
         assert!(ntrup.key_pair.verify());
     }
