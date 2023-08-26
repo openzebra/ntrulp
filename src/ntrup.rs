@@ -104,7 +104,7 @@ impl<const P: usize, const Q: usize, const W: usize, const Q12: usize> NTRUPrime
 #[cfg(test)]
 mod tests {
     use crate::{
-        kem::{r3::R3, rq::Rq},
+        kem::r3::R3,
         ntrup::NTRUPrime,
         random::{CommonRandom, NTRURandom},
     };
@@ -167,7 +167,5 @@ mod tests {
         ntrup.key_pair_gen().unwrap();
 
         let encrypted = ntrup.encrypt(&cipher);
-
-        dbg!(encrypted);
     }
 }

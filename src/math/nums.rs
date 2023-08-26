@@ -72,6 +72,29 @@ pub fn i32_mod_u14(x: i32, m: u16) -> u32 {
     i32_divmod_u14(x, m).1
 }
 
+pub fn weightw_mask<const P: usize, const W: usize>(r: &[i8; P]) -> i16 {
+    let mut weight = 0i16;
+
+    for i in 0..P {
+        weight += r[i] as i16 & 1;
+    }
+
+    i16_nonzero_mask(weight - W as i16) as i16
+}
+
+#[test]
+fn test_weightw_mask() {
+    const P: usize = 8;
+    const W: usize = 4;
+    let r1: [i8; P] = [1, 1, 0, 0, 1, 0, 1, 1];
+
+    assert_eq!(weightw_mask::<P, W>(&r1), -1);
+
+    let r2: [i8; P] = [1, 0, 0, 0, 1, 0, 1, 1];
+
+    assert_eq!(weightw_mask::<P, W>(&r2), 0);
+}
+
 #[test]
 fn test_i32_divmod_u14() {
     assert_eq!(i32_divmod_u14(100, 30), (3, 10));

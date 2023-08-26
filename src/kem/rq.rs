@@ -45,45 +45,6 @@ impl<const P: usize, const Q: usize, const Q12: usize> Rq<P, Q, Q12> {
     }
 
     // h = f*g in the ring Rq
-    pub fn mult(&self, gq: &Rq<P, Q, Q12>) -> Rq<P, Q, Q12> {
-        let mut out = [0i16; P];
-        let f = self.get_coeffs();
-        let g = gq.get_coeffs();
-        let mut fg = vec![0i16; P + P - 1];
-
-        for i in 0..P {
-            let mut result = 0i16;
-
-            for j in 0..=i {
-                let value = result as i32 + f[j] as i32 * (g[i - j]) as i32;
-                result = fq::freeze::<Q12, Q>(value);
-            }
-
-            fg[i] = result;
-        }
-
-        for i in P..(P + P - 1) {
-            let mut result = 0i16;
-
-            for j in (i - P + 1)..P {
-                let value = result as i32 + f[j] as i32 * (g[i - j] as i32);
-                result = fq::freeze::<Q12, Q>(value);
-            }
-
-            fg[i] = result;
-        }
-
-        for i in (P..=(P + P - 2)).rev() {
-            // TODO: -1530 = f * 1/f.
-            fg[i - P] = fq::freeze::<Q12, Q>((fg[i - P] + fg[i]) as i32);
-            fg[i - P + 1] = fq::freeze::<Q12, Q>((fg[i - P + 1] + fg[i]) as i32);
-        }
-
-        out[..P].clone_from_slice(&fg[..P]);
-
-        Rq::from(out)
-    }
-    // h = f*g in the ring Rq
     pub fn mult_small(&self, gq: &R3<P, Q, Q12>) -> Rq<P, Q, Q12> {
         // TODO Add hyperthreading.
         // TODO: possible make it on stack.
