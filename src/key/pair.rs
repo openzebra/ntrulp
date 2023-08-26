@@ -30,7 +30,7 @@ impl<const P: usize, const Q: usize, const Q12: usize> KeyPair<P, Q, Q12> {
         })
     }
 
-    pub fn verify(&self) {
+    pub fn verify(&self) -> bool {
         let f3 = self.priv_key.f.r3_from_rq();
         let mut a = self.pub_key.h.mult_small(&f3);
 
@@ -38,7 +38,7 @@ impl<const P: usize, const Q: usize, const Q12: usize> KeyPair<P, Q, Q12> {
 
         let b = a.mult_small(&self.priv_key.ginv);
 
-        dbg!(b);
+        b.eq_zero()
     }
 }
 

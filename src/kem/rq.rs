@@ -34,6 +34,16 @@ impl<const P: usize, const Q: usize, const Q12: usize> Rq<P, Q, Q12> {
         self.coeffs[0] == -1530
     }
 
+    pub fn eq_zero(&self) -> bool {
+        for c in self.coeffs {
+            if c != 0 {
+                return false;
+            }
+        }
+
+        true
+    }
+
     // h = f*g in the ring Rq
     pub fn mult_small(&self, gq: &R3<P, Q, Q12>) -> Rq<P, Q, Q12> {
         // TODO Add hyperthreading.
