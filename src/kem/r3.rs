@@ -1,8 +1,5 @@
-use super::{errors::KemErrors, f3, rq::Rq};
-use crate::{
-    kem::fq,
-    math::nums::{i16_negative_mask, i16_nonzero_mask},
-};
+use super::{errors::KemErrors, f3};
+use crate::math::nums::{i16_negative_mask, i16_nonzero_mask};
 
 #[derive(Debug)]
 pub struct R3<const P: usize, const Q: usize, const Q12: usize> {

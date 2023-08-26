@@ -1,5 +1,5 @@
 use crate::{
-    kem::{r3::R3, rq::Rq},
+    kem::{f3::round, r3::R3, rq::Rq},
     key::pair::KeyPair,
     math,
     random::{CommonRandom, NTRURandom},
@@ -49,7 +49,13 @@ impl<const P: usize, const Q: usize, const W: usize, const Q12: usize> NTRUPrime
         Ok(NTRUPrime { rng, key_pair })
     }
 
-    pub fn encrypt(&self) {}
+    pub fn encrypt(&self, r: R3<P, Q, Q12>) -> Rq<P, Q, Q12> {
+        let h = &self.key_pair.pub_key.h;
+        let hr = h.mult_small(&r);
+        let hr_rounded = round(hr.get_coeffs());
+
+        Rq::from(hr_rounded)
+    }
 
     pub fn decrypt(&self) {}
 
@@ -101,11 +107,23 @@ mod tests {
 
     #[test]
     fn test_init_params() {
+        NTRUPrime::<761, 4591, 286, 4590>::new().unwrap();
+        NTRUPrime::<857, 5167, 322, 5166>::new().unwrap();
+        NTRUPrime::<653, 4621, 288, 4620>::new().unwrap();
+        NTRUPrime::<953, 6343, 396, 6342>::new().unwrap();
+        NTRUPrime::<1013, 7177, 448, 7176>::new().unwrap();
+        NTRUPrime::<1277, 7879, 492, 7878>::new().unwrap();
+    }
+
+    #[test]
+    fn test_gen_key_pair() {
         const P: usize = 761;
         const Q: usize = 4591;
         const W: usize = 286;
         const Q12: usize = (Q - 1) / 2;
 
         let ntrup: NTRUPrime<P, Q, W, Q12> = NTRUPrime::new().unwrap();
+
+        assert!(ntrup.key_pair.verify());
     }
 }

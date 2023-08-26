@@ -1,7 +1,4 @@
-use crate::{
-    kem::{errors::KemErrors, r3::R3, rq::Rq},
-    random::NTRURandom,
-};
+use crate::kem::{errors::KemErrors, r3::R3, rq::Rq};
 
 use super::{priv_key::PrivKey, pub_key::PubKey};
 
@@ -44,9 +41,10 @@ impl<const P: usize, const Q: usize, const Q12: usize> KeyPair<P, Q, Q12> {
 
 #[cfg(test)]
 mod test_pair {
-    use crate::random::CommonRandom;
-
     use super::*;
+
+    use crate::random::CommonRandom;
+    use crate::random::NTRURandom;
 
     #[test]
     fn test_key_gen_from_seed() {
