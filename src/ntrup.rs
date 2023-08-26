@@ -1,7 +1,7 @@
 use crate::{
     kem::{f3::round, r3::R3, rq::Rq},
     key::pair::KeyPair,
-    math,
+    math::{self, nums::weightw_mask},
     random::{CommonRandom, NTRURandom},
 };
 
@@ -57,7 +57,29 @@ impl<const P: usize, const Q: usize, const W: usize, const Q12: usize> NTRUPrime
         Rq::from(hr_rounded)
     }
 
-    pub fn decrypt(&self) {}
+    pub fn decrypt(&self, c: &Rq<P, Q, Q12>) -> R3<P, Q, Q12> {
+        let f = &self.key_pair.priv_key.f;
+        let ginv = &self.key_pair.priv_key.ginv;
+        let mut r = [0i8; P];
+        let cf: Rq<P, Q, Q12> = c.mult_small(&f.r3_from_rq());
+        let cf3: Rq<P, Q, Q12> = cf.mult3();
+        let e: R3<P, Q, Q12> = cf3.r3_from_rq();
+        let ev: R3<P, Q, Q12> = e.mult(&ginv);
+        #[allow(unused_assignments)]
+        let mut mask: i16 = 0;
+
+        mask = weightw_mask::<P, W>(ev.get_coeffs()); // 0 if weight w, else -1
+
+        for i in 0..W {
+            r[i] = (((ev.get_coeffs()[i] ^ 1) as i16 & !mask) ^ 1) as i8;
+        }
+
+        for i in W..P {
+            r[i] = (ev.get_coeffs()[i] as i16 & !mask) as i8;
+        }
+
+        R3::from(r)
+    }
 
     pub fn key_pair_gen(&mut self) -> Result<(), NTRUPrimeErrors> {
         const MAX_TRY: usize = 100;
@@ -99,12 +121,16 @@ impl<const P: usize, const Q: usize, const W: usize, const Q12: usize> NTRUPrime
 
         Ok(())
     }
+
+    pub fn set_key_pair(&mut self, key_pair: KeyPair<P, Q, Q12>) {
+        self.key_pair = key_pair;
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::{
-        kem::r3::R3,
+        kem::{r3::R3, rq::Rq},
         ntrup::NTRUPrime,
         random::{CommonRandom, NTRURandom},
     };
@@ -159,13 +185,23 @@ mod tests {
     }
 
     #[test]
-    fn test_encrypt() {
-        let mut rng: NTRURandom<761> = NTRURandom::new();
-        let cipher = R3::from(rng.random_small().unwrap());
-        let mut ntrup = NTRUPrime::<761, 4591, 286, 4590>::new().unwrap();
+    fn test_decrpt_encrypt() {
+        const P: usize = 761;
+        const Q: usize = 4591;
+        const W: usize = 286;
+        const Q12: usize = (Q - 1) / 2;
+
+        let mut ntrup = NTRUPrime::<P, Q, W, Q12>::new().unwrap();
 
         ntrup.key_pair_gen().unwrap();
 
-        let encrypted = ntrup.encrypt(&cipher);
+        for _ in 0..100 {
+            let mut rng: NTRURandom<P> = NTRURandom::new();
+            let c: R3<P, Q, Q12> = Rq::from(rng.short_random(W).unwrap()).r3_from_rq();
+            let encrypted = ntrup.encrypt(&c);
+            let decrypted = ntrup.decrypt(&encrypted);
+
+            assert_eq!(decrypted.get_coeffs(), c.get_coeffs())
+        }
     }
 }
