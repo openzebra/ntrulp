@@ -49,7 +49,7 @@ impl<const P: usize, const Q: usize, const W: usize, const Q12: usize> NTRUPrime
         Ok(NTRUPrime { rng, key_pair })
     }
 
-    pub fn encrypt(&self, r: R3<P, Q, Q12>) -> Rq<P, Q, Q12> {
+    pub fn encrypt(&self, r: &R3<P, Q, Q12>) -> Rq<P, Q, Q12> {
         let h = &self.key_pair.pub_key.h;
         let hr = h.mult_small(&r);
         let hr_rounded = round(hr.get_coeffs());
@@ -103,7 +103,11 @@ impl<const P: usize, const Q: usize, const W: usize, const Q12: usize> NTRUPrime
 
 #[cfg(test)]
 mod tests {
-    use crate::ntrup::NTRUPrime;
+    use crate::{
+        kem::{r3::R3, rq::Rq},
+        ntrup::NTRUPrime,
+        random::{CommonRandom, NTRURandom},
+    };
 
     #[test]
     fn test_init_params() {
@@ -117,27 +121,53 @@ mod tests {
 
     #[test]
     fn test_gen_key_pair() {
-        let ntrup = NTRUPrime::<761, 4591, 286, 4590>::new().unwrap();
+        let mut ntrup = NTRUPrime::<761, 4591, 286, 4590>::new().unwrap();
+
+        ntrup.key_pair_gen().unwrap();
 
         assert!(ntrup.key_pair.verify());
 
-        let ntrup = NTRUPrime::<857, 5167, 322, 5166>::new().unwrap();
+        let mut ntrup = NTRUPrime::<857, 5167, 322, 5166>::new().unwrap();
+
+        ntrup.key_pair_gen().unwrap();
 
         assert!(ntrup.key_pair.verify());
 
-        let ntrup = NTRUPrime::<653, 4621, 288, 4620>::new().unwrap();
+        let mut ntrup = NTRUPrime::<653, 4621, 288, 4620>::new().unwrap();
+
+        ntrup.key_pair_gen().unwrap();
 
         assert!(ntrup.key_pair.verify());
 
-        let ntrup = NTRUPrime::<953, 6343, 396, 6342>::new().unwrap();
+        let mut ntrup = NTRUPrime::<953, 6343, 396, 6342>::new().unwrap();
+
+        ntrup.key_pair_gen().unwrap();
 
         assert!(ntrup.key_pair.verify());
 
-        let ntrup = NTRUPrime::<1013, 7177, 448, 7176>::new().unwrap();
+        let mut ntrup = NTRUPrime::<1013, 7177, 448, 7176>::new().unwrap();
+
+        ntrup.key_pair_gen().unwrap();
 
         assert!(ntrup.key_pair.verify());
-        let ntrup = NTRUPrime::<1277, 7879, 492, 7878>::new().unwrap();
+
+        let mut ntrup = NTRUPrime::<1277, 7879, 492, 7878>::new().unwrap();
+
+        ntrup.key_pair_gen().unwrap();
 
         assert!(ntrup.key_pair.verify());
+    }
+
+    #[test]
+    fn test_encrypt() {
+        let mut rng: NTRURandom<761> = NTRURandom::new();
+        let cipher = R3::from(rng.random_small().unwrap());
+        let mut ntrup = NTRUPrime::<761, 4591, 286, 4590>::new().unwrap();
+
+        ntrup.key_pair_gen().unwrap();
+
+        let encrypted = ntrup.encrypt(&cipher);
+
+        dbg!(encrypted);
     }
 }

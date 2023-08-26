@@ -21,6 +21,16 @@ impl<const P: usize, const Q: usize, const Q12: usize> R3<P, Q, Q12> {
         &self.coeffs
     }
 
+    pub fn eq_zero(&self) -> bool {
+        for c in self.coeffs {
+            if c != 0 {
+                return false;
+            }
+        }
+
+        true
+    }
+
     // h = f*g in the ring R3
     pub fn mult(&self, g3: &R3<P, Q, Q12>) -> R3<P, Q, Q12> {
         // TODO Add hyperthreading.

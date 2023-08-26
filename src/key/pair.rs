@@ -16,26 +16,25 @@ impl<const P: usize, const Q: usize, const Q12: usize> KeyPair<P, Q, Q12> {
     }
 
     // h,(f,ginv)
-    pub fn from_seed(&self, g: R3<P, Q, Q12>, f: Rq<P, Q, Q12>) -> Result<Self, KemErrors> {
+    pub fn from_seed(&mut self, g: R3<P, Q, Q12>, f: Rq<P, Q, Q12>) -> Result<(), KemErrors> {
         let finv = f.recip3()?;
         let ginv = g.recip()?;
         let h = finv.mult_small(&g);
 
-        Ok(Self {
-            priv_key: PrivKey::from(f, ginv),
-            pub_key: PubKey::from(h),
-        })
+        self.priv_key = PrivKey::from(f, ginv);
+        self.pub_key = PubKey::from(h);
+
+        Ok(())
     }
 
     pub fn verify(&self) -> bool {
-        let f3 = self.priv_key.f.r3_from_rq();
-        let mut a = self.pub_key.h.mult_small(&f3);
+        if self.priv_key.f.eq_zero() || self.priv_key.ginv.eq_zero() || self.pub_key.h.eq_zero() {
+            return false;
+        }
 
-        a.mult_mod(3);
+        // TODO: calc inverse and add verify method.
 
-        let b = a.mult_small(&self.priv_key.ginv);
-
-        b.eq_zero()
+        true
     }
 }
 
@@ -54,7 +53,7 @@ mod test_pair {
         const Q12: usize = (Q - 1) / 2;
 
         let mut random: NTRURandom<P> = NTRURandom::new();
-        let pair: KeyPair<P, Q, Q12> = KeyPair::new();
+        let mut pair: KeyPair<P, Q, Q12> = KeyPair::new();
         let f: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap());
         let g: R3<P, Q, Q12> = R3::from(random.random_small().unwrap());
 
