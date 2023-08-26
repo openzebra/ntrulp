@@ -257,7 +257,7 @@ mod test_rq {
     }
 
     #[test]
-    fn test_recip3_exact() {
+    fn test_recip3_exact_match_with_sage() {
         const P: usize = 761;
         const Q: usize = 4591;
         const Q12: usize = (Q - 1) / 2;

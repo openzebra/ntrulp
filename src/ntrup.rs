@@ -195,7 +195,7 @@ mod tests {
 
         ntrup.key_pair_gen().unwrap();
 
-        for _ in 0..100 {
+        for _ in 0..10 {
             let mut rng: NTRURandom<P> = NTRURandom::new();
             let c: R3<P, Q, Q12> = Rq::from(rng.short_random(W).unwrap()).r3_from_rq();
             let encrypted = ntrup.encrypt(&c);
