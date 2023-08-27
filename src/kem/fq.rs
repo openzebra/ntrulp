@@ -3,7 +3,7 @@ use crate::math::nums::i32_mod_u14;
 pub fn freeze<const Q12: usize, const Q: usize>(x: i32) -> i16 {
     let r = i32_mod_u14(x + Q12 as i32, Q as u16);
 
-    (r as i16).wrapping_sub(Q12 as i16)
+    r as i16 - Q12 as i16
 }
 
 pub fn recip<const Q12: usize, const Q: usize>(a1: i16) -> i16 {

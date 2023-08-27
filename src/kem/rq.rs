@@ -102,19 +102,11 @@ impl<const P: usize, const Q: usize, const Q12: usize> Rq<P, Q, Q12> {
         let mut g0: i32;
         let scale: i16;
 
-        for i in 0..P + 1 {
-            v[i] = 0;
-        }
-        for i in 0..P + 1 {
-            r[i] = 0;
-        }
         r[0] = fq::recip::<Q12, Q>(3);
-        for i in 0..P {
-            f[i] = 0;
-        }
         f[0] = 1;
         f[P - 1] = -1;
         f[P] = -1;
+
         for i in 0..P {
             g[P - 1 - i] = input[i] as i16;
         }
@@ -143,6 +135,7 @@ impl<const P: usize, const Q: usize, const Q12: usize> Rq<P, Q, Q12> {
 
             f0 = f[0] as i32;
             g0 = g[0] as i32;
+
             for i in 0..P + 1 {
                 let x = f0 * g[i] as i32 - g0 * f[i] as i32;
                 g[i] = fq::freeze::<Q12, Q>(x);
@@ -155,10 +148,12 @@ impl<const P: usize, const Q: usize, const Q12: usize> Rq<P, Q, Q12> {
             for i in 0..P {
                 g[i] = g[i + 1];
             }
+
             g[P] = 0;
         }
 
         scale = fq::recip::<Q12, Q>(f[0]);
+
         for i in 0..P {
             let x = scale as i32 * (v[P - 1 - i] as i32);
             out[i] = fq::freeze::<Q12, Q>(x) as i16;

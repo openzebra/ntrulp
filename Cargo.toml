@@ -19,3 +19,7 @@ harness = false
 [[bench]]
 name = "chipher"
 harness = false
+
+[[bench]]
+name = "rq"
+harness = false
