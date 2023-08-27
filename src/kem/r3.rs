@@ -3,7 +3,7 @@ use crate::math::nums::{i16_negative_mask, i16_nonzero_mask};
 
 #[derive(Debug)]
 pub struct R3<const P: usize, const Q: usize, const Q12: usize> {
-    coeffs: [i8; P],
+    pub coeffs: [i8; P],
 }
 
 impl<const P: usize, const Q: usize, const Q12: usize> R3<P, Q, Q12> {
@@ -13,12 +13,6 @@ impl<const P: usize, const Q: usize, const Q12: usize> R3<P, Q, Q12> {
 
     pub fn from(coeffs: [i8; P]) -> Self {
         Self { coeffs }
-    }
-
-    /// Gets the slice of internal data.
-    #[inline]
-    pub fn get_coeffs(&self) -> &[i8; P] {
-        &self.coeffs
     }
 
     pub fn eq_zero(&self) -> bool {
@@ -35,7 +29,7 @@ impl<const P: usize, const Q: usize, const Q12: usize> R3<P, Q, Q12> {
     pub fn mult(&self, g3: &R3<P, Q, Q12>) -> R3<P, Q, Q12> {
         // TODO Add hyperthreading.
         let f = self.coeffs;
-        let g = g3.get_coeffs();
+        let g = g3.coeffs;
         let mut out = [0i8; P];
         let mut fg = vec![0i8; P * 2 - 1];
 
@@ -287,7 +281,7 @@ mod test_r3 {
             let out = r3.recip().unwrap();
             let one = out.mult(&r3);
 
-            assert_eq!(one.get_coeffs()[0], 1);
+            assert_eq!(one.coeffs[0], 1);
             assert!(one.eq_one());
         }
     }

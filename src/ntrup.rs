@@ -52,7 +52,7 @@ impl<const P: usize, const Q: usize, const W: usize, const Q12: usize> NTRUPrime
     pub fn encrypt(&self, r: &R3<P, Q, Q12>) -> Rq<P, Q, Q12> {
         let h = &self.key_pair.pub_key.h;
         let hr = h.mult_small(&r);
-        let hr_rounded = round(hr.get_coeffs());
+        let hr_rounded = round(&hr.coeffs);
 
         Rq::from(hr_rounded)
     }
@@ -68,14 +68,14 @@ impl<const P: usize, const Q: usize, const W: usize, const Q12: usize> NTRUPrime
         #[allow(unused_assignments)]
         let mut mask: i16 = 0;
 
-        mask = weightw_mask::<P, W>(ev.get_coeffs()); // 0 if weight w, else -1
+        mask = weightw_mask::<P, W>(&ev.coeffs); // 0 if weight w, else -1
 
         for i in 0..W {
-            r[i] = (((ev.get_coeffs()[i] ^ 1) as i16 & !mask) ^ 1) as i8;
+            r[i] = (((ev.coeffs[i] ^ 1) as i16 & !mask) ^ 1) as i8;
         }
 
         for i in W..P {
-            r[i] = (ev.get_coeffs()[i] as i16 & !mask) as i8;
+            r[i] = (ev.coeffs[i] as i16 & !mask) as i8;
         }
 
         R3::from(r)
@@ -201,7 +201,7 @@ mod tests {
             let encrypted = ntrup.encrypt(&c);
             let decrypted = ntrup.decrypt(&encrypted);
 
-            assert_eq!(decrypted.get_coeffs(), c.get_coeffs())
+            assert_eq!(decrypted.coeffs, c.coeffs);
         }
     }
 }

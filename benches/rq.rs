@@ -24,6 +24,18 @@ fn rq_benchmark(cb: &mut Criterion) {
             rq.mult_small(&r3);
         });
     });
+
+    cb.bench_function("rq_recip3: p=761", |b| {
+        b.iter(|| {
+            rq.recip3().unwrap();
+        });
+    });
+
+    cb.bench_function("rq_mult3: p=761", |b| {
+        b.iter(|| {
+            rq.mult3();
+        });
+    });
 }
 
 criterion_group!(benches, rq_benchmark);

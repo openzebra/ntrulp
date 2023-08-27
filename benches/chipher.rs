@@ -23,7 +23,7 @@ fn encrypt_benchmark(cb: &mut Criterion) {
             let encrypted = ntrup.encrypt(&c);
             let decrypted = ntrup.decrypt(&encrypted);
 
-            assert_eq!(decrypted.get_coeffs(), c.get_coeffs())
+            assert_eq!(decrypted.coeffs, c.coeffs);
         });
     });
 }

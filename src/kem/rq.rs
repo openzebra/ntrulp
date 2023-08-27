@@ -6,7 +6,7 @@ use crate::{
 
 #[derive(Debug)]
 pub struct Rq<const P: usize, const Q: usize, const Q12: usize> {
-    coeffs: [i16; P],
+    pub coeffs: [i16; P],
 }
 
 impl<const P: usize, const Q: usize, const Q12: usize> Rq<P, Q, Q12> {
@@ -16,12 +16,6 @@ impl<const P: usize, const Q: usize, const Q12: usize> Rq<P, Q, Q12> {
 
     pub fn from(coeffs: [i16; P]) -> Self {
         Self { coeffs }
-    }
-
-    /// Gets the slice of internal data.
-    #[inline]
-    pub fn get_coeffs(&self) -> &[i16; P] {
-        &self.coeffs
     }
 
     pub fn eq_one(&self) -> bool {
@@ -46,11 +40,9 @@ impl<const P: usize, const Q: usize, const Q12: usize> Rq<P, Q, Q12> {
 
     // h = f*g in the ring Rq
     pub fn mult_small(&self, gq: &R3<P, Q, Q12>) -> Rq<P, Q, Q12> {
-        // TODO Add hyperthreading.
-        // TODO: possible make it on stack.
         let mut out = [0i16; P];
-        let f = self.get_coeffs();
-        let g = gq.get_coeffs();
+        let f = self.coeffs;
+        let g = gq.coeffs;
         let mut fg = vec![0i16; P + P - 1];
 
         for i in 0..P {
@@ -229,7 +221,7 @@ mod test_rq {
         let h: Rq<P, Q, Q12> = Rq::from([0, 0, 1, 0, 0, -1, 0, -1, -1]);
         let r3 = h.r3_from_rq();
 
-        assert_eq!(r3.get_coeffs(), &[0, 0, 1, 0, 0, -1, 0, -1, -1]);
+        assert_eq!(r3.coeffs, [0, 0, 1, 0, 0, -1, 0, -1, -1]);
     }
 
     #[test]
@@ -294,8 +286,8 @@ mod test_rq {
         assert!(zero_r3.recip3().is_err());
 
         assert_eq!(
-            out.get_coeffs(),
-            &[
+            out.coeffs,
+            [
                 -1332, -599, 1628, 2057, -1137, -318, -1943, -1693, 690, -2276, 1635, 1114, -1716,
                 -2181, -2229, -394, -1054, 521, 10, 2235, -603, -377, 704, 561, 1540, 868, -1969,
                 -1150, -311, 828, -645, 388, 607, -355, -331, 1396, 1362, 2278, -25, 1532, 654,
