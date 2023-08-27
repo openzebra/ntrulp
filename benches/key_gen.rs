@@ -6,7 +6,7 @@ use ntrulpr::{
 };
 
 fn key_gen_benchmark(c: &mut Criterion) {
-    c.bench_function("p=761", |b| {
+    c.bench_function("keygen: p=761", |b| {
         b.iter(|| {
             const P: usize = 761;
             const Q: usize = 4591;
@@ -27,7 +27,7 @@ fn key_gen_benchmark(c: &mut Criterion) {
             }
         });
     });
-    c.bench_function("p=857", |b| {
+    c.bench_function("keygen: p=857", |b| {
         b.iter(|| {
             const P: usize = 857;
             const Q: usize = 5167;
@@ -48,7 +48,7 @@ fn key_gen_benchmark(c: &mut Criterion) {
             }
         });
     });
-    c.bench_function("p=953", |b| {
+    c.bench_function("keygen: p=953", |b| {
         b.iter(|| {
             const P: usize = 953;
             const Q: usize = 6343;
@@ -69,7 +69,7 @@ fn key_gen_benchmark(c: &mut Criterion) {
             }
         });
     });
-    c.bench_function("p=1013", |b| {
+    c.bench_function("keygen: p=1013", |b| {
         b.iter(|| {
             const P: usize = 1013;
             const Q: usize = 7177;
@@ -90,7 +90,7 @@ fn key_gen_benchmark(c: &mut Criterion) {
             }
         });
     });
-    c.bench_function("p=1277", |b| {
+    c.bench_function("keygen: p=1277", |b| {
         b.iter(|| {
             const P: usize = 1277;
             const Q: usize = 7879;

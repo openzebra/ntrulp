@@ -15,3 +15,7 @@ criterion = "0.3"
 [[bench]]
 name = "key_gen"
 harness = false
+
+[[bench]]
+name = "chipher"
+harness = false
