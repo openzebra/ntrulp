@@ -1,0 +1,117 @@
+use criterion::{criterion_group, criterion_main, Criterion};
+use ntrulpr::{
+    kem::{r3::R3, rq::Rq},
+    key::pair::KeyPair,
+    random::{CommonRandom, NTRURandom},
+};
+
+fn key_gen_benchmark(c: &mut Criterion) {
+    c.bench_function("p=761", |b| {
+        b.iter(|| {
+            const P: usize = 761;
+            const Q: usize = 4591;
+            const W: usize = 286;
+            const Q12: usize = (Q - 1) / 2;
+
+            let mut random: NTRURandom<P> = NTRURandom::new();
+            let mut pair: KeyPair<P, Q, Q12> = KeyPair::new();
+
+            loop {
+                let f: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap());
+                let g: R3<P, Q, Q12> = R3::from(random.random_small().unwrap());
+
+                match pair.from_seed(g, f) {
+                    Ok(_) => break,
+                    Err(_) => continue,
+                };
+            }
+        });
+    });
+    c.bench_function("p=857", |b| {
+        b.iter(|| {
+            const P: usize = 857;
+            const Q: usize = 5167;
+            const W: usize = 322;
+            const Q12: usize = (Q - 1) / 2;
+
+            let mut random: NTRURandom<P> = NTRURandom::new();
+            let mut pair: KeyPair<P, Q, Q12> = KeyPair::new();
+
+            loop {
+                let f: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap());
+                let g: R3<P, Q, Q12> = R3::from(random.random_small().unwrap());
+
+                match pair.from_seed(g, f) {
+                    Ok(_) => break,
+                    Err(_) => continue,
+                };
+            }
+        });
+    });
+    c.bench_function("p=953", |b| {
+        b.iter(|| {
+            const P: usize = 953;
+            const Q: usize = 6343;
+            const W: usize = 396;
+            const Q12: usize = (Q - 1) / 2;
+
+            let mut random: NTRURandom<P> = NTRURandom::new();
+            let mut pair: KeyPair<P, Q, Q12> = KeyPair::new();
+
+            loop {
+                let f: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap());
+                let g: R3<P, Q, Q12> = R3::from(random.random_small().unwrap());
+
+                match pair.from_seed(g, f) {
+                    Ok(_) => break,
+                    Err(_) => continue,
+                };
+            }
+        });
+    });
+    c.bench_function("p=1013", |b| {
+        b.iter(|| {
+            const P: usize = 1013;
+            const Q: usize = 7177;
+            const W: usize = 448;
+            const Q12: usize = (Q - 1) / 2;
+
+            let mut random: NTRURandom<P> = NTRURandom::new();
+            let mut pair: KeyPair<P, Q, Q12> = KeyPair::new();
+
+            loop {
+                let f: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap());
+                let g: R3<P, Q, Q12> = R3::from(random.random_small().unwrap());
+
+                match pair.from_seed(g, f) {
+                    Ok(_) => break,
+                    Err(_) => continue,
+                };
+            }
+        });
+    });
+    c.bench_function("p=1277", |b| {
+        b.iter(|| {
+            const P: usize = 1277;
+            const Q: usize = 7879;
+            const W: usize = 492;
+            const Q12: usize = (Q - 1) / 2;
+
+            let mut random: NTRURandom<P> = NTRURandom::new();
+            let mut pair: KeyPair<P, Q, Q12> = KeyPair::new();
+
+            loop {
+                let f: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap());
+                let g: R3<P, Q, Q12> = R3::from(random.random_small().unwrap());
+
+                match pair.from_seed(g, f) {
+                    Ok(_) => break,
+                    Err(_) => continue,
+                };
+            }
+        });
+    });
+}
+
+criterion_group!(benches, key_gen_benchmark);
+criterion_main!(benches);
