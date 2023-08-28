@@ -72,6 +72,10 @@ pub fn i32_mod_u14(x: i32, m: u16) -> u32 {
     i32_divmod_u14(x, m).1
 }
 
+pub fn u32_mod_u14(x: u32, m: u16) -> u16 {
+    u32_divmod_u14(x, m).1
+}
+
 pub fn weightw_mask<const P: usize, const W: usize>(r: &[i8; P]) -> i16 {
     let mut weight = 0i16;
 
