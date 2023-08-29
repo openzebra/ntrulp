@@ -14,11 +14,12 @@ pub enum NTRUErrors {
     QShouldBeMoreOrEq17MulWPlusOne,
     QModeSixShouldBeEqOne,
     KeyPairGen,
+    KeysIsEmpty,
 }
 
 pub struct NTRUPrime<const P: usize, const Q: usize, const W: usize, const Q12: usize> {
     pub key_pair: KeyPair<P, Q, Q12>,
-    rng: NTRURandom<P>,
+    pub rng: NTRURandom<P>,
 }
 
 impl<const P: usize, const Q: usize, const W: usize, const Q12: usize> NTRUPrime<P, Q, W, Q12> {
@@ -124,10 +125,6 @@ impl<const P: usize, const Q: usize, const W: usize, const Q12: usize> NTRUPrime
 
     pub fn set_key_pair(&mut self, key_pair: KeyPair<P, Q, Q12>) {
         self.key_pair = key_pair;
-    }
-
-    pub fn set_rng(&mut self, rng: NTRURandom<P>) {
-        self.rng = rng;
     }
 }
 
