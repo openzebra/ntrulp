@@ -80,6 +80,21 @@ impl<const P: usize, const Q: usize, const Q12: usize> KeyPair<P, Q, Q12> {
         self.priv_key.f = f.rq_from_r3();
         self.pub_key.h = h;
     }
+
+    pub fn import_sk(&mut self, sk: &[u8]) -> Result<(), KemErrors> {
+        let r3_bytes = (P + 3) / 4;
+        let f: Rq<P, Q, Q12> = R3::from(r3_decode(&sk[r3_bytes..])).rq_from_r3();
+        let ginv: R3<P, Q, Q12> = R3::from(r3_decode(&sk[..r3_bytes]));
+        let g = ginv.recip()?;
+        let finv = f.recip3()?;
+        let h = finv.mult_small(&g);
+
+        self.priv_key.ginv = ginv;
+        self.priv_key.f = f;
+        self.pub_key.h = h;
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -115,18 +130,24 @@ mod test_pair {
 
         let mut random: NTRURandom<P> = NTRURandom::new();
         let mut pair0: KeyPair<P, Q, Q12> = KeyPair::new();
+        let mut pair1: KeyPair<P, Q, Q12> = KeyPair::new();
+        let mut pair2: KeyPair<P, Q, Q12> = KeyPair::new();
         let f: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap());
         let g: R3<P, Q, Q12> = R3::from(random.random_small().unwrap());
-        let mut pair1: KeyPair<P, Q, Q12> = KeyPair::new();
 
         pair0.from_seed(g, f).unwrap();
 
         let (pk, sk) = pair0.export_pair().unwrap();
 
         pair1.import_pair(&pk, &sk);
+        pair2.import_sk(&sk).unwrap();
 
         assert_eq!(&pair0.pub_key.h.coeffs, &pair1.pub_key.h.coeffs);
         assert_eq!(&pair0.priv_key.f.coeffs, &pair1.priv_key.f.coeffs);
         assert_eq!(&pair0.priv_key.ginv.coeffs, &pair1.priv_key.ginv.coeffs);
+
+        assert_eq!(&pair0.pub_key.h.coeffs, &pair2.pub_key.h.coeffs);
+        assert_eq!(&pair0.priv_key.f.coeffs, &pair2.priv_key.f.coeffs);
+        assert_eq!(&pair0.priv_key.ginv.coeffs, &pair2.priv_key.ginv.coeffs);
     }
 }
