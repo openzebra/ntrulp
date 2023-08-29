@@ -186,7 +186,7 @@ mod tests {
     }
 
     #[test]
-    fn test_shot_random() {
+    fn test_short_random() {
         const P: usize = 761;
         let mut random: NTRURandom<P> = NTRURandom::new();
 

@@ -1,4 +1,4 @@
-use super::{errors::KemErrors, f3};
+use super::{errors::KemErrors, f3, fq, rq::Rq};
 use crate::math::nums::{i16_negative_mask, i16_nonzero_mask};
 
 #[derive(Debug)]
@@ -152,6 +152,16 @@ impl<const P: usize, const Q: usize, const Q12: usize> R3<P, Q, Q12> {
         } else {
             Err(KemErrors::R3NoSolutionRecip)
         }
+    }
+
+    pub fn rq_from_r3(&self) -> Rq<P, Q, Q12> {
+        let mut out = [0i16; P];
+
+        for i in 0..P {
+            out[i] = fq::freeze::<Q12, Q>(self.coeffs[i].into());
+        }
+
+        Rq::from(out)
     }
 }
 
