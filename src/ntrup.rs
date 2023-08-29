@@ -125,6 +125,10 @@ impl<const P: usize, const Q: usize, const W: usize, const Q12: usize> NTRUPrime
     pub fn set_key_pair(&mut self, key_pair: KeyPair<P, Q, Q12>) {
         self.key_pair = key_pair;
     }
+
+    pub fn set_rng(&mut self, rng: NTRURandom<P>) {
+        self.rng = rng;
+    }
 }
 
 #[cfg(test)]
