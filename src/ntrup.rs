@@ -6,7 +6,7 @@ use crate::{
 };
 
 #[derive(Debug)]
-pub enum NTRUPrimeErrors {
+pub enum NTRUErrors {
     PMustBePrimeNumber,
     QMustbePrimeNumber,
     WCannotBeLessZero,
@@ -22,25 +22,25 @@ pub struct NTRUPrime<const P: usize, const Q: usize, const W: usize, const Q12: 
 }
 
 impl<const P: usize, const Q: usize, const W: usize, const Q12: usize> NTRUPrime<P, Q, W, Q12> {
-    pub fn new() -> Result<Self, NTRUPrimeErrors> {
+    pub fn new() -> Result<Self, NTRUErrors> {
         if !math::prime::is_prime(P) {
-            return Err(NTRUPrimeErrors::PMustBePrimeNumber);
+            return Err(NTRUErrors::PMustBePrimeNumber);
         }
         if !math::prime::is_prime(Q) {
-            return Err(NTRUPrimeErrors::QMustbePrimeNumber);
+            return Err(NTRUErrors::QMustbePrimeNumber);
         }
         if !(W > 0) {
-            return Err(NTRUPrimeErrors::WCannotBeLessZero);
+            return Err(NTRUErrors::WCannotBeLessZero);
         }
         if !(2 * P >= 3 * W) {
-            return Err(NTRUPrimeErrors::DubblePShouldBeMoreOrEqTripleW);
+            return Err(NTRUErrors::DubblePShouldBeMoreOrEqTripleW);
         }
         if !(Q >= 16 * W + 1) {
-            return Err(NTRUPrimeErrors::QShouldBeMoreOrEq17MulWPlusOne);
+            return Err(NTRUErrors::QShouldBeMoreOrEq17MulWPlusOne);
         }
         if !(Q % 6 == 1) {
             // spec allows 5 but these tests do not
-            return Err(NTRUPrimeErrors::QModeSixShouldBeEqOne);
+            return Err(NTRUErrors::QModeSixShouldBeEqOne);
         }
 
         let rng: NTRURandom<P> = NTRURandom::new();
@@ -81,14 +81,14 @@ impl<const P: usize, const Q: usize, const W: usize, const Q12: usize> NTRUPrime
         R3::from(r)
     }
 
-    pub fn key_pair_gen(&mut self) -> Result<(), NTRUPrimeErrors> {
+    pub fn key_pair_gen(&mut self) -> Result<(), NTRUErrors> {
         const MAX_TRY: usize = 100;
 
         let mut k: usize = 0;
 
         loop {
             if k >= MAX_TRY {
-                return Err(NTRUPrimeErrors::KeyPairGen);
+                return Err(NTRUErrors::KeyPairGen);
             }
 
             let short_entropy = match self.rng.short_random(W) {
