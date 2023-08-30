@@ -4,7 +4,7 @@ use crate::{
         rq::{rq_decode, rq_encode},
     },
     kem::{errors::KemErrors, r3::R3, rq::Rq},
-    ntrup::NTRUErrors,
+    ntru::errors::NTRUErrors,
 };
 
 use super::{priv_key::PrivKey, pub_key::PubKey};

@@ -1,7 +1,7 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use ntrulpr::{
     kem::{r3::R3, rq::Rq},
-    ntrup::NTRUPrime,
+    ntru::ntrup::NTRUPrime,
     random::{CommonRandom, NTRURandom},
 };
 

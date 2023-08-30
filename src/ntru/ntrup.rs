@@ -1,21 +1,11 @@
 use crate::{
     kem::{f3::round, r3::R3, rq::Rq},
     key::pair::KeyPair,
-    math::{self, nums::weightw_mask},
+    math::nums::weightw_mask,
     random::{CommonRandom, NTRURandom},
 };
 
-#[derive(Debug)]
-pub enum NTRUErrors {
-    PMustBePrimeNumber,
-    QMustbePrimeNumber,
-    WCannotBeLessZero,
-    DubblePShouldBeMoreOrEqTripleW,
-    QShouldBeMoreOrEq17MulWPlusOne,
-    QModeSixShouldBeEqOne,
-    KeyPairGen,
-    KeysIsEmpty,
-}
+use super::{errors::NTRUErrors, params::check_params};
 
 pub struct NTRUPrime<const P: usize, const Q: usize, const W: usize, const Q12: usize> {
     pub key_pair: KeyPair<P, Q, Q12>,
@@ -24,25 +14,7 @@ pub struct NTRUPrime<const P: usize, const Q: usize, const W: usize, const Q12: 
 
 impl<const P: usize, const Q: usize, const W: usize, const Q12: usize> NTRUPrime<P, Q, W, Q12> {
     pub fn new() -> Result<Self, NTRUErrors> {
-        if !math::prime::is_prime(P) {
-            return Err(NTRUErrors::PMustBePrimeNumber);
-        }
-        if !math::prime::is_prime(Q) {
-            return Err(NTRUErrors::QMustbePrimeNumber);
-        }
-        if !(W > 0) {
-            return Err(NTRUErrors::WCannotBeLessZero);
-        }
-        if !(2 * P >= 3 * W) {
-            return Err(NTRUErrors::DubblePShouldBeMoreOrEqTripleW);
-        }
-        if !(Q >= 16 * W + 1) {
-            return Err(NTRUErrors::QShouldBeMoreOrEq17MulWPlusOne);
-        }
-        if !(Q % 6 == 1) {
-            // spec allows 5 but these tests do not
-            return Err(NTRUErrors::QModeSixShouldBeEqOne);
-        }
+        check_params::<P, Q, W, Q12>()?;
 
         let rng: NTRURandom<P> = NTRURandom::new();
         let key_pair: KeyPair<P, Q, Q12> = KeyPair::new();
@@ -130,9 +102,9 @@ impl<const P: usize, const Q: usize, const W: usize, const Q12: usize> NTRUPrime
 
 #[cfg(test)]
 mod tests {
+    use super::NTRUPrime;
     use crate::{
         kem::{r3::R3, rq::Rq},
-        ntrup::NTRUPrime,
         random::{CommonRandom, NTRURandom},
     };
 
