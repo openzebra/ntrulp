@@ -1,11 +1,11 @@
+use super::{errors::NTRUErrors, params::check_params};
 use crate::{
     kem::{f3::round, r3::R3, rq::Rq},
     key::pair::KeyPair,
     math::nums::weightw_mask,
     random::{CommonRandom, NTRURandom},
 };
-
-use super::{errors::NTRUErrors, params::check_params};
+use sha2::{Digest, Sha512};
 
 pub struct NTRUPrime<const P: usize, const Q: usize, const W: usize, const Q12: usize> {
     pub key_pair: KeyPair<P, Q, Q12>,
@@ -98,6 +98,29 @@ impl<const P: usize, const Q: usize, const W: usize, const Q12: usize> NTRUPrime
     pub fn set_key_pair(&mut self, key_pair: KeyPair<P, Q, Q12>) {
         self.key_pair = key_pair;
     }
+
+    fn hash_prefix<const PUB_KEY_BYTES: usize, const X_SIZE: usize>(
+        &self,
+        b: u8,
+        input: &[u8],
+    ) -> [u8; 32] {
+        let mut out = [0u8; 32];
+        let mut x = [0u8; X_SIZE];
+
+        x[0] = b;
+
+        for i in 0..PUB_KEY_BYTES {
+            x[i + 1] = input[i];
+        }
+
+        let mut hasher = Sha512::new();
+        hasher.update(&x[..X_SIZE]);
+        let hash_result = hasher.finalize();
+
+        out.copy_from_slice(&hash_result[..32]);
+
+        out
+    }
 }
 
 #[cfg(test)]
@@ -176,5 +199,29 @@ mod tests {
 
             assert_eq!(decrypted.coeffs, c.coeffs);
         }
+    }
+
+    #[test]
+    fn test_hash_prefix() {
+        const P: usize = 761;
+        const Q: usize = 4591;
+        const W: usize = 286;
+        const Q12: usize = (Q - 1) / 2;
+        const PUB_KEY_BYTES: usize = 19;
+        const X_SIZE: usize = PUB_KEY_BYTES + 1;
+
+        let ntrup = NTRUPrime::<P, Q, W, Q12>::new().unwrap();
+        let pk: [u8; PUB_KEY_BYTES] = [
+            148, 232, 167, 6, 238, 154, 62, 139, 23, 188, 44, 203, 145, 105, 86, 35, 189, 81, 53,
+        ];
+        let cache = ntrup.hash_prefix::<PUB_KEY_BYTES, X_SIZE>(4, &pk);
+
+        assert_eq!(
+            cache,
+            [
+                222, 186, 79, 121, 25, 137, 67, 75, 68, 147, 154, 85, 228, 55, 0, 27, 1, 11, 8, 13,
+                189, 11, 136, 143, 64, 153, 116, 221, 92, 2, 193, 228
+            ]
+        );
     }
 }

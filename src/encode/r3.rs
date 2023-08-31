@@ -25,7 +25,7 @@ pub fn r3_decode<const P: usize>(s: &[u8]) -> [i8; P] {
     let mut i = 0;
 
     while i < P / 4 {
-        x = s[i];
+        x = *s.get(i).unwrap_or(&0u8);
         f[i * 4] = (x & 3) as i8 - 1;
         x >>= 2;
         f[i * 4 + 1] = (x & 3) as i8 - 1;
@@ -36,10 +36,40 @@ pub fn r3_decode<const P: usize>(s: &[u8]) -> [i8; P] {
         i += 1;
     }
 
-    x = s[i];
+    x = *s.get(i).unwrap_or(&0u8);
     f[i * 4] = (x & 3) as i8 - 1;
 
     f
+}
+
+pub fn r3_split_bytes<const P: usize>(input: &[u8]) -> Vec<Vec<u8>> {
+    let chunk_size = P / 4 + 1;
+    let mut result: Vec<Vec<u8>> = Vec::new();
+
+    for chunk in input.chunks(chunk_size) {
+        let mut padded_chunk: Vec<u8> = chunk.to_vec();
+
+        while padded_chunk.len() < chunk_size {
+            padded_chunk.push(0);
+        }
+        result.push(padded_chunk);
+    }
+
+    result
+}
+
+#[test]
+fn test_chunk_split() {
+    use rand::Rng;
+
+    const P: usize = 761;
+
+    let mut rng = rand::thread_rng();
+    let array_length: usize = 255 + rng.gen::<u8>() as usize;
+    let random_bytes: Vec<u8> = (0..array_length).map(|_| rng.gen::<u8>()).collect();
+    let bytes_chunks = r3_split_bytes::<P>(&random_bytes);
+
+    assert_eq!(bytes_chunks.len(), random_bytes.len() / 190 + 1);
 }
 
 #[test]
