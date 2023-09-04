@@ -164,7 +164,7 @@ mod tests {
         const W: usize = 286;
         let mut random: NTRURandom<P> = NTRURandom::new();
 
-        // dbg!(random.short_random(W).unwrap());
+        // dbg!(random.random_small().unwrap());
 
         for _ in 0..100 {
             let r = random.short_random(W).unwrap();
