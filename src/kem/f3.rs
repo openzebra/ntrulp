@@ -1,4 +1,4 @@
-use crate::{kem::r3::R3, math::nums::i32_mod_u14};
+use crate::math::nums::i32_mod_u14;
 
 pub fn freeze(x: i16) -> i8 {
     let r = i32_mod_u14(x as i32 + 1, 3) as i8;
@@ -6,14 +6,10 @@ pub fn freeze(x: i16) -> i8 {
     r - 1
 }
 
-pub fn round<const P: usize>(a: &[i16; P]) -> [i16; P] {
-    let mut out = [0i16; P];
-
+pub fn round<const P: usize>(a: &mut [i16; P]) {
     for i in 0..P {
-        out[i] = a[i] - freeze(a[i]) as i16;
+        a[i] = a[i] - freeze(a[i]) as i16;
     }
-
-    out
 }
 
 #[test]
@@ -38,9 +34,10 @@ fn test_round() {
         }
     }
 
-    let new_round = round(&r3.coeffs);
+    let mut new_round = r3.coeffs.clone();
 
     round3(&mut r3.coeffs);
+    round(&mut new_round);
 
     assert_eq!(new_round, r3.coeffs);
 }
