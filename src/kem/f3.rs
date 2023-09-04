@@ -1,4 +1,4 @@
-use crate::math::nums::i32_mod_u14;
+use crate::{kem::r3::R3, math::nums::i32_mod_u14};
 
 pub fn freeze(x: i16) -> i8 {
     let r = i32_mod_u14(x as i32 + 1, 3) as i8;
@@ -14,6 +14,35 @@ pub fn round<const P: usize>(a: &[i16; P]) -> [i16; P] {
     }
 
     out
+}
+
+#[test]
+fn test_round() {
+    use crate::kem::rq::Rq;
+    use crate::random::CommonRandom;
+    use crate::random::NTRURandom;
+
+    const P: usize = 761;
+    const W: usize = 286;
+    const Q: usize = 4591;
+    const Q12: usize = (Q - 1) / 2;
+
+    let mut random: NTRURandom<P> = NTRURandom::new();
+    let mut r3: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap()).recip3().unwrap();
+
+    fn round3(h: &mut [i16; 761]) {
+        let f: [i16; 761] = *h;
+        for i in 0..761 {
+            let inner = 21846i32 * (f[i] + 2295) as i32;
+            h[i] = (((inner + 32768) >> 16) * 3 - 2295) as i16;
+        }
+    }
+
+    let new_round = round(&r3.coeffs);
+
+    round3(&mut r3.coeffs);
+
+    assert_eq!(new_round, r3.coeffs);
 }
 
 #[test]

@@ -1,7 +1,11 @@
 use super::{errors::NTRUErrors, params::check_params};
 use crate::{
     encode::r3,
-    kem::{f3::round, r3::R3, rq::Rq},
+    kem::{
+        f3::{self, round},
+        r3::R3,
+        rq::Rq,
+    },
     key::pair::KeyPair,
     math::nums::weightw_mask,
     random::{CommonRandom, NTRURandom},
@@ -100,43 +104,23 @@ impl<const P: usize, const Q: usize, const W: usize, const Q12: usize> NTRUPrime
         Ok(())
     }
 
-    // pub fn decapsulate(
-    //     &self,
-    //     cstr: [u8; CT_SIZE],
-    //     sk: [u8; SK_SIZE],
-    // ) -> Result<[u8; K_SIZE], bool> {
-    //     let f = self.key_pair.priv_key.f;
-    //     let c = rq::encoding::decode_rounded(&cstr[32..]);
+    // fn create_cipher(&self, r: &R3<P, Q, Q12>) -> ([u8; CT_SIZE], [u8; K_SIZE]) {
+    //     let h = self.key_pair.pub_key.h;
+    //     let mut c = [0i16; P];
+    //     let c = f3::round(bb) h.mult_small(r);
     //
-    //     let f = zx::encoding::decode(&sk[..191]);
-    //     let c = rq::encoding::decode_rounded(&cstr[32..]);
-    //     let mut t = [0i16; P];
-    //     rq::mult(&mut t, c, f);
-    //     let mut t3 = [0i8; P];
-    //     for i in 0..P {
-    //         t3[i] = r3::mod3::freeze(rq::modq::freeze(3 * t[i] as i32) as i32);
-    //     }
-    //     let gr = zx::encoding::decode(&sk[191..]);
-    //     let mut r = [0i8; P];
-    //     r3::mult(&mut r, t3, gr);
-    //     let w = count_zeroes(r);
-    //     let mut check = w == 286;
-    //     let h = rq::encoding::decode(&sk[(2 * 191)..]);
-    //     let mut hr = [0i16; P];
-    //     rq::mult(&mut hr, h, r);
-    //     rq::round3(&mut hr);
-    //     for i in 0..P {
-    //         check &= (hr[i] - c[i]) == 0;
-    //     }
-    //     let s = Sha512::digest(&zx::encoding::encode(r));
-    //     check &= s[..32] == cstr[..32];
+    //     rq::round3(&mut c);
+    //
     //     let mut k = [0u8; 32];
+    //     let s = Sha512::digest(&zx::encoding::encode(r));
+    //
     //     k.copy_from_slice(&s[32..]);
-    //     if check {
-    //         Ok(k)
-    //     } else {
-    //         Err(false)
-    //     }
+    //
+    //     let mut cstr = [0u8; 1047];
+    //
+    //     cstr[..32].copy_from_slice(&s[..32]);
+    //     cstr[32..].copy_from_slice(&rq::encoding::encode_rounded(c));
+    //     (cstr, k)
     // }
 
     pub fn set_key_pair(&mut self, key_pair: KeyPair<P, Q, Q12>) {
