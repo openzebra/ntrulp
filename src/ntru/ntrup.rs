@@ -12,10 +12,6 @@ pub struct NTRUPrime<const P: usize, const Q: usize, const W: usize, const Q12: 
     pub rng: NTRURandom<P>,
 }
 
-const P: usize = 761;
-const INPUT_BYTES: usize = (P + 3) / 4;
-const INPUT_BYTES_SIZE: usize = INPUT_BYTES + 1;
-
 impl<const P: usize, const Q: usize, const W: usize, const Q12: usize> NTRUPrime<P, Q, W, Q12> {
     pub fn new() -> Result<Self, NTRUErrors> {
         check_params::<P, Q, W, Q12>()?;
@@ -223,7 +219,6 @@ mod tests {
         const Q: usize = 4591;
         const W: usize = 286;
         const Q12: usize = (Q - 1) / 2;
-        const PUB_KEY_BYTES: usize = 1158;
 
         let ntrup = NTRUPrime::<P, Q, W, Q12>::new().unwrap();
         let pk = [
