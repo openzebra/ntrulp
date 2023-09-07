@@ -42,7 +42,7 @@ pub fn r3_decode<const P: usize>(s: &[u8]) -> [i8; P] {
     }
 
     x = *s.get(i).unwrap_or(&0u8);
-    f[i * 4] = (x & 3) as i8 - 1;
+    f[i * 4] = swap(x);
 
     f
 }
