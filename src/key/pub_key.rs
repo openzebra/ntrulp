@@ -7,7 +7,9 @@ pub struct PubKey<const P: usize, const Q: usize, const Q12: usize> {
 
 impl<const P: usize, const Q: usize, const Q12: usize> PubKey<P, Q, Q12> {
     pub fn new() -> Self {
-        Self { h: Rq::new() }
+        let h = Rq::new();
+
+        Self { h }
     }
 
     pub fn from(h: Rq<P, Q, Q12>) -> Self {

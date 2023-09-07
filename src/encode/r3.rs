@@ -23,16 +23,21 @@ pub fn r3_decode<const P: usize>(s: &[u8]) -> [i8; P] {
     let mut f = [0i8; P];
     let mut x: u8;
     let mut i = 0;
+    let swap = move |x: u8| -> i8 {
+        let r = (x & 3) as i8 - 1;
+
+        r
+    };
 
     while i < P / 4 {
         x = *s.get(i).unwrap_or(&0u8);
-        f[i * 4] = (x & 3) as i8 - 1;
+        f[i * 4] = swap(x);
         x >>= 2;
-        f[i * 4 + 1] = (x & 3) as i8 - 1;
+        f[i * 4 + 1] = swap(x);
         x >>= 2;
-        f[i * 4 + 2] = (x & 3) as i8 - 1;
+        f[i * 4 + 2] = swap(x);
         x >>= 2;
-        f[i * 4 + 3] = (x & 3) as i8 - 1;
+        f[i * 4 + 3] = swap(x);
         i += 1;
     }
 
@@ -42,34 +47,55 @@ pub fn r3_decode<const P: usize>(s: &[u8]) -> [i8; P] {
     f
 }
 
-pub fn r3_split_bytes<const P: usize>(input: &[u8]) -> Vec<Vec<u8>> {
-    let chunk_size = P / 4 + 1;
-    let mut result: Vec<Vec<u8>> = Vec::new();
+pub fn r3_split_w_chunks<const P: usize, const W: usize>(input: &[i8]) -> Vec<[i8; P]> {
+    let mut chunks: Vec<[i8; P]> = vec![];
+    let mut part = [0i8; P];
+    let mut sum = 0u16;
+    let mut i = 0;
 
-    for chunk in input.chunks(chunk_size) {
-        let mut padded_chunk: Vec<u8> = chunk.to_vec();
-
-        while padded_chunk.len() < chunk_size {
-            padded_chunk.push(0);
+    for value in input {
+        if sum + value.abs() as u16 <= W as u16 {
+            part[i] = *value;
+            sum += value.abs() as u16;
+        } else {
+            i = 0;
+            chunks.push(part);
+            part = [0i8; P];
+            part[i] = *value;
+            sum = value.abs() as u16;
         }
-        result.push(padded_chunk);
+        i += 1;
     }
 
-    result
+    chunks
 }
 
-#[test]
-fn test_chunk_split() {
-    use rand::Rng;
+// split a byte 00 = 0, 01 = -1, 11=1
+pub fn r3_decode_chunks<const P: usize, const W: usize>(bytes: &[u8]) -> Vec<i8> {
+    let mut output: Vec<i8> = vec![0i8; bytes.len() * 4];
+    let mut i = 0;
 
-    const P: usize = 761;
+    let swap = move |x: u8| -> i8 {
+        let r = (x & 3) as i8 - 1;
 
-    let mut rng = rand::thread_rng();
-    let array_length: usize = 255 + rng.gen::<u8>() as usize;
-    let random_bytes: Vec<u8> = (0..array_length).map(|_| rng.gen::<u8>()).collect();
-    let bytes_chunks = r3_split_bytes::<P>(&random_bytes);
+        r
+    };
 
-    assert_eq!(bytes_chunks.len(), random_bytes.len() / 190 + 1);
+    for byte in bytes {
+        let mut x = *byte;
+
+        output[i * 4] = swap(x);
+        x >>= 2;
+        output[i * 4 + 1] = swap(x);
+        x >>= 2;
+        output[i * 4 + 2] = swap(x);
+        x >>= 2;
+        output[i * 4 + 3] = swap(x);
+
+        i += 1;
+    }
+
+    output
 }
 
 #[test]
@@ -85,4 +111,62 @@ fn test_r3_encode() {
     let dec = r3_decode::<P>(&bytes);
 
     assert_eq!(dec, r3);
+}
+
+#[test]
+fn test_spliter() {
+    use rand::Rng;
+
+    const P: usize = 761;
+    const Q: usize = 4591;
+    const W: usize = 286;
+    const Q12: usize = (Q - 1) / 2;
+
+    let mut rng = rand::thread_rng();
+    let bytes: Vec<u8> = (0..1000).map(|_| rng.gen::<u8>()).collect();
+    let r3 = r3_decode_chunks::<P, W>(&bytes);
+    let chunks = r3_split_w_chunks::<P, W>(&r3);
+
+    dbg!(&r3);
+}
+
+#[test]
+fn test_r3() {
+    const P: usize = 761;
+    const Q: usize = 4591;
+    const W: usize = 286;
+    const Q12: usize = (Q - 1) / 2;
+
+    let content = "
+In the realm of digital night, Satoshi did conceive,
+A currency of cryptic might, for all to believe.
+In code and chains, he wove the tale,
+Of Bitcoin's birth, a revolution set to sail.
+
+A name unknown, a face unseen,
+Satoshi, a genius, behind the crypto machine.
+With whitepaper in hand and vision so clear,
+He birthed a new era, without any fear.
+
+Decentralized ledger, transparent and free,
+Bitcoin emerged, for the world to see.
+Mining for coins, nodes in a network,
+A financial system, no central clerk.
+
+The world was skeptical, yet curiosity grew,
+As Bitcoin's value steadily blew.
+From pennies to thousands, a meteoric rise,
+Satoshi's creation took us by surprise.
+
+But Nakamoto vanished, into the digital mist,
+Leaving behind a legacy, a cryptocurrency twist.
+In the hearts of hodlers, Satoshi's name lives on,
+A symbol of innovation, in the crypto dawn.
+";
+    let bytes = content.as_bytes();
+    let r3 = r3_decode_chunks::<P, W>(&bytes);
+
+    // for c in r3 {
+    //     print!("{c}, ");
+    // }
 }

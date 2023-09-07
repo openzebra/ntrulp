@@ -159,7 +159,7 @@ mod tests {
     }
 
     #[test]
-    fn test_random_small_vec() {
+    fn test_short_random() {
         const P: usize = 761;
         const W: usize = 286;
         let mut random: NTRURandom<P> = NTRURandom::new();
@@ -186,7 +186,7 @@ mod tests {
     }
 
     #[test]
-    fn test_short_random() {
+    fn test_small_random() {
         const P: usize = 761;
         let mut random: NTRURandom<P> = NTRURandom::new();
 
