@@ -16,6 +16,23 @@ fn convert_to_ternary(num: u8) -> [i8; 4] {
     result
 }
 
+fn convert_to_decimal(ternary: [i8; 4]) -> u8 {
+    let mut result = 0i16;
+
+    for &digit in &ternary {
+        let x = match digit {
+            0 => 0,
+            1 => 1,
+            -1 => 2,
+            _ => unreachable!(),
+        };
+
+        result = result * 3 + x as i16;
+    }
+
+    result as u8
+}
+
 pub fn r3_encode<const P: usize>(f: &[i8; P]) -> Vec<u8> {
     let lenght = P / 4;
     let mut s = vec![0u8; lenght + 1];
@@ -114,10 +131,9 @@ fn test_r3_encode() {
     let dec = r3_decode::<P>(&bytes);
 
     assert_eq!(dec, r3);
-
-    let number = 54;
-    let ternary_representation = convert_to_ternary(number);
-    println!("{:?}", ternary_representation);
+    let bits = convert_to_ternary(255);
+    let n = convert_to_decimal(bits);
+    dbg!(n);
 }
 
 #[test]
@@ -178,8 +194,9 @@ A symbol of innovation, in the crypto dawn.
 ";
     let bytes = content.as_bytes();
     let r3 = r3_decode_chunks::<P, W>(&bytes);
+    let chunks = r3_split_w_chunks::<P, W>(&r3);
 
-    // for c in r3 {
-    //     print!("{c}, ");
-    // }
+    for c in chunks {
+        println!("{:?}", c);
+    }
 }
