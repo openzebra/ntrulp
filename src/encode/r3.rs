@@ -1,3 +1,21 @@
+fn convert_to_ternary(num: u8) -> [i8; 4] {
+    let mut result = [0i8; 4];
+    let mut n = num;
+
+    for i in (0..4).rev() {
+        let digit = n % 3;
+        result[i] = match digit {
+            0 => 0,
+            1 => 1,
+            2 => -1,
+            _ => unreachable!(),
+        };
+        n /= 3;
+    }
+
+    result
+}
+
 pub fn r3_encode<const P: usize>(f: &[i8; P]) -> Vec<u8> {
     let lenght = P / 4;
     let mut s = vec![0u8; lenght + 1];
@@ -72,27 +90,12 @@ pub fn r3_split_w_chunks<const P: usize, const W: usize>(input: &[i8]) -> Vec<[i
 
 // split a byte 00 = 0, 01 = -1, 11=1
 pub fn r3_decode_chunks<const P: usize, const W: usize>(bytes: &[u8]) -> Vec<i8> {
-    let mut output: Vec<i8> = vec![0i8; bytes.len() * 4];
-    let mut i = 0;
-
-    let swap = move |x: u8| -> i8 {
-        let r = (x & 3) as i8 - 1;
-
-        r
-    };
+    let mut output: Vec<i8> = Vec::new();
 
     for byte in bytes {
-        let mut x = *byte;
+        let bits = convert_to_ternary(*byte);
 
-        output[i * 4] = swap(x);
-        x >>= 2;
-        output[i * 4 + 1] = swap(x);
-        x >>= 2;
-        output[i * 4 + 2] = swap(x);
-        x >>= 2;
-        output[i * 4 + 3] = swap(x);
-
-        i += 1;
+        output.extend(&bits);
     }
 
     output
@@ -111,6 +114,10 @@ fn test_r3_encode() {
     let dec = r3_decode::<P>(&bytes);
 
     assert_eq!(dec, r3);
+
+    let number = 54;
+    let ternary_representation = convert_to_ternary(number);
+    println!("{:?}", ternary_representation);
 }
 
 #[test]
@@ -118,16 +125,22 @@ fn test_spliter() {
     use rand::Rng;
 
     const P: usize = 761;
-    const Q: usize = 4591;
     const W: usize = 286;
-    const Q12: usize = (Q - 1) / 2;
 
     let mut rng = rand::thread_rng();
-    let bytes: Vec<u8> = (0..1000).map(|_| rng.gen::<u8>()).collect();
-    let r3 = r3_decode_chunks::<P, W>(&bytes);
-    let chunks = r3_split_w_chunks::<P, W>(&r3);
 
-    dbg!(&r3);
+    for _ in 0..10 {
+        let bytes: Vec<u8> = (0..1000).map(|_| rng.gen::<u8>()).collect();
+        let r3 = r3_decode_chunks::<P, W>(&bytes);
+        let chunks = r3_split_w_chunks::<P, W>(&r3);
+
+        for c in chunks {
+            let sum = c.iter().map(|&x| x.abs() as i32).sum::<i32>();
+
+            assert_eq!(sum as usize, W);
+            assert_eq!(c.len(), P);
+        }
+    }
 }
 
 #[test]
