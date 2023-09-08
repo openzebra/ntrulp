@@ -133,22 +133,11 @@ fn from_decimal(num: u8) -> [i8; 5] {
 // split a byte 00 = 0, 01 = -1, 11=1
 pub fn r3_decode_chunks<const P: usize, const W: usize>(bytes: &[u8]) -> Vec<i8> {
     let mut output: Vec<i8> = Vec::new();
-    let mut i = 0;
-    let swap = move |x: u8| -> i8 {
-        let r = (x & 3) as i8 - 1;
 
-        r
-    };
     for byte in bytes {
-        let mut x = *byte;
-        output[i * 4] = swap(x);
-        x >>= 2;
-        output[i * 4 + 1] = swap(x);
-        x >>= 2;
-        output[i * 4 + 2] = swap(x);
-        x >>= 2;
-        output[i * 4 + 3] = swap(x);
-        i += 1;
+        let bits = convert_to_ternary(*byte);
+
+        output.extend(bits);
     }
 
     output
