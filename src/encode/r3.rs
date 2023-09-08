@@ -85,7 +85,7 @@ pub fn r3_decode<const P: usize>(s: &[u8]) -> [i8; P] {
     f
 }
 
-// SIZEP = P / BITS_SIZE + 1
+// SIZEP = P / BITS_SIZE
 pub fn r3_decode_bytes<const P: usize, const SIZEP: usize>(input: &[u8; SIZEP]) -> [i8; P] {
     let mut out = [0i8; P];
 
@@ -105,7 +105,7 @@ pub fn r3_decode_bytes<const P: usize, const SIZEP: usize>(input: &[u8; SIZEP]) 
     out
 }
 
-// SIZEP = P / BITS_SIZE + 1
+// SIZEP = P / BITS_SIZE
 pub fn r3_encode_bytes<const P: usize, const SIZEP: usize>(input: &[i8; P]) -> [u8; SIZEP] {
     let mut out = [0u8; SIZEP];
     let mut out_index = 0;
@@ -117,12 +117,7 @@ pub fn r3_encode_bytes<const P: usize, const SIZEP: usize>(input: &[i8; P]) -> [
         let mut chunk = [0i8; BITS_SIZE];
 
         for j in 0..BITS_SIZE {
-            match input.get(i + j) {
-                Some(v) => chunk[j] = *v,
-                None => {
-                    continue;
-                }
-            }
+            chunk[j] = input[i + j];
         }
 
         out[out_index] = convert_to_decimal(chunk);
