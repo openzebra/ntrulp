@@ -129,7 +129,9 @@ pub fn r3_encode_bytes<const P: usize, const SIZEP: usize>(input: &[i8; P]) -> [
 }
 
 // size is array with last index
-pub fn r3_split_w_chunks<const P: usize, const W: usize>(input: &[i8]) -> Vec<([i8; P], usize)> {
+pub fn r3_split_w_chunks<const P: usize, const W: usize>(
+    input: &[i8],
+) -> (Vec<[i8; P]>, Vec<usize>) {
     let mut chunks: Vec<[i8; P]> = Vec::new();
     let mut part = [0i8; P];
     let mut sum = 0u16;
@@ -151,10 +153,7 @@ pub fn r3_split_w_chunks<const P: usize, const W: usize>(input: &[i8]) -> Vec<([
         i += 1;
     }
 
-    chunks
-        .into_iter()
-        .zip(size)
-        .collect::<Vec<([i8; P], usize)>>()
+    (chunks, size)
 }
 
 pub fn r3_decode_chunks(bytes: &[u8]) -> Vec<i8> {
@@ -225,9 +224,9 @@ fn test_spliter() {
     for _ in 0..10 {
         let bytes: Vec<u8> = (0..1000).map(|_| rng.gen::<u8>()).collect();
         let r3 = r3_decode_chunks(&bytes);
-        let chunks = r3_split_w_chunks::<P, W>(&r3);
+        let (chunks, size) = r3_split_w_chunks::<P, W>(&r3);
 
-        for (chunk, index) in chunks {
+        for (chunk, index) in chunks.iter().zip(size) {
             let sum = chunk.iter().map(|&x| x.abs() as i32).sum::<i32>();
 
             assert_eq!(sum as usize, W);
