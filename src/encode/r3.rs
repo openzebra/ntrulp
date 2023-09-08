@@ -1,8 +1,10 @@
-fn convert_to_ternary(num: u8) -> [i8; 4] {
-    let mut result = [0i8; 4];
+const BITS_SIZE: usize = 6;
+
+fn convert_to_ternary(num: u8) -> [i8; BITS_SIZE] {
+    let mut result = [0i8; BITS_SIZE];
     let mut n = num;
 
-    for i in (0..4).rev() {
+    for i in (0..BITS_SIZE).rev() {
         let digit = n % 3;
         result[i] = match digit {
             0 => 0,
@@ -16,7 +18,7 @@ fn convert_to_ternary(num: u8) -> [i8; 4] {
     result
 }
 
-fn convert_to_decimal(ternary: [i8; 4]) -> u8 {
+fn convert_to_decimal(ternary: [i8; BITS_SIZE]) -> u8 {
     let mut result = 0i16;
 
     for &digit in &ternary {
@@ -40,6 +42,7 @@ pub fn r3_encode<const P: usize>(f: &[i8; P]) -> Vec<u8> {
     let mut f_iter = f.iter();
 
     for i in 0..lenght {
+        // TODO: Remove unwrap.
         x = *f_iter.next().unwrap() + 1;
         x += (f_iter.next().unwrap() + 1) << 2;
         x += (f_iter.next().unwrap() + 1) << 4;
@@ -105,17 +108,60 @@ pub fn r3_split_w_chunks<const P: usize, const W: usize>(input: &[i8]) -> Vec<[i
     chunks
 }
 
+fn from_decimal(num: u8) -> [i8; 5] {
+    let mut x = num;
+    let mut output = [0i8; 5];
+    let swap = move |x: u8| -> i8 {
+        let r = (x & 3) as i8 - 1;
+
+        r
+    };
+
+    output[0] = swap(x);
+    x >>= 2;
+    output[1] = swap(x);
+    x >>= 2;
+    output[2] = swap(x);
+    x >>= 2;
+    output[3] = swap(x);
+    x >>= 2;
+    output[4] = swap(x);
+
+    output
+}
+
 // split a byte 00 = 0, 01 = -1, 11=1
 pub fn r3_decode_chunks<const P: usize, const W: usize>(bytes: &[u8]) -> Vec<i8> {
     let mut output: Vec<i8> = Vec::new();
+    let mut i = 0;
+    let swap = move |x: u8| -> i8 {
+        let r = (x & 3) as i8 - 1;
 
+        r
+    };
     for byte in bytes {
-        let bits = convert_to_ternary(*byte);
-
-        output.extend(&bits);
+        let mut x = *byte;
+        output[i * 4] = swap(x);
+        x >>= 2;
+        output[i * 4 + 1] = swap(x);
+        x >>= 2;
+        output[i * 4 + 2] = swap(x);
+        x >>= 2;
+        output[i * 4 + 3] = swap(x);
+        i += 1;
     }
 
     output
+}
+
+#[test]
+fn test_bit_convert() {
+    for n in 0..255 {
+        let bits = convert_to_ternary(n);
+        let out = convert_to_decimal(bits);
+
+        assert_eq!(n, out);
+    }
 }
 
 #[test]
@@ -131,9 +177,6 @@ fn test_r3_encode() {
     let dec = r3_decode::<P>(&bytes);
 
     assert_eq!(dec, r3);
-    let bits = convert_to_ternary(255);
-    let n = convert_to_decimal(bits);
-    dbg!(n);
 }
 
 #[test]
