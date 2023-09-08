@@ -85,16 +85,44 @@ pub fn r3_decode<const P: usize>(s: &[u8]) -> [i8; P] {
     f
 }
 
-// SIZEP = p / BITS_SIZE + 1
-pub fn r3_encode0<const P: usize, const SIZEP: usize>(input: &[i8; P]) -> [u8; SIZEP] {
+// SIZEP = P / BITS_SIZE + 1
+pub fn r3_decode_bytes<const P: usize, const SIZEP: usize>(input: &[u8; SIZEP]) -> [i8; P] {
+    let mut out = [0i8; P];
+
+    for i in 0..SIZEP {
+        let bits = convert_to_ternary(input[i]);
+
+        for j in 0..BITS_SIZE {
+            let index = i * BITS_SIZE + j;
+
+            match out.get_mut(index) {
+                Some(e) => *e = bits[j],
+                None => continue,
+            }
+        }
+    }
+
+    out
+}
+
+// SIZEP = P / BITS_SIZE + 1
+pub fn r3_encode_bytes<const P: usize, const SIZEP: usize>(input: &[i8; P]) -> [u8; SIZEP] {
     let mut out = [0u8; SIZEP];
     let mut out_index = 0;
 
     for i in (0..P).step_by(BITS_SIZE) {
+        if out_index == SIZEP {
+            break;
+        }
         let mut chunk = [0i8; BITS_SIZE];
 
         for j in 0..BITS_SIZE {
-            chunk[j] = *input.get(i + j).unwrap_or(&0);
+            match input.get(i + j) {
+                Some(v) => chunk[j] = *v,
+                None => {
+                    continue;
+                }
+            }
         }
 
         out[out_index] = convert_to_decimal(chunk);
@@ -142,11 +170,30 @@ pub fn r3_decode_chunks(bytes: &[u8]) -> Vec<i8> {
 
 #[test]
 fn test_bit_convert() {
-    for n in 0..255 {
+    for n in 0..u8::MAX {
         let bits = convert_to_ternary(n);
         let out = convert_to_decimal(bits);
 
         assert_eq!(n, out);
+    }
+}
+
+#[test]
+fn test_bytes_encode_decode() {
+    use rand::Rng;
+
+    const P: usize = 761;
+    const SIZEP: usize = P / BITS_SIZE;
+
+    for _ in 0..10 {
+        let mut bytes = [0u8; SIZEP];
+
+        rand::thread_rng().fill(&mut bytes[..]);
+
+        let r3 = r3_decode_bytes::<P, SIZEP>(&bytes);
+        let dec = r3_encode_bytes::<P, SIZEP>(&r3);
+
+        assert_eq!(dec, bytes);
     }
 }
 
@@ -163,11 +210,6 @@ fn test_r3_encode() {
     let dec = r3_decode::<P>(&bytes);
 
     assert_eq!(dec, r3);
-
-    const SIZEP: usize = P / BITS_SIZE + 1;
-    let out = r3_encode0::<P, SIZEP>(&r3);
-
-    print!("out_len={:?}, bytes_len={:?}", out.len(), bytes.len());
 }
 
 #[test]
