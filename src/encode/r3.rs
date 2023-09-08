@@ -1,4 +1,4 @@
-const BITS_SIZE: usize = 6;
+pub const BITS_SIZE: usize = 6;
 
 fn convert_to_ternary(num: u8) -> [i8; BITS_SIZE] {
     let mut result = [0i8; BITS_SIZE];
@@ -85,6 +85,26 @@ pub fn r3_decode<const P: usize>(s: &[u8]) -> [i8; P] {
     f
 }
 
+// SIZEP = p / BITS_SIZE + 1
+pub fn r3_encode0<const P: usize, const SIZEP: usize>(input: &[i8; P]) -> [u8; SIZEP] {
+    let mut out = [0u8; SIZEP];
+    let mut out_index = 0;
+
+    for i in (0..P).step_by(BITS_SIZE) {
+        let mut chunk = [0i8; BITS_SIZE];
+
+        for j in 0..BITS_SIZE {
+            chunk[j] = *input.get(i + j).unwrap_or(&0);
+        }
+
+        out[out_index] = convert_to_decimal(chunk);
+
+        out_index += 1;
+    }
+
+    out
+}
+
 pub fn r3_split_w_chunks<const P: usize, const W: usize>(input: &[i8]) -> Vec<[i8; P]> {
     let mut chunks: Vec<[i8; P]> = vec![];
     let mut part = [0i8; P];
@@ -108,30 +128,7 @@ pub fn r3_split_w_chunks<const P: usize, const W: usize>(input: &[i8]) -> Vec<[i
     chunks
 }
 
-fn from_decimal(num: u8) -> [i8; 5] {
-    let mut x = num;
-    let mut output = [0i8; 5];
-    let swap = move |x: u8| -> i8 {
-        let r = (x & 3) as i8 - 1;
-
-        r
-    };
-
-    output[0] = swap(x);
-    x >>= 2;
-    output[1] = swap(x);
-    x >>= 2;
-    output[2] = swap(x);
-    x >>= 2;
-    output[3] = swap(x);
-    x >>= 2;
-    output[4] = swap(x);
-
-    output
-}
-
-// split a byte 00 = 0, 01 = -1, 11=1
-pub fn r3_decode_chunks<const P: usize, const W: usize>(bytes: &[u8]) -> Vec<i8> {
+pub fn r3_decode_chunks(bytes: &[u8]) -> Vec<i8> {
     let mut output: Vec<i8> = Vec::new();
 
     for byte in bytes {
@@ -166,6 +163,11 @@ fn test_r3_encode() {
     let dec = r3_decode::<P>(&bytes);
 
     assert_eq!(dec, r3);
+
+    const SIZEP: usize = P / BITS_SIZE + 1;
+    let out = r3_encode0::<P, SIZEP>(&r3);
+
+    print!("out_len={:?}, bytes_len={:?}", out.len(), bytes.len());
 }
 
 #[test]
@@ -179,7 +181,7 @@ fn test_spliter() {
 
     for _ in 0..10 {
         let bytes: Vec<u8> = (0..1000).map(|_| rng.gen::<u8>()).collect();
-        let r3 = r3_decode_chunks::<P, W>(&bytes);
+        let r3 = r3_decode_chunks(&bytes);
         let chunks = r3_split_w_chunks::<P, W>(&r3);
 
         for c in chunks {
@@ -194,9 +196,7 @@ fn test_spliter() {
 #[test]
 fn test_r3() {
     const P: usize = 761;
-    const Q: usize = 4591;
     const W: usize = 286;
-    const Q12: usize = (Q - 1) / 2;
 
     let content = "
 In the realm of digital night, Satoshi did conceive,
@@ -225,7 +225,7 @@ In the hearts of hodlers, Satoshi's name lives on,
 A symbol of innovation, in the crypto dawn.
 ";
     let bytes = content.as_bytes();
-    let r3 = r3_decode_chunks::<P, W>(&bytes);
+    let r3 = r3_decode_chunks(&bytes);
     let chunks = r3_split_w_chunks::<P, W>(&r3);
 
     for c in chunks {

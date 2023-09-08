@@ -80,7 +80,7 @@ impl<const P: usize, const Q: usize, const Q12: usize> Rq<P, Q, Q12> {
 
     // out = 1/(3*in) in Rq
     pub fn recip3(&self) -> Result<Rq<P, Q, Q12>, KemErrors> {
-        // TODO Add hyperthreading.
+        // TODO makt it on STACK!.
         let input = self.coeffs;
         let mut out = [0i16; P];
         let mut f = vec![0i16; P + 1];
