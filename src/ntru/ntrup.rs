@@ -6,7 +6,6 @@ use crate::{
     math::nums::weightw_mask,
     random::{CommonRandom, NTRURandom},
 };
-use sha2::{Digest, Sha512};
 
 pub const PK_SIZE: usize = 1218; // Public Key
 pub const SK_SIZE: usize = 1600; // Private/Secret Key
@@ -26,16 +25,6 @@ impl<const P: usize, const Q: usize, const W: usize, const Q12: usize> NTRUPrime
         let key_pair: KeyPair<P, Q, Q12> = KeyPair::new();
 
         Ok(NTRUPrime { rng, key_pair })
-    }
-
-    pub fn encap(&mut self, pk: &[u8]) -> (Vec<u8>, [u8; 32]) {
-        // TODO: 1158=this is lenght of pub_key as bytes.
-        let r: R3<P, Q, Q12> = Rq::from(self.rng.short_random(W).unwrap()).r3_from_rq();
-        let cache: [u8; 32] = self.hash_prefix(4, pk, 1158);
-        let (c, r_enc) = self.hide(&r, &cache);
-        let gamma = self.hash_session(1, &r_enc, &c);
-
-        (c, gamma)
     }
 
     pub fn encrypt(&self, r: &R3<P, Q, Q12>) -> Rq<P, Q, Q12> {
@@ -110,70 +99,6 @@ impl<const P: usize, const Q: usize, const W: usize, const Q12: usize> NTRUPrime
         }
 
         Ok(())
-    }
-
-    fn hash_prefix(&self, b: u8, input: &[u8], length: usize) -> [u8; 32] {
-        let ext_len = length + 1;
-        let mut out = [0u8; 32];
-        let mut x = vec![0u8; ext_len];
-
-        x[0] = b;
-
-        for i in 0..length {
-            x[i + 1] = match input.get(i) {
-                Some(&v) => v,
-                None => continue,
-            };
-        }
-
-        let mut hasher = Sha512::new();
-        hasher.update(&x[..ext_len]);
-        let hash_result = hasher.finalize();
-
-        out.copy_from_slice(&hash_result[..32]);
-
-        out
-    }
-
-    fn hash_confirm(&self, r_enc: &[u8], cache: &[u8]) -> [u8; 32] {
-        let mut x = [0u8; 64];
-
-        x[..32].copy_from_slice(&self.hash_prefix(3, &r_enc, r_enc.len() + 1));
-
-        for i in 0..32 {
-            x[32 + i] = cache[i];
-        }
-
-        self.hash_prefix(2, &x, x.len())
-    }
-
-    fn hide(&self, r: &R3<P, Q, Q12>, cache: &[u8]) -> (Vec<u8>, Vec<u8>) {
-        // TODO: 32 is a half of the length sha512
-        // TODO: r_enc is [u8; P + 3 / 4]
-        let r_enc = r3::r3_encode(&r.coeffs);
-        let rq = self.encrypt(&r);
-        let mut c = vec![0u8; 1007 + 32];
-
-        c[32..].copy_from_slice(rq::rq_rounded_encode::<P, Q, Q12>(&rq.coeffs).as_slice());
-
-        let gamma = self.hash_confirm(&r_enc, cache);
-
-        // TODO: Rounded_bytes=1007 for p=761
-        c[..32].copy_from_slice(&gamma);
-
-        (c, r_enc)
-    }
-
-    fn hash_session(&self, b: u8, y: &[u8], z: &[u8]) -> [u8; 32] {
-        // TODO: 191 is Inputs_bytes
-        let mut x = self.hash_prefix(3, y, 191);
-
-        // TODO: Rounded_bytes=1007 + Confirm_bytes=32
-        for i in 0..1007 + 32 {
-            x[32 + i] = z[i];
-        }
-
-        self.hash_prefix(b, &x, x.len())
     }
 
     pub fn set_key_pair(&mut self, key_pair: KeyPair<P, Q, Q12>) {

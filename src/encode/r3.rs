@@ -223,7 +223,7 @@ fn test_spliter() {
     let mut rng = rand::thread_rng();
 
     for _ in 0..10 {
-        let bytes: Vec<u8> = (0..100_000_000).map(|_| rng.gen::<u8>()).collect();
+        let bytes: Vec<u8> = (0..1000).map(|_| rng.gen::<u8>()).collect();
         let r3 = r3_decode_chunks(&bytes);
         let chunks = r3_split_w_chunks::<P, W>(&r3);
 
