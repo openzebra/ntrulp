@@ -10,10 +10,13 @@ use crate::{
     math::nums::weightw_mask,
     random::{CommonRandom, NTRURandom},
 };
-use std::thread::{self};
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex},
+};
+use std::{
+    mem::size_of,
+    thread::{self},
 };
 
 fn rq_decrypt<const P: usize, const Q: usize, const W: usize, const Q12: usize>(
@@ -138,12 +141,12 @@ impl<
         let size_bytes_len: &[u8; 8] = &bytes[bytes_len - 8..].try_into().unwrap(); // TODO: remove unwrap!
         let size_len = usize::from_ne_bytes(*size_bytes_len);
         let size_bytes = &bytes[bytes_len - size_len - 8..(bytes_len - 1)];
-        let size = self.byte_to_usize_vec(size_bytes);
+        let size = Arc::new(self.byte_to_usize_vec(size_bytes));
         let bytes_data = &bytes[..bytes_len - size_len - 8];
         let chunks = bytes_data.chunks(ROUNDED_BYTES);
 
-        // let f = Arc::new(self.key_pair.priv_key.f);
-        // let ginv = Arc::new(self.key_pair.priv_key.ginv);
+        let f = Arc::new(self.key_pair.priv_key.f.coeffs);
+        let ginv = Arc::new(self.key_pair.priv_key.ginv.coeffs);
 
         let sync_hash_map: Arc<Mutex<HashMap<usize, Vec<u8>>>> =
             Arc::new(Mutex::new(HashMap::new()));
@@ -152,12 +155,19 @@ impl<
         for (index, chunk) in chunks.into_iter().enumerate() {
             // TODO: Remove unwrap!
             let rounded_chunk: [u8; ROUNDED_BYTES] = chunk.try_into().unwrap();
+            let f_ref = Arc::clone(&f);
+            let ginv_ref = Arc::clone(&ginv);
+            let size_ref = Arc::clone(&size);
             let handle = thread::spawn(move || {
                 let rq_coeffs = rq::rq_rounded_decode::<P, Q, Q12, ROUNDED_BYTES>(&rounded_chunk);
                 let rq: Rq<P, Q, Q12> = Rq::from(rq_coeffs);
-                // let r3 = self.rq_decrypt(&rq);
+                let f: Rq<P, Q, Q12> = Rq::from(*f_ref);
+                let ginv: R3<P, Q, Q12> = R3::from(*ginv_ref);
+                let r3 = rq_decrypt::<P, Q, W, Q12>(&rq, &f, &ginv);
+                let point = size_ref[index];
+                let slice = &r3.coeffs[..point];
 
-                // println!("{:?}", r3);
+                println!("point={point}, {:?}", slice);
             });
 
             threads.push(handle);
