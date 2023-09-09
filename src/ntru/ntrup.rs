@@ -46,7 +46,7 @@ impl<const P: usize, const Q: usize, const W: usize, const Q12: usize> NTRUPrime
         let pub_key_coeffs = rq::rq_decode::<P, Q, Q12>(pk);
         let h: Arc<Rq<P, Q, Q12>> = Arc::new(Rq::from(pub_key_coeffs));
         let (chunks, size) = r3::r3_split_w_chunks::<P, W>(&unlimted_poly);
-        let enc: Arc<Mutex<HashMap<usize, Vec<u8>>>> = Arc::new(Mutex::new(HashMap::new()));
+        let enc: Arc<Mutex<HashMap<usize, [u8; 1007]>>> = Arc::new(Mutex::new(HashMap::new()));
         let mut threads = Vec::with_capacity(self.num_threads);
 
         for (index, chunk) in chunks.into_iter().enumerate() {
@@ -58,7 +58,8 @@ impl<const P: usize, const Q: usize, const W: usize, const Q12: usize> NTRUPrime
 
                 round(&mut hr.coeffs);
 
-                let rq_bytes = rq::rq_encode::<P, Q, Q12>(&hr.coeffs);
+                // TODO: replace 1007 as ROUNDED_BYTES
+                let rq_bytes = rq::rq_rounded_encode::<P, Q, Q12, 1007>(&hr.coeffs);
                 let mut enc = enc_ref.lock().unwrap();
 
                 enc.insert(index, rq_bytes);
@@ -90,8 +91,6 @@ impl<const P: usize, const Q: usize, const W: usize, const Q12: usize> NTRUPrime
             }
         }
 
-        println!("encrypt={:?}", bytes);
-
         bytes.extend(size_bytes);
         bytes.extend(size_len);
 
@@ -105,6 +104,15 @@ impl<const P: usize, const Q: usize, const W: usize, const Q12: usize> NTRUPrime
         let size_bytes = &bytes[bytes_len - size_len - 8..(bytes_len - 1)];
         let size = self.byte_to_usize_vec(size_bytes);
         let bytes_data = &bytes[..bytes_len - size_len - 8];
+        let chunks = bytes_data.chunks(1007);
+
+        // for chunk in chunks {
+        //     println!("chunk={:?}", chunk);
+        // }
+
+        // let rq_disordered = rq::rq_rounded_decode::<P, Q, Q12>(&bytes_data);
+        //
+        // println!("{:?}", &bytes_data.chunks(size.len()));
     }
 
     pub fn r3_encrypt(&self, r: &R3<P, Q, Q12>, h: &Rq<P, Q, Q12>) -> Rq<P, Q, Q12> {

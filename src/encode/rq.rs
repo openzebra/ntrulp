@@ -1,6 +1,7 @@
 use crate::math::nums::{u32_divmod_u14, u32_mod_u14};
 
-fn encode(out: &mut Vec<u8>, r: &[u16], m: &[u16], len: usize) {
+fn encode(out: &mut [u8], r: &[u16], m: &[u16], len: usize) {
+    let next_p: usize = len + 1 / 2;
     if len == 1 {
         let mut r_val = r[0];
         let mut m_val = m[0];
@@ -12,8 +13,8 @@ fn encode(out: &mut Vec<u8>, r: &[u16], m: &[u16], len: usize) {
     }
 
     if len > 1 {
-        let mut r2 = vec![0; (len + 1) / 2];
-        let mut m2 = vec![0; (len + 1) / 2];
+        let mut r2 = vec![0; next_p];
+        let mut m2 = vec![0; next_p];
         let mut i = 0;
         while i < len - 1 {
             let m0 = m[i] as u32;
@@ -32,7 +33,7 @@ fn encode(out: &mut Vec<u8>, r: &[u16], m: &[u16], len: usize) {
             r2[i / 2] = r[i];
             m2[i / 2] = m[i];
         }
-        encode(out, &r2, &m2, (len + 1) / 2);
+        encode(out, &r2, &m2, next_p);
     }
 }
 
@@ -138,9 +139,17 @@ pub fn rq_rounded_decode<const P: usize, const Q: usize, const Q12: usize>(s: &[
     rq
 }
 
-pub fn rq_rounded_encode<const P: usize, const Q: usize, const Q12: usize>(rq: &[i16]) -> Vec<u8> {
+// TODO: should return rounded_bytes = 1007, now it vec
+pub fn rq_rounded_encode<
+    const P: usize,
+    const Q: usize,
+    const Q12: usize,
+    const ROUNDED_BYTES: usize,
+>(
+    rq: &[i16; P],
+) -> [u8; ROUNDED_BYTES] {
     // TODO: know the size!!!!.
-    let mut s = Vec::new();
+    let mut s = [0u8; ROUNDED_BYTES];
     let mut r = [0u16; P];
     let mut m = [0u16; P];
 
@@ -182,6 +191,7 @@ fn test_rounded_encode_decode() {
     const P: usize = 761;
     const Q: usize = 4591;
     const Q12: usize = (Q - 1) / 2;
+    const ROUNDED_BYTES: usize = 1007;
 
     let content = "
 In the realm of digital night, Satoshi did conceive,
@@ -217,7 +227,7 @@ A symbol of innovation, in the crypto dawn.
     }
 
     let rq = rq_rounded_decode::<P, Q, Q12>(&bytes);
-    let dec = rq_rounded_encode::<P, Q, Q12>(&rq);
+    let dec = rq_rounded_encode::<P, Q, Q12, ROUNDED_BYTES>(&rq);
     let utf8_string = std::str::from_utf8(&dec[..len_slice]).unwrap();
 
     assert_eq!(content, utf8_string);
