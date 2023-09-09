@@ -16,6 +16,32 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+fn rq_decrypt<const P: usize, const Q: usize, const W: usize, const Q12: usize>(
+    c: &Rq<P, Q, Q12>,
+    f: &Rq<P, Q, Q12>,
+    ginv: &R3<P, Q, Q12>,
+) -> R3<P, Q, Q12> {
+    let mut r = [0i8; P];
+    let cf: Rq<P, Q, Q12> = c.mult_small(&f.r3_from_rq());
+    let cf3: Rq<P, Q, Q12> = cf.mult3();
+    let e: R3<P, Q, Q12> = cf3.r3_from_rq();
+    let ev: R3<P, Q, Q12> = e.mult(&ginv);
+    #[allow(unused_assignments)]
+    let mut mask: i16 = 0;
+
+    mask = weightw_mask::<P, W>(&ev.coeffs); // 0 if weight w, else -1
+
+    for i in 0..W {
+        r[i] = (((ev.coeffs[i] ^ 1) as i16 & !mask) ^ 1) as i8;
+    }
+
+    for i in W..P {
+        r[i] = (ev.coeffs[i] as i16 & !mask) as i8;
+    }
+
+    R3::from(r)
+}
+
 pub struct NTRUPrime<
     const P: usize,
     const Q: usize,
@@ -107,7 +133,7 @@ impl<
         bytes
     }
 
-    pub fn decrypt(&self, bytes: &[u8]) {
+    pub fn decrypt(&self, bytes: Vec<u8>) {
         let bytes_len = bytes.len();
         let size_bytes_len: &[u8; 8] = &bytes[bytes_len - 8..].try_into().unwrap(); // TODO: remove unwrap!
         let size_len = usize::from_ne_bytes(*size_bytes_len);
@@ -116,13 +142,22 @@ impl<
         let bytes_data = &bytes[..bytes_len - size_len - 8];
         let chunks = bytes_data.chunks(ROUNDED_BYTES);
 
+        // let f = Arc::new(self.key_pair.priv_key.f);
+        // let ginv = Arc::new(self.key_pair.priv_key.ginv);
+
         let sync_hash_map: Arc<Mutex<HashMap<usize, Vec<u8>>>> =
             Arc::new(Mutex::new(HashMap::new()));
         let mut threads = Vec::with_capacity(self.num_threads);
 
         for (index, chunk) in chunks.into_iter().enumerate() {
+            // TODO: Remove unwrap!
+            let rounded_chunk: [u8; ROUNDED_BYTES] = chunk.try_into().unwrap();
             let handle = thread::spawn(move || {
-                // let rq_coeffs = rq::rq_rounded_decode::<P, Q, Q12, ROUNDED_BYTES>(&chunk);
+                let rq_coeffs = rq::rq_rounded_decode::<P, Q, Q12, ROUNDED_BYTES>(&rounded_chunk);
+                let rq: Rq<P, Q, Q12> = Rq::from(rq_coeffs);
+                // let r3 = self.rq_decrypt(&rq);
+
+                // println!("{:?}", r3);
             });
 
             threads.push(handle);
@@ -154,25 +189,8 @@ impl<
     pub fn rq_decrypt(&self, c: &Rq<P, Q, Q12>) -> R3<P, Q, Q12> {
         let f = &self.key_pair.priv_key.f;
         let ginv = &self.key_pair.priv_key.ginv;
-        let mut r = [0i8; P];
-        let cf: Rq<P, Q, Q12> = c.mult_small(&f.r3_from_rq());
-        let cf3: Rq<P, Q, Q12> = cf.mult3();
-        let e: R3<P, Q, Q12> = cf3.r3_from_rq();
-        let ev: R3<P, Q, Q12> = e.mult(&ginv);
-        #[allow(unused_assignments)]
-        let mut mask: i16 = 0;
 
-        mask = weightw_mask::<P, W>(&ev.coeffs); // 0 if weight w, else -1
-
-        for i in 0..W {
-            r[i] = (((ev.coeffs[i] ^ 1) as i16 & !mask) ^ 1) as i8;
-        }
-
-        for i in W..P {
-            r[i] = (ev.coeffs[i] as i16 & !mask) as i8;
-        }
-
-        R3::from(r)
+        rq_decrypt::<P, Q, W, Q12>(c, f, ginv)
     }
 
     pub fn key_pair_gen(&mut self, rng: ThreadRng) -> Result<(), NTRUErrors> {
@@ -464,7 +482,7 @@ mod tests {
         let (pk, sk) = ntrup.key_pair.export_pair().unwrap();
 
         let encrypted = ntrup.encrypt(&bytes, &pk);
-        let decrypted = ntrup.decrypt(&encrypted);
+        let decrypted = ntrup.decrypt(encrypted);
 
         // println!("{:?}", encrypted);
     }
