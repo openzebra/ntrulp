@@ -39,6 +39,8 @@ impl<const P: usize, const Q: usize, const W: usize, const Q12: usize> NTRUPrime
         })
     }
 
+    // return bytes where
+    // content = [content, chunk_size, 8_bytes_usize_len_chunks_size_bytes]
     pub fn encrypt(&self, bytes: &[u8], pk: &[u8]) -> Vec<u8> {
         let unlimted_poly = r3::r3_decode_chunks(bytes);
         let pub_key_coeffs = rq::rq_decode::<P, Q, Q12>(pk);
@@ -76,6 +78,8 @@ impl<const P: usize, const Q: usize, const W: usize, const Q12: usize> NTRUPrime
         }
 
         let enc_ref = enc.lock().unwrap();
+        let size_bytes = self.usize_vec_to_bytes(&size);
+        let size_len = size_bytes.len().to_ne_bytes().to_vec();
         let mut bytes: Vec<u8> = Vec::with_capacity(P * size.len());
 
         for i in 0..size.len() {
@@ -86,20 +90,8 @@ impl<const P: usize, const Q: usize, const W: usize, const Q12: usize> NTRUPrime
             }
         }
 
-        let u8_vector: Vec<u8> = size
-            .iter()
-            .flat_map(|&x| x.to_ne_bytes().to_vec())
-            .collect();
-        let usize_vector: Vec<usize> = u8_vector
-            .chunks_exact(std::mem::size_of::<usize>())
-            .map(|chunk| {
-                let mut bytes = [0; std::mem::size_of::<usize>()];
-                bytes.copy_from_slice(chunk);
-                usize::from_ne_bytes(bytes)
-            })
-            .collect();
-
-        assert_eq!(usize_vector, size);
+        bytes.extend(size_bytes);
+        bytes.extend(size_len);
 
         bytes
     }
@@ -304,7 +296,7 @@ mod tests {
 
         let mut rng = rand::thread_rng();
         let mut ntrup = NTRUPrime::<P, Q, W, Q12>::new().unwrap();
-        let bytes: Vec<u8> = (0..1000).map(|_| rng.gen::<u8>()).collect();
+        let bytes: Vec<u8> = (0..100_000).map(|_| rng.gen::<u8>()).collect();
 
         ntrup.key_pair_gen(rand::thread_rng()).unwrap();
 
