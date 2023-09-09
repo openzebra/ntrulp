@@ -145,7 +145,14 @@ pub fn rq_decode<const P: usize, const Q: usize, const Q12: usize, const RQ_BYTE
     rq
 }
 
-pub fn rq_rounded_decode<const P: usize, const Q: usize, const Q12: usize>(s: &[u8]) -> [i16; P] {
+pub fn rq_rounded_decode<
+    const P: usize,
+    const Q: usize,
+    const Q12: usize,
+    const ROUNDED_BYTES: usize,
+>(
+    s: &[u8; ROUNDED_BYTES],
+) -> [i16; P] {
     let mut rq = [0i16; P];
     let mut r = [0u16; P];
     let m = [(Q as u16 + 2) / 3; P];
@@ -297,8 +304,10 @@ mod rq_encoder_tests {
         const ROUNDED_BYTES: usize = 1007;
 
         let mut rng = rand::thread_rng();
-        let bytes: Vec<u8> = (0..ROUNDED_BYTES).map(|_| rng.gen::<u8>()).collect();
-        let rq = rq_rounded_decode::<P, Q, Q12>(&bytes);
+        let mut bytes: [u8; ROUNDED_BYTES] = [0u8; ROUNDED_BYTES];
+
+        rng.fill(&mut bytes[..]);
+        let rq = rq_rounded_decode::<P, Q, Q12, ROUNDED_BYTES>(&bytes);
         let dec = rq_rounded_encode::<P, Q, Q12, ROUNDED_BYTES>(&rq);
 
         assert_eq!(rq.len(), P);
@@ -313,8 +322,11 @@ mod rq_encoder_tests {
         const ROUNDED_BYTES: usize = 1152;
 
         let mut rng = rand::thread_rng();
-        let bytes: Vec<u8> = (0..ROUNDED_BYTES).map(|_| rng.gen::<u8>()).collect();
-        let rq = rq_rounded_decode::<P, Q, Q12>(&bytes);
+        let mut bytes: [u8; ROUNDED_BYTES] = [0u8; ROUNDED_BYTES];
+
+        rng.fill(&mut bytes[..]);
+
+        let rq = rq_rounded_decode::<P, Q, Q12, ROUNDED_BYTES>(&bytes);
         let dec = rq_rounded_encode::<P, Q, Q12, ROUNDED_BYTES>(&rq);
 
         assert_eq!(rq.len(), P);
@@ -329,8 +341,11 @@ mod rq_encoder_tests {
         const ROUNDED_BYTES: usize = 865;
 
         let mut rng = rand::thread_rng();
-        let bytes: Vec<u8> = (0..ROUNDED_BYTES).map(|_| rng.gen::<u8>()).collect();
-        let rq = rq_rounded_decode::<P, Q, Q12>(&bytes);
+        let mut bytes: [u8; ROUNDED_BYTES] = [0u8; ROUNDED_BYTES];
+
+        rng.fill(&mut bytes[..]);
+
+        let rq = rq_rounded_decode::<P, Q, Q12, ROUNDED_BYTES>(&bytes);
         let dec = rq_rounded_encode::<P, Q, Q12, ROUNDED_BYTES>(&rq);
 
         assert_eq!(rq.len(), P);
@@ -345,8 +360,10 @@ mod rq_encoder_tests {
         const ROUNDED_BYTES: usize = 1317;
 
         let mut rng = rand::thread_rng();
-        let bytes: Vec<u8> = (0..ROUNDED_BYTES).map(|_| rng.gen::<u8>()).collect();
-        let rq = rq_rounded_decode::<P, Q, Q12>(&bytes);
+        let mut bytes: [u8; ROUNDED_BYTES] = [0u8; ROUNDED_BYTES];
+        rng.fill(&mut bytes[..]);
+
+        let rq = rq_rounded_decode::<P, Q, Q12, ROUNDED_BYTES>(&bytes);
         let dec = rq_rounded_encode::<P, Q, Q12, ROUNDED_BYTES>(&rq);
 
         assert_eq!(rq.len(), P);
@@ -361,8 +378,10 @@ mod rq_encoder_tests {
         const ROUNDED_BYTES: usize = 1423;
 
         let mut rng = rand::thread_rng();
-        let bytes: Vec<u8> = (0..ROUNDED_BYTES).map(|_| rng.gen::<u8>()).collect();
-        let rq = rq_rounded_decode::<P, Q, Q12>(&bytes);
+        let mut bytes: [u8; ROUNDED_BYTES] = [0u8; ROUNDED_BYTES];
+        rng.fill(&mut bytes[..]);
+
+        let rq = rq_rounded_decode::<P, Q, Q12, ROUNDED_BYTES>(&bytes);
         let dec = rq_rounded_encode::<P, Q, Q12, ROUNDED_BYTES>(&rq);
 
         assert_eq!(rq.len(), P);
@@ -377,8 +396,10 @@ mod rq_encoder_tests {
         const ROUNDED_BYTES: usize = 1815;
 
         let mut rng = rand::thread_rng();
-        let bytes: Vec<u8> = (0..ROUNDED_BYTES).map(|_| rng.gen::<u8>()).collect();
-        let rq = rq_rounded_decode::<P, Q, Q12>(&bytes);
+        let mut bytes: [u8; ROUNDED_BYTES] = [0u8; ROUNDED_BYTES];
+        rng.fill(&mut bytes[..]);
+
+        let rq = rq_rounded_decode::<P, Q, Q12, ROUNDED_BYTES>(&bytes.into());
         let dec = rq_rounded_encode::<P, Q, Q12, ROUNDED_BYTES>(&rq);
 
         assert_eq!(rq.len(), P);

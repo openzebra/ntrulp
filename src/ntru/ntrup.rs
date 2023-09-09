@@ -114,11 +114,29 @@ impl<
         let size_bytes = &bytes[bytes_len - size_len - 8..(bytes_len - 1)];
         let size = self.byte_to_usize_vec(size_bytes);
         let bytes_data = &bytes[..bytes_len - size_len - 8];
-        let chunks = bytes_data.chunks(1007);
+        let chunks = bytes_data.chunks(ROUNDED_BYTES);
 
-        // for chunk in chunks {
-        //     println!("chunk={:?}", chunk);
-        // }
+        let sync_hash_map: Arc<Mutex<HashMap<usize, Vec<u8>>>> =
+            Arc::new(Mutex::new(HashMap::new()));
+        let mut threads = Vec::with_capacity(self.num_threads);
+
+        for (index, chunk) in chunks.into_iter().enumerate() {
+            let handle = thread::spawn(move || {
+                // let rq_coeffs = rq::rq_rounded_decode::<P, Q, Q12, ROUNDED_BYTES>(&chunk);
+            });
+
+            threads.push(handle);
+
+            if threads.len() >= self.num_threads {
+                let handle = threads.remove(0);
+
+                handle.join().unwrap();
+            }
+        }
+
+        for h in threads {
+            h.join().unwrap();
+        }
 
         // let rq_disordered = rq::rq_rounded_decode::<P, Q, Q12>(&bytes_data);
         //
@@ -448,6 +466,6 @@ mod tests {
         let encrypted = ntrup.encrypt(&bytes, &pk);
         let decrypted = ntrup.decrypt(&encrypted);
 
-        println!("{:?}", encrypted);
+        // println!("{:?}", encrypted);
     }
 }
