@@ -81,9 +81,25 @@ impl<const P: usize, const Q: usize, const W: usize, const Q12: usize> NTRUPrime
         for i in 0..size.len() {
             match enc_ref.get(&i) {
                 Some(v) => bytes.extend(v),
-                None => panic!("cannot find from enc"),
+                None => panic!("cannot find from enc"), // TODO: add error handler, remove all
+                                                        // unwrap!
             }
         }
+
+        let u8_vector: Vec<u8> = size
+            .iter()
+            .flat_map(|&x| x.to_ne_bytes().to_vec())
+            .collect();
+        let usize_vector: Vec<usize> = u8_vector
+            .chunks_exact(std::mem::size_of::<usize>())
+            .map(|chunk| {
+                let mut bytes = [0; std::mem::size_of::<usize>()];
+                bytes.copy_from_slice(chunk);
+                usize::from_ne_bytes(bytes)
+            })
+            .collect();
+
+        assert_eq!(usize_vector, size);
 
         bytes
     }
@@ -167,6 +183,22 @@ impl<const P: usize, const Q: usize, const W: usize, const Q12: usize> NTRUPrime
     pub fn set_key_pair(&mut self, key_pair: KeyPair<P, Q, Q12>) {
         self.key_pair = key_pair;
     }
+
+    fn usize_vec_to_bytes(&self, list: &[usize]) -> Vec<u8> {
+        list.iter()
+            .flat_map(|&x| x.to_ne_bytes().to_vec())
+            .collect()
+    }
+
+    fn byte_to_usize_vec(&self, list: &[u8]) -> Vec<usize> {
+        list.chunks_exact(std::mem::size_of::<usize>())
+            .map(|chunk| {
+                let mut bytes = [0; std::mem::size_of::<usize>()];
+                bytes.copy_from_slice(chunk);
+                usize::from_ne_bytes(bytes)
+            })
+            .collect()
+    }
 }
 
 #[cfg(test)]
@@ -248,6 +280,22 @@ mod tests {
     }
 
     #[test]
+    fn test_uszie_convert() {
+        const P: usize = 761;
+        const Q: usize = 4591;
+        const W: usize = 286;
+        const Q12: usize = (Q - 1) / 2;
+
+        let mut rng = rand::thread_rng();
+        let ntrup = NTRUPrime::<P, Q, W, Q12>::new().unwrap();
+        let usize_list: Vec<usize> = (0..1000).map(|_| rng.gen::<usize>()).collect();
+        let bytes = ntrup.usize_vec_to_bytes(&usize_list);
+        let out = ntrup.byte_to_usize_vec(&bytes);
+
+        assert_eq!(out, usize_list);
+    }
+
+    #[test]
     fn test_decrpt_encrypt_bytes() {
         const P: usize = 761;
         const Q: usize = 4591;
@@ -264,6 +312,6 @@ mod tests {
 
         let encrypted = ntrup.encrypt(&bytes, &pk);
 
-        println!("{:?}", encrypted);
+        // println!("{:?}", encrypted);
     }
 }
