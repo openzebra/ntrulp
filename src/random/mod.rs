@@ -43,6 +43,12 @@ impl<const SIZE: usize> NTRURandom<SIZE> {
         }
     }
 
+    pub fn from(rng: ThreadRng) -> Self {
+        NTRURandom {
+            rng: RngOptions::Thread(rng),
+        }
+    }
+
     pub fn from_u64(seed: u64) -> Self {
         let rng = StdRng::seed_from_u64(seed);
 
