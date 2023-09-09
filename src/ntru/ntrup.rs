@@ -16,21 +16,31 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-pub const PK_SIZE: usize = 1218; // Public Key
-pub const SK_SIZE: usize = 1600; // Private/Secret Key
-pub const CT_SIZE: usize = 1047; // Cipher Text
-pub const K_SIZE: usize = 32; // Shared Key
-
-pub struct NTRUPrime<const P: usize, const Q: usize, const W: usize, const Q12: usize> {
-    pub key_pair: KeyPair<P, Q, Q12>,
+pub struct NTRUPrime<
+    const P: usize,
+    const Q: usize,
+    const W: usize,
+    const Q12: usize,
+    const ROUNDED_BYTES: usize,
+    const RQ_BYTES: usize,
+> {
+    pub key_pair: KeyPair<P, Q, Q12, RQ_BYTES>,
     pub num_threads: usize,
 }
 
-impl<const P: usize, const Q: usize, const W: usize, const Q12: usize> NTRUPrime<P, Q, W, Q12> {
+impl<
+        const P: usize,
+        const Q: usize,
+        const W: usize,
+        const Q12: usize,
+        const ROUNDED_BYTES: usize,
+        const RQ_BYTES: usize,
+    > NTRUPrime<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES>
+{
     pub fn new() -> Result<Self, NTRUErrors> {
         check_params::<P, Q, W, Q12>()?;
 
-        let key_pair: KeyPair<P, Q, Q12> = KeyPair::new();
+        let key_pair: KeyPair<P, Q, Q12, RQ_BYTES> = KeyPair::new();
         let num_threads = num_cpus::get();
 
         Ok(NTRUPrime {
@@ -43,10 +53,11 @@ impl<const P: usize, const Q: usize, const W: usize, const Q12: usize> NTRUPrime
     // content = [content, chunk_size, 8_bytes_usize_len_chunks_size_bytes]
     pub fn encrypt(&self, bytes: &[u8], pk: &[u8]) -> Vec<u8> {
         let unlimted_poly = r3::r3_decode_chunks(bytes);
-        let pub_key_coeffs = rq::rq_decode::<P, Q, Q12>(pk);
+        let pub_key_coeffs = rq::rq_decode::<P, Q, Q12, RQ_BYTES>(pk);
         let h: Arc<Rq<P, Q, Q12>> = Arc::new(Rq::from(pub_key_coeffs));
         let (chunks, size) = r3::r3_split_w_chunks::<P, W>(&unlimted_poly);
-        let enc: Arc<Mutex<HashMap<usize, [u8; 1007]>>> = Arc::new(Mutex::new(HashMap::new()));
+        let enc: Arc<Mutex<HashMap<usize, [u8; ROUNDED_BYTES]>>> =
+            Arc::new(Mutex::new(HashMap::new()));
         let mut threads = Vec::with_capacity(self.num_threads);
 
         for (index, chunk) in chunks.into_iter().enumerate() {
@@ -58,8 +69,7 @@ impl<const P: usize, const Q: usize, const W: usize, const Q12: usize> NTRUPrime
 
                 round(&mut hr.coeffs);
 
-                // TODO: replace 1007 as ROUNDED_BYTES
-                let rq_bytes = rq::rq_rounded_encode::<P, Q, Q12, 1007>(&hr.coeffs);
+                let rq_bytes = rq::rq_rounded_encode::<P, Q, Q12, ROUNDED_BYTES>(&hr.coeffs);
                 let mut enc = enc_ref.lock().unwrap();
 
                 enc.insert(index, rq_bytes);
@@ -189,7 +199,7 @@ impl<const P: usize, const Q: usize, const W: usize, const Q12: usize> NTRUPrime
         Ok(())
     }
 
-    pub fn set_key_pair(&mut self, key_pair: KeyPair<P, Q, Q12>) {
+    pub fn set_key_pair(&mut self, key_pair: KeyPair<P, Q, Q12, RQ_BYTES>) {
         self.key_pair = key_pair;
     }
 
@@ -221,47 +231,47 @@ mod tests {
 
     #[test]
     fn test_init_params() {
-        NTRUPrime::<761, 4591, 286, 4590>::new().unwrap();
-        NTRUPrime::<857, 5167, 322, 5166>::new().unwrap();
-        NTRUPrime::<653, 4621, 288, 4620>::new().unwrap();
-        NTRUPrime::<953, 6343, 396, 6342>::new().unwrap();
-        NTRUPrime::<1013, 7177, 448, 7176>::new().unwrap();
-        NTRUPrime::<1277, 7879, 492, 7878>::new().unwrap();
+        NTRUPrime::<761, 4591, 286, 4590, 1007, 1158>::new().unwrap();
+        NTRUPrime::<857, 5167, 322, 5166, 1152, 1322>::new().unwrap();
+        NTRUPrime::<653, 4621, 288, 4620, 865, 994>::new().unwrap();
+        NTRUPrime::<953, 6343, 396, 6342, 1317, 1505>::new().unwrap();
+        NTRUPrime::<1013, 7177, 448, 7176, 1423, 1623>::new().unwrap();
+        NTRUPrime::<1277, 7879, 492, 7878, 1815, 2067>::new().unwrap();
     }
 
     #[test]
     fn test_gen_key_pair() {
-        let mut ntrup = NTRUPrime::<761, 4591, 286, 4590>::new().unwrap();
+        let mut ntrup = NTRUPrime::<761, 4591, 286, 4590, 1007, 1158>::new().unwrap();
 
         ntrup.key_pair_gen(rand::thread_rng()).unwrap();
 
         assert!(ntrup.key_pair.verify());
 
-        let mut ntrup = NTRUPrime::<857, 5167, 322, 5166>::new().unwrap();
+        let mut ntrup = NTRUPrime::<857, 5167, 322, 5166, 1152, 1322>::new().unwrap();
 
         ntrup.key_pair_gen(rand::thread_rng()).unwrap();
 
         assert!(ntrup.key_pair.verify());
 
-        let mut ntrup = NTRUPrime::<653, 4621, 288, 4620>::new().unwrap();
+        let mut ntrup = NTRUPrime::<653, 4621, 288, 4620, 865, 994>::new().unwrap();
 
         ntrup.key_pair_gen(rand::thread_rng()).unwrap();
 
         assert!(ntrup.key_pair.verify());
 
-        let mut ntrup = NTRUPrime::<953, 6343, 396, 6342>::new().unwrap();
+        let mut ntrup = NTRUPrime::<953, 6343, 396, 6342, 1317, 1505>::new().unwrap();
 
         ntrup.key_pair_gen(rand::thread_rng()).unwrap();
 
         assert!(ntrup.key_pair.verify());
 
-        let mut ntrup = NTRUPrime::<1013, 7177, 448, 7176>::new().unwrap();
+        let mut ntrup = NTRUPrime::<1013, 7177, 448, 7176, 1423, 1623>::new().unwrap();
 
         ntrup.key_pair_gen(rand::thread_rng()).unwrap();
 
         assert!(ntrup.key_pair.verify());
 
-        let mut ntrup = NTRUPrime::<1277, 7879, 492, 7878>::new().unwrap();
+        let mut ntrup = NTRUPrime::<1277, 7879, 492, 7878, 1815, 2067>::new().unwrap();
 
         ntrup.key_pair_gen(rand::thread_rng()).unwrap();
 
@@ -269,13 +279,125 @@ mod tests {
     }
 
     #[test]
-    fn test_decrpt_encrypt_r3_to_rq() {
+    fn test_decrpt_encrypt_r3_to_rq_761() {
         const P: usize = 761;
-        const Q: usize = 4591;
         const W: usize = 286;
+        const Q: usize = 4591;
         const Q12: usize = (Q - 1) / 2;
+        const RQ_BYTES: usize = 1158;
+        const ROUNDED_BYTES: usize = 1007;
 
-        let mut ntrup = NTRUPrime::<P, Q, W, Q12>::new().unwrap();
+        let mut ntrup = NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES>::new().unwrap();
+
+        ntrup.key_pair_gen(rand::thread_rng()).unwrap();
+
+        let mut rng: NTRURandom<P> = NTRURandom::new();
+        let c: R3<P, Q, Q12> = Rq::from(rng.short_random(W).unwrap()).r3_from_rq();
+
+        let encrypted = ntrup.r3_encrypt(&c, &ntrup.key_pair.pub_key.h);
+        let decrypted = ntrup.rq_decrypt(&encrypted);
+
+        assert_eq!(decrypted.coeffs, c.coeffs);
+    }
+
+    #[test]
+    fn test_decrpt_encrypt_r3_to_rq_857() {
+        const P: usize = 857;
+        const W: usize = 322;
+        const Q: usize = 5167;
+        const Q12: usize = (Q - 1) / 2;
+        const RQ_BYTES: usize = 1322;
+        const ROUNDED_BYTES: usize = 1152;
+
+        let mut ntrup = NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES>::new().unwrap();
+
+        ntrup.key_pair_gen(rand::thread_rng()).unwrap();
+
+        let mut rng: NTRURandom<P> = NTRURandom::new();
+        let c: R3<P, Q, Q12> = Rq::from(rng.short_random(W).unwrap()).r3_from_rq();
+
+        let encrypted = ntrup.r3_encrypt(&c, &ntrup.key_pair.pub_key.h);
+        let decrypted = ntrup.rq_decrypt(&encrypted);
+
+        assert_eq!(decrypted.coeffs, c.coeffs);
+    }
+
+    #[test]
+    fn test_decrpt_encrypt_r3_to_rq_653() {
+        const P: usize = 653;
+        const Q: usize = 4621;
+        const W: usize = 288;
+        const Q12: usize = (Q - 1) / 2;
+        const RQ_BYTES: usize = 994;
+        const ROUNDED_BYTES: usize = 865;
+
+        let mut ntrup = NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES>::new().unwrap();
+
+        ntrup.key_pair_gen(rand::thread_rng()).unwrap();
+
+        let mut rng: NTRURandom<P> = NTRURandom::new();
+        let c: R3<P, Q, Q12> = Rq::from(rng.short_random(W).unwrap()).r3_from_rq();
+
+        let encrypted = ntrup.r3_encrypt(&c, &ntrup.key_pair.pub_key.h);
+        let decrypted = ntrup.rq_decrypt(&encrypted);
+
+        assert_eq!(decrypted.coeffs, c.coeffs);
+    }
+
+    #[test]
+    fn test_decrpt_encrypt_r3_to_rq_953() {
+        const P: usize = 953;
+        const Q: usize = 6343;
+        const W: usize = 396;
+        const Q12: usize = (Q - 1) / 2;
+        const RQ_BYTES: usize = 1505;
+        const ROUNDED_BYTES: usize = 1317;
+
+        let mut ntrup = NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES>::new().unwrap();
+
+        ntrup.key_pair_gen(rand::thread_rng()).unwrap();
+
+        let mut rng: NTRURandom<P> = NTRURandom::new();
+        let c: R3<P, Q, Q12> = Rq::from(rng.short_random(W).unwrap()).r3_from_rq();
+
+        let encrypted = ntrup.r3_encrypt(&c, &ntrup.key_pair.pub_key.h);
+        let decrypted = ntrup.rq_decrypt(&encrypted);
+
+        assert_eq!(decrypted.coeffs, c.coeffs);
+    }
+
+    #[test]
+    fn test_decrpt_encrypt_r3_to_rq_1013() {
+        const P: usize = 1013;
+        const Q: usize = 7177;
+        const W: usize = 448;
+        const Q12: usize = (Q - 1) / 2;
+        const RQ_BYTES: usize = 1623;
+        const ROUNDED_BYTES: usize = 1423;
+
+        let mut ntrup = NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES>::new().unwrap();
+
+        ntrup.key_pair_gen(rand::thread_rng()).unwrap();
+
+        let mut rng: NTRURandom<P> = NTRURandom::new();
+        let c: R3<P, Q, Q12> = Rq::from(rng.short_random(W).unwrap()).r3_from_rq();
+
+        let encrypted = ntrup.r3_encrypt(&c, &ntrup.key_pair.pub_key.h);
+        let decrypted = ntrup.rq_decrypt(&encrypted);
+
+        assert_eq!(decrypted.coeffs, c.coeffs);
+    }
+
+    #[test]
+    fn test_decrpt_encrypt_r3_to_rq_1277() {
+        const P: usize = 1277;
+        const Q: usize = 7879;
+        const W: usize = 492;
+        const Q12: usize = (Q - 1) / 2;
+        const RQ_BYTES: usize = 2067;
+        const ROUNDED_BYTES: usize = 1815;
+
+        let mut ntrup = NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES>::new().unwrap();
 
         ntrup.key_pair_gen(rand::thread_rng()).unwrap();
 
@@ -291,12 +413,14 @@ mod tests {
     #[test]
     fn test_uszie_convert() {
         const P: usize = 761;
-        const Q: usize = 4591;
         const W: usize = 286;
+        const Q: usize = 4591;
         const Q12: usize = (Q - 1) / 2;
+        const RQ_BYTES: usize = 1158;
+        const ROUNDED_BYTES: usize = 1007;
 
         let mut rng = rand::thread_rng();
-        let ntrup = NTRUPrime::<P, Q, W, Q12>::new().unwrap();
+        let ntrup = NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES>::new().unwrap();
         let usize_list: Vec<usize> = (0..1000).map(|_| rng.gen::<usize>()).collect();
         let bytes = ntrup.usize_vec_to_bytes(&usize_list);
         let out = ntrup.byte_to_usize_vec(&bytes);
@@ -307,12 +431,14 @@ mod tests {
     #[test]
     fn test_decrpt_encrypt_bytes() {
         const P: usize = 761;
-        const Q: usize = 4591;
         const W: usize = 286;
+        const Q: usize = 4591;
         const Q12: usize = (Q - 1) / 2;
+        const RQ_BYTES: usize = 1158;
+        const ROUNDED_BYTES: usize = 1007;
 
         let mut rng = rand::thread_rng();
-        let mut ntrup = NTRUPrime::<P, Q, W, Q12>::new().unwrap();
+        let mut ntrup = NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES>::new().unwrap();
         let bytes: Vec<u8> = (0..1000).map(|_| rng.gen::<u8>()).collect();
 
         ntrup.key_pair_gen(rand::thread_rng()).unwrap();
@@ -322,6 +448,6 @@ mod tests {
         let encrypted = ntrup.encrypt(&bytes, &pk);
         let decrypted = ntrup.decrypt(&encrypted);
 
-        // println!("{:?}", encrypted);
+        println!("{:?}", encrypted);
     }
 }

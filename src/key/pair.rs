@@ -9,12 +9,14 @@ use crate::{
 
 use super::{priv_key::PrivKey, pub_key::PubKey};
 
-pub struct KeyPair<const P: usize, const Q: usize, const Q12: usize> {
+pub struct KeyPair<const P: usize, const Q: usize, const Q12: usize, const RQ_BYTES: usize> {
     pub pub_key: PubKey<P, Q, Q12>,
     pub priv_key: PrivKey<P, Q, Q12>,
 }
 
-impl<const P: usize, const Q: usize, const Q12: usize> KeyPair<P, Q, Q12> {
+impl<const P: usize, const Q: usize, const Q12: usize, const RQ_BYTES: usize>
+    KeyPair<P, Q, Q12, RQ_BYTES>
+{
     pub fn new() -> Self {
         Self {
             pub_key: PubKey::new(),
@@ -45,7 +47,7 @@ impl<const P: usize, const Q: usize, const Q12: usize> KeyPair<P, Q, Q12> {
     }
 
     // (PublicKey, SecretKey)
-    pub fn export_pair(&mut self) -> Result<(Vec<u8>, Vec<u8>), NTRUErrors> {
+    pub fn export_pair(&mut self) -> Result<([u8; RQ_BYTES], Vec<u8>), NTRUErrors> {
         if !self.verify() {
             return Err(NTRUErrors::KeysIsEmpty);
         }
@@ -55,7 +57,7 @@ impl<const P: usize, const Q: usize, const Q12: usize> KeyPair<P, Q, Q12> {
         let f = self.priv_key.f.r3_from_rq().coeffs;
         let ginv = self.priv_key.ginv.coeffs;
 
-        let pk = rq_encode::<P, Q, Q12>(&h);
+        let pk = rq_encode::<P, Q, Q12, RQ_BYTES>(&h);
         let mut sk = vec![0u8; r3_bytes * 2];
         let fencoded = r3_encode(&f).to_vec();
         let ginv_encoded = r3_encode(&ginv);
@@ -72,7 +74,7 @@ impl<const P: usize, const Q: usize, const Q12: usize> KeyPair<P, Q, Q12> {
         let mut f: R3<P, Q, Q12> = R3::new();
         let mut ginv: R3<P, Q, Q12> = R3::new();
 
-        h.coeffs = rq_decode::<P, Q, Q12>(pk);
+        h.coeffs = rq_decode::<P, Q, Q12, RQ_BYTES>(pk);
         f.coeffs = r3_decode(&sk[r3_bytes..]);
         ginv.coeffs = r3_decode(&sk[..r3_bytes]);
 
@@ -110,9 +112,10 @@ mod test_pair {
         const Q: usize = 4591;
         const W: usize = 286;
         const Q12: usize = (Q - 1) / 2;
+        const RQ_BYTES: usize = 1158;
 
         let mut random: NTRURandom<P> = NTRURandom::new();
-        let mut pair: KeyPair<P, Q, Q12> = KeyPair::new();
+        let mut pair: KeyPair<P, Q, Q12, RQ_BYTES> = KeyPair::new();
         let f: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap());
         let g: R3<P, Q, Q12> = R3::from(random.random_small().unwrap());
 
@@ -127,11 +130,12 @@ mod test_pair {
         const Q: usize = 4591;
         const W: usize = 286;
         const Q12: usize = (Q - 1) / 2;
+        const RQ_BYTES: usize = 1158;
 
         let mut random: NTRURandom<P> = NTRURandom::new();
-        let mut pair0: KeyPair<P, Q, Q12> = KeyPair::new();
-        let mut pair1: KeyPair<P, Q, Q12> = KeyPair::new();
-        let mut pair2: KeyPair<P, Q, Q12> = KeyPair::new();
+        let mut pair0: KeyPair<P, Q, Q12, RQ_BYTES> = KeyPair::new();
+        let mut pair1: KeyPair<P, Q, Q12, RQ_BYTES> = KeyPair::new();
+        let mut pair2: KeyPair<P, Q, Q12, RQ_BYTES> = KeyPair::new();
         let f: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap());
         let g: R3<P, Q, Q12> = R3::from(random.random_small().unwrap());
 
