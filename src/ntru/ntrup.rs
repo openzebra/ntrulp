@@ -90,13 +90,22 @@ impl<const P: usize, const Q: usize, const W: usize, const Q12: usize> NTRUPrime
             }
         }
 
+        println!("encrypt={:?}", bytes);
+
         bytes.extend(size_bytes);
         bytes.extend(size_len);
 
         bytes
     }
 
-    pub fn decrypt(&self, bytes: &[u8]) {}
+    pub fn decrypt(&self, bytes: &[u8]) {
+        let bytes_len = bytes.len();
+        let size_bytes_len: &[u8; 8] = &bytes[bytes_len - 8..].try_into().unwrap(); // TODO: remove unwrap!
+        let size_len = usize::from_ne_bytes(*size_bytes_len);
+        let size_bytes = &bytes[bytes_len - size_len - 8..(bytes_len - 1)];
+        let size = self.byte_to_usize_vec(size_bytes);
+        let bytes_data = &bytes[..bytes_len - size_len - 8];
+    }
 
     pub fn r3_encrypt(&self, r: &R3<P, Q, Q12>, h: &Rq<P, Q, Q12>) -> Rq<P, Q, Q12> {
         let mut hr = h.mult_small(&r);
@@ -296,13 +305,14 @@ mod tests {
 
         let mut rng = rand::thread_rng();
         let mut ntrup = NTRUPrime::<P, Q, W, Q12>::new().unwrap();
-        let bytes: Vec<u8> = (0..100_000).map(|_| rng.gen::<u8>()).collect();
+        let bytes: Vec<u8> = (0..1000).map(|_| rng.gen::<u8>()).collect();
 
         ntrup.key_pair_gen(rand::thread_rng()).unwrap();
 
         let (pk, sk) = ntrup.key_pair.export_pair().unwrap();
 
         let encrypted = ntrup.encrypt(&bytes, &pk);
+        let decrypted = ntrup.decrypt(&encrypted);
 
         // println!("{:?}", encrypted);
     }
