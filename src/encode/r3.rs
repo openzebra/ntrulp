@@ -108,7 +108,7 @@ pub fn r3_decode_bytes<const P: usize, const SIZEP: usize>(input: &[u8; SIZEP]) 
 }
 
 // SIZEP = P / BITS_SIZE
-pub fn r3_encode_bytes_0(input: &[i8]) -> Vec<u8> {
+pub fn r3_encode_bytes(input: &[i8]) -> Vec<u8> {
     let mut out = Vec::new();
 
     for i in (0..input.len()).step_by(BITS_SIZE) {
@@ -119,29 +119,6 @@ pub fn r3_encode_bytes_0(input: &[i8]) -> Vec<u8> {
         }
 
         out.push(convert_to_decimal(chunk));
-    }
-
-    out
-}
-
-// SIZEP = P / BITS_SIZE
-pub fn r3_encode_bytes<const P: usize, const SIZEP: usize>(input: &[i8; P]) -> [u8; SIZEP] {
-    let mut out = [0u8; SIZEP];
-    let mut out_index = 0;
-
-    for i in (0..P).step_by(BITS_SIZE) {
-        if out_index == SIZEP {
-            break;
-        }
-        let mut chunk = [0i8; BITS_SIZE];
-
-        for j in 0..BITS_SIZE {
-            chunk[j] = input[i + j];
-        }
-
-        out[out_index] = convert_to_decimal(chunk);
-
-        out_index += 1;
     }
 
     out
@@ -246,35 +223,6 @@ mod r3_encoder_tests {
     }
 
     #[test]
-    fn test_r3_decode_decode_chunks() {
-        const P: usize = 761;
-        const SIZEP: usize = P / BITS_SIZE;
-
-        let mut rng = rand::thread_rng();
-        let bytes: Vec<u8> = (0..1000).map(|_| rng.gen::<u8>()).collect();
-        let coeffs = r3_decode_chunks(&bytes);
-        let mut out_bytes: Vec<u8> = Vec::new();
-
-        for (index, chunk) in coeffs.chunks(P).enumerate() {
-            let restored_bytes = r3_encode_bytes_0(&chunk);
-
-            out_bytes.extend_from_slice(&restored_bytes);
-
-            if index == 1 {
-                println!("index={index}, restored_bytes={:?}", restored_bytes);
-            }
-        }
-
-        for (index, chunk) in bytes.chunks(SIZEP).enumerate() {
-            if index == 1 {
-                println!("index={index}, chunk={:?}", chunk);
-            }
-        }
-
-        // assert_eq!(out_bytes, bytes);
-    }
-
-    #[test]
     fn test_bytes_encode_decode() {
         use rand::Rng;
 
@@ -287,7 +235,7 @@ mod r3_encoder_tests {
             rand::thread_rng().fill(&mut bytes[..]);
 
             let r3 = r3_decode_bytes::<P, SIZEP>(&bytes);
-            let dec = r3_encode_bytes::<P, SIZEP>(&r3);
+            let dec = r3_encode_bytes(&r3);
 
             assert_eq!(dec, bytes);
         }
@@ -327,25 +275,28 @@ mod r3_encoder_tests {
         const W: usize = 286;
 
         let mut rng = rand::thread_rng();
-        let bytes: Vec<u8> = (0..90).map(|_| rng.gen::<u8>()).collect();
-        let r3 = r3_decode_chunks(&bytes);
-        let (chunks, size) = r3_split_w_chunks::<P, W>(&r3);
-        let merged = r3_merge_w_chunks::<P>(&chunks, &size);
 
-        let mut r3_sum = 0usize;
-        for el in &r3 {
-            r3_sum += el.abs() as usize;
+        for _ in 0..100 {
+            let bytes: Vec<u8> = (0..90).map(|_| rng.gen::<u8>()).collect();
+            let r3 = r3_decode_chunks(&bytes);
+            let (chunks, size) = r3_split_w_chunks::<P, W>(&r3);
+            let merged = r3_merge_w_chunks::<P>(&chunks, &size);
+
+            let mut r3_sum = 0usize;
+            for el in &r3 {
+                r3_sum += el.abs() as usize;
+            }
+
+            let mut m_sum = 0usize;
+            for el in &merged {
+                m_sum += el.abs() as usize;
+            }
+
+            assert_eq!(r3_sum, m_sum);
+
+            assert_eq!(merged.len(), r3.len());
+            assert_eq!(merged, r3);
         }
-
-        let mut m_sum = 0usize;
-        for el in &merged {
-            m_sum += el.abs() as usize;
-        }
-
-        assert_eq!(r3_sum, m_sum);
-
-        assert_eq!(merged.len(), r3.len());
-        assert_eq!(merged, r3);
     }
 
     #[test]

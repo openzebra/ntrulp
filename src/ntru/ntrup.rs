@@ -140,14 +140,14 @@ impl<
         let size_bytes_len: &[u8; 8] = &bytes[bytes_len - 8..].try_into().unwrap(); // TODO: remove unwrap!
         let size_len = usize::from_ne_bytes(*size_bytes_len);
         let size_bytes = &bytes[bytes_len - size_len - 8..(bytes_len - 1)];
-        let size = Arc::new(self.byte_to_usize_vec(size_bytes));
+        let size = self.byte_to_usize_vec(size_bytes);
         let bytes_data = &bytes[..bytes_len - size_len - 8];
         let chunks = bytes_data.chunks(ROUNDED_BYTES);
 
         let f = Arc::new(self.key_pair.priv_key.f.coeffs);
         let ginv = Arc::new(self.key_pair.priv_key.ginv.coeffs);
 
-        let sync_hash_map: Arc<Mutex<HashMap<usize, Vec<u8>>>> =
+        let sync_hash_map: Arc<Mutex<HashMap<usize, [i8; P]>>> =
             Arc::new(Mutex::new(HashMap::new()));
         let mut threads = Vec::with_capacity(self.num_threads);
 
@@ -157,20 +157,16 @@ impl<
             let rounded_chunk: [u8; ROUNDED_BYTES] = chunk.try_into().unwrap();
             let f_ref = Arc::clone(&f);
             let ginv_ref = Arc::clone(&ginv);
-            let size_ref = Arc::clone(&size);
             let handle = thread::spawn(move || {
                 let rq_coeffs = rq::rq_rounded_decode::<P, Q, Q12, ROUNDED_BYTES>(&rounded_chunk);
                 let rq: Rq<P, Q, Q12> = Rq::from(rq_coeffs);
                 let f: Rq<P, Q, Q12> = Rq::from(*f_ref);
                 let ginv: R3<P, Q, Q12> = R3::from(*ginv_ref);
                 let r3 = rq_decrypt::<P, Q, W, Q12>(&rq, &f, &ginv);
-                let point = size_ref[index];
-                let slice = &r3.coeffs[..point];
-                let bytes = r3::r3_encode_chunks(slice);
 
                 let mut sync_map = sync_map_ref.lock().unwrap();
 
-                sync_map.insert(index, bytes);
+                sync_map.insert(index, r3.coeffs);
             });
 
             threads.push(handle);
@@ -188,17 +184,18 @@ impl<
 
         // TODO: Remove unwrap.
         let sync_map = sync_hash_map.lock().unwrap();
-        let mut out_bytes: Vec<u8> = Vec::with_capacity(size_len);
+        let mut r3_chunks = Vec::new();
+        for i in 0..size.len() {
+            match sync_map.get(&i) {
+                Some(v) => r3_chunks.push(*v),
+                None => panic!("cannot find from enc"), // TODO: add error handler, remove all
+                                                        // unwrap!
+            }
+        }
 
-        // for i in 0..size.len() {
-        //     match sync_map.get(&i) {
-        //         Some(v) => out_bytes.extend(v),
-        //         None => panic!("cannot find from enc"), // TODO: add error handler, remove all
-        //                                                 // unwrap!
-        //     }
-        // }
+        let out_r3 = r3::r3_merge_w_chunks::<P>(&r3_chunks, &size);
 
-        out_bytes
+        r3::r3_encode_chunks(&out_r3)
     }
 
     pub fn r3_encrypt(&self, r: &R3<P, Q, Q12>, h: &Rq<P, Q, Q12>) -> Rq<P, Q, Q12> {
@@ -514,7 +511,7 @@ mod tests {
         let mut rng = rand::thread_rng();
         let mut ntrup =
             NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES, SIZE_PBITS>::new().unwrap();
-        let bytes: Vec<u8> = (0..100).map(|_| rng.gen::<u8>()).collect();
+        let bytes: Vec<u8> = (0..10_000).map(|_| rng.gen::<u8>()).collect();
 
         ntrup.key_pair_gen(rand::thread_rng()).unwrap();
 
@@ -523,8 +520,6 @@ mod tests {
         let encrypted = ntrup.encrypt(&bytes, &pk);
         let decrypted = ntrup.decrypt(encrypted);
 
-        // println!("{:?}", decrypted);
-        println!();
-        println!("{:?}", bytes);
+        assert_eq!(decrypted, bytes);
     }
 }
