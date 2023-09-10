@@ -139,7 +139,7 @@ pub fn r3_split_w_chunks<const P: usize, const W: usize>(
         }
     }
 
-    if i != 0 && sum != W {
+    if sum != W {
         let mut rng = rand::thread_rng();
         let num = if rng.gen::<bool>() { 1 } else { -1 };
 
@@ -153,6 +153,9 @@ pub fn r3_split_w_chunks<const P: usize, const W: usize>(
         }
 
         chunks.push(part);
+    } else {
+        chunks.push(part);
+        size.push(i);
     }
 
     (chunks, size)
@@ -273,6 +276,34 @@ mod r3_encoder_tests {
             assert_eq!(merged.len(), r3.len());
             assert_eq!(merged, r3);
         }
+    }
+
+    #[test]
+    fn test_encode_decode_bytes_by_chunks_spliter_merge_9() {
+        const P: usize = 16;
+        const W: usize = 3;
+
+        let mut rng = rand::thread_rng();
+
+        let bytes: Vec<u8> = (0..20).map(|_| rng.gen::<u8>()).collect();
+        let r3 = r3_decode_chunks(&bytes);
+        let (chunks, size) = r3_split_w_chunks::<P, W>(&r3);
+        let merged = r3_merge_w_chunks::<P>(&chunks, &size);
+
+        let mut r3_sum = 0usize;
+        for el in &r3 {
+            r3_sum += el.abs() as usize;
+        }
+
+        let mut m_sum = 0usize;
+        for el in &merged {
+            m_sum += el.abs() as usize;
+        }
+
+        assert_eq!(r3_sum, m_sum);
+
+        assert_eq!(merged.len(), r3.len());
+        assert_eq!(merged, r3);
     }
 
     #[test]
