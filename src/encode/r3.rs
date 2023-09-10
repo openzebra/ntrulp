@@ -87,43 +87,6 @@ pub fn r3_decode<const P: usize>(s: &[u8]) -> [i8; P] {
     f
 }
 
-// SIZEP = P / BITS_SIZE
-pub fn r3_decode_bytes<const P: usize, const SIZEP: usize>(input: &[u8; SIZEP]) -> [i8; P] {
-    let mut out = [0i8; P];
-
-    for i in 0..SIZEP {
-        let bits = convert_to_ternary(input[i]);
-
-        for j in 0..BITS_SIZE {
-            let index = i * BITS_SIZE + j;
-
-            match out.get_mut(index) {
-                Some(e) => *e = bits[j],
-                None => continue,
-            }
-        }
-    }
-
-    out
-}
-
-// SIZEP = P / BITS_SIZE
-pub fn r3_encode_bytes(input: &[i8]) -> Vec<u8> {
-    let mut out = Vec::new();
-
-    for i in (0..input.len()).step_by(BITS_SIZE) {
-        let mut chunk = [0i8; BITS_SIZE];
-
-        for j in 0..BITS_SIZE {
-            chunk[j] = *input.get(i + j).unwrap_or(&0i8);
-        }
-
-        out.push(convert_to_decimal(chunk));
-    }
-
-    out
-}
-
 pub fn r3_encode_chunks(r3: &[i8]) -> Vec<u8> {
     let mut output: Vec<u8> = Vec::new();
 
@@ -223,25 +186,6 @@ mod r3_encoder_tests {
     }
 
     #[test]
-    fn test_bytes_encode_decode() {
-        use rand::Rng;
-
-        const P: usize = 761;
-        const SIZEP: usize = P / BITS_SIZE - 1;
-
-        for _ in 0..10 {
-            let mut bytes = [0u8; SIZEP];
-
-            rand::thread_rng().fill(&mut bytes[..]);
-
-            let r3 = r3_decode_bytes::<P, SIZEP>(&bytes);
-            let dec = r3_encode_bytes(&r3);
-
-            assert_eq!(dec, bytes);
-        }
-    }
-
-    #[test]
     fn test_r3_encode() {
         use crate::random::CommonRandom;
         use crate::random::NTRURandom;
@@ -277,7 +221,8 @@ mod r3_encoder_tests {
         let mut rng = rand::thread_rng();
 
         for _ in 0..100 {
-            let bytes: Vec<u8> = (0..90).map(|_| rng.gen::<u8>()).collect();
+            let rand_len = rng.gen_range(5..1000);
+            let bytes: Vec<u8> = (0..rand_len).map(|_| rng.gen::<u8>()).collect();
             let r3 = r3_decode_chunks(&bytes);
             let (chunks, size) = r3_split_w_chunks::<P, W>(&r3);
             let merged = r3_merge_w_chunks::<P>(&chunks, &size);
