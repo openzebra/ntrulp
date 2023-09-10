@@ -245,14 +245,130 @@ mod r3_encoder_tests {
     }
 
     #[test]
-    fn test_spliter() {
+    fn test_spliter_761() {
         const P: usize = 761;
         const W: usize = 286;
 
         let mut rng = rand::thread_rng();
 
         for _ in 0..10 {
-            let bytes: Vec<u8> = (0..1000).map(|_| rng.gen::<u8>()).collect();
+            let rand_len = rng.gen_range(5..1000);
+            let bytes: Vec<u8> = (0..rand_len).map(|_| rng.gen::<u8>()).collect();
+            let r3 = r3_decode_chunks(&bytes);
+            let (chunks, size) = r3_split_w_chunks::<P, W>(&r3);
+
+            for (chunk, index) in chunks.iter().zip(size) {
+                let sum = chunk.iter().map(|&x| x.abs() as i32).sum::<i32>();
+
+                assert_eq!(sum as usize, W);
+                assert_eq!(chunk.len(), P);
+                assert!(index <= P);
+            }
+        }
+    }
+
+    #[test]
+    fn test_spliter_857() {
+        const P: usize = 857;
+        const W: usize = 322;
+
+        let mut rng = rand::thread_rng();
+
+        for _ in 0..10 {
+            let rand_len = rng.gen_range(5..1000);
+            let bytes: Vec<u8> = (0..rand_len).map(|_| rng.gen::<u8>()).collect();
+            let r3 = r3_decode_chunks(&bytes);
+            let (chunks, size) = r3_split_w_chunks::<P, W>(&r3);
+
+            for (chunk, index) in chunks.iter().zip(size) {
+                let sum = chunk.iter().map(|&x| x.abs() as i32).sum::<i32>();
+
+                assert_eq!(sum as usize, W);
+                assert_eq!(chunk.len(), P);
+                assert!(index <= P);
+            }
+        }
+    }
+
+    #[test]
+    fn test_spliter_653() {
+        const P: usize = 653;
+        const W: usize = 288;
+
+        let mut rng = rand::thread_rng();
+
+        for _ in 0..10 {
+            let rand_len = rng.gen_range(5..1000);
+            let bytes: Vec<u8> = (0..rand_len).map(|_| rng.gen::<u8>()).collect();
+            let r3 = r3_decode_chunks(&bytes);
+            let (chunks, size) = r3_split_w_chunks::<P, W>(&r3);
+
+            for (chunk, index) in chunks.iter().zip(size) {
+                let sum = chunk.iter().map(|&x| x.abs() as i32).sum::<i32>();
+
+                assert_eq!(sum as usize, W);
+                assert_eq!(chunk.len(), P);
+                assert!(index <= P);
+            }
+        }
+    }
+
+    #[test]
+    fn test_spliter_953() {
+        const P: usize = 953;
+        const W: usize = 396;
+
+        let mut rng = rand::thread_rng();
+
+        for _ in 0..10 {
+            let rand_len = rng.gen_range(5..1000);
+            let bytes: Vec<u8> = (0..rand_len).map(|_| rng.gen::<u8>()).collect();
+            let r3 = r3_decode_chunks(&bytes);
+            let (chunks, size) = r3_split_w_chunks::<P, W>(&r3);
+
+            for (chunk, index) in chunks.iter().zip(size) {
+                let sum = chunk.iter().map(|&x| x.abs() as i32).sum::<i32>();
+
+                assert_eq!(sum as usize, W);
+                assert_eq!(chunk.len(), P);
+                assert!(index <= P);
+            }
+        }
+    }
+
+    #[test]
+    fn test_spliter_1013() {
+        const P: usize = 1013;
+        const W: usize = 448;
+
+        let mut rng = rand::thread_rng();
+
+        for _ in 0..10 {
+            let rand_len = rng.gen_range(5..1000);
+            let bytes: Vec<u8> = (0..rand_len).map(|_| rng.gen::<u8>()).collect();
+            let r3 = r3_decode_chunks(&bytes);
+            let (chunks, size) = r3_split_w_chunks::<P, W>(&r3);
+
+            for (chunk, index) in chunks.iter().zip(size) {
+                let sum = chunk.iter().map(|&x| x.abs() as i32).sum::<i32>();
+
+                assert_eq!(sum as usize, W);
+                assert_eq!(chunk.len(), P);
+                assert!(index <= P);
+            }
+        }
+    }
+
+    #[test]
+    fn test_spliter_1277() {
+        const P: usize = 1277;
+        const W: usize = 492;
+
+        let mut rng = rand::thread_rng();
+
+        for _ in 0..10 {
+            let rand_len = rng.gen_range(5..1000);
+            let bytes: Vec<u8> = (0..rand_len).map(|_| rng.gen::<u8>()).collect();
             let r3 = r3_decode_chunks(&bytes);
             let (chunks, size) = r3_split_w_chunks::<P, W>(&r3);
 
