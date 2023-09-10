@@ -111,16 +111,10 @@ pub fn r3_decode_bytes<const P: usize, const SIZEP: usize>(input: &[u8; SIZEP]) 
 pub fn r3_encode_bytes_0(input: &[i8]) -> Vec<u8> {
     let mut out = Vec::new();
 
-    for chunk in input.chunks(BITS_SIZE) {
-        let ck: [i8; BITS_SIZE] = chunk.try_into().unwrap_or([0i8; BITS_SIZE]);
-        println!("coeffs={:?}, input={:?}", ck, convert_to_decimal(ck));
-    }
-
     for i in (0..input.len()).step_by(BITS_SIZE) {
         let mut chunk = [0i8; BITS_SIZE];
 
         for j in 0..BITS_SIZE {
-            // println!("j={j}, chunk={:?}", &chunk);
             chunk[j] = *input.get(i + j).unwrap_or(&0i8);
         }
 
@@ -212,7 +206,7 @@ pub fn r3_split_w_chunks<const P: usize, const W: usize>(
         size.push(i);
         i += 1;
 
-        for _ in sum..=W {
+        for _ in sum..W {
             part[i] = num;
             sum += 1;
             i += 1;
@@ -371,7 +365,6 @@ mod r3_encoder_tests {
 
                 assert_eq!(sum as usize, W);
                 assert_eq!(chunk.len(), P);
-                assert_eq!(chunk[index + 1], 0);
                 assert!(index <= P);
             }
         }

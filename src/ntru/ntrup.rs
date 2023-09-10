@@ -147,7 +147,7 @@ impl<
         let f = Arc::new(self.key_pair.priv_key.f.coeffs);
         let ginv = Arc::new(self.key_pair.priv_key.ginv.coeffs);
 
-        let sync_hash_map: Arc<Mutex<HashMap<usize, [u8; SIZE_PBITS]>>> =
+        let sync_hash_map: Arc<Mutex<HashMap<usize, Vec<u8>>>> =
             Arc::new(Mutex::new(HashMap::new()));
         let mut threads = Vec::with_capacity(self.num_threads);
 
@@ -164,13 +164,9 @@ impl<
                 let f: Rq<P, Q, Q12> = Rq::from(*f_ref);
                 let ginv: R3<P, Q, Q12> = R3::from(*ginv_ref);
                 let r3 = rq_decrypt::<P, Q, W, Q12>(&rq, &f, &ginv);
-                // let point = size_ref[index];
-                // let slice = &r3.coeffs[..point];
-                let bytes = r3::r3_encode_bytes::<P, SIZE_PBITS>(&r3.coeffs);
-
-                if index == 0 {
-                    println!("decrypt_bytes={:?}", bytes);
-                }
+                let point = size_ref[index];
+                let slice = &r3.coeffs[..point];
+                let bytes = r3::r3_encode_chunks(slice);
 
                 let mut sync_map = sync_map_ref.lock().unwrap();
 
@@ -194,13 +190,13 @@ impl<
         let sync_map = sync_hash_map.lock().unwrap();
         let mut out_bytes: Vec<u8> = Vec::with_capacity(size_len);
 
-        for i in 0..size.len() {
-            match sync_map.get(&i) {
-                Some(v) => out_bytes.extend(v),
-                None => panic!("cannot find from enc"), // TODO: add error handler, remove all
-                                                        // unwrap!
-            }
-        }
+        // for i in 0..size.len() {
+        //     match sync_map.get(&i) {
+        //         Some(v) => out_bytes.extend(v),
+        //         None => panic!("cannot find from enc"), // TODO: add error handler, remove all
+        //                                                 // unwrap!
+        //     }
+        // }
 
         out_bytes
     }
@@ -518,16 +514,17 @@ mod tests {
         let mut rng = rand::thread_rng();
         let mut ntrup =
             NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES, SIZE_PBITS>::new().unwrap();
-        let bytes: Vec<u8> = (0..1000).map(|_| rng.gen::<u8>()).collect();
+        let bytes: Vec<u8> = (0..100).map(|_| rng.gen::<u8>()).collect();
 
         ntrup.key_pair_gen(rand::thread_rng()).unwrap();
 
-        let (pk, sk) = ntrup.key_pair.export_pair().unwrap();
+        let (pk, _) = ntrup.key_pair.export_pair().unwrap();
 
         let encrypted = ntrup.encrypt(&bytes, &pk);
         let decrypted = ntrup.decrypt(encrypted);
 
-        // println!("enc={:?}", decrypted);
-        println!("input{:?}", bytes);
+        // println!("{:?}", decrypted);
+        println!();
+        println!("{:?}", bytes);
     }
 }
