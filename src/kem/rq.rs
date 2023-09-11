@@ -69,6 +69,7 @@ impl<const P: usize, const Q: usize, const Q12: usize> Rq<P, Q, Q12> {
 
         for i in (P..=(P + P - 2)).rev() {
             // TODO: -1530 = f * 1/f.
+            // TODO: for diff params it diff result!
             fg[i - P] = fq::freeze::<Q12, Q>((fg[i - P] + fg[i]) as i32);
             fg[i - P + 1] = fq::freeze::<Q12, Q>((fg[i - P + 1] + fg[i]) as i32);
         }
@@ -225,10 +226,29 @@ mod test_rq {
     }
 
     #[test]
-    fn test_recip3() {
+    fn test_recip3_761() {
         const P: usize = 761;
         const Q: usize = 4591;
         const W: usize = 286;
+        const Q12: usize = (Q - 1) / 2;
+
+        let mut random: NTRURandom<P> = NTRURandom::new();
+
+        for _ in 0..2 {
+            let rq: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap());
+
+            let out = rq.recip3().unwrap();
+            let h = out.mult_small(&rq.r3_from_rq());
+
+            assert!(h.eq_one());
+        }
+    }
+
+    #[test]
+    fn test_recip3_857() {
+        const P: usize = 857;
+        const W: usize = 322;
+        const Q: usize = 5167;
         const Q12: usize = (Q - 1) / 2;
 
         let mut random: NTRURandom<P> = NTRURandom::new();
