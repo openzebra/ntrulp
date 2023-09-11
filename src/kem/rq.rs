@@ -39,7 +39,7 @@ impl<const P: usize, const Q: usize, const Q12: usize> Rq<P, Q, Q12> {
     }
 
     // h = f*g in the ring Rq
-    pub fn mult_small<const P_TWICE_MINUS_ONE: usize>(&self, gq: &R3<P, Q, Q12>) -> Rq<P, Q, Q12> {
+    pub fn mult_r3<const P_TWICE_MINUS_ONE: usize>(&self, gq: &R3<P, Q, Q12>) -> Rq<P, Q, Q12> {
         let mut out = [0i16; P];
         let f = self.coeffs;
         let g = gq.coeffs;
@@ -194,7 +194,7 @@ mod test_rq {
     use super::*;
 
     #[test]
-    fn test_mult_small() {
+    fn test_mult_r3() {
         const Q: usize = 4591;
         const Q12: usize = (Q - 1) / 2;
         const P: usize = 9;
@@ -202,7 +202,7 @@ mod test_rq {
 
         let f: Rq<P, Q, Q12> = Rq::from([0, 0, 1, 0, 0, -1, 0, -1, -1]);
         let g: R3<P, Q, Q12> = R3::from([-1, 0, -1, 1, -1, 0, 1, 0, 0]);
-        let h = f.mult_small::<P_TWICE_MINUS_ONE>(&g);
+        let h = f.mult_r3::<P_TWICE_MINUS_ONE>(&g);
 
         assert_eq!(h.coeffs, [2, 2, -2, 0, -1, 0, -2, 2, 1,])
     }
@@ -245,7 +245,7 @@ mod test_rq {
             let rq: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap());
 
             let out = rq.recip3::<P_PLUS_ONE>().unwrap();
-            let h = out.mult_small::<P_TWICE_MINUS_ONE>(&rq.r3_from_rq());
+            let h = out.mult_r3::<P_TWICE_MINUS_ONE>(&rq.r3_from_rq());
 
             assert!(h.eq_one());
         }

@@ -43,7 +43,7 @@ impl<
     pub fn from_seed(&mut self, g: R3<P, Q, Q12>, f: Rq<P, Q, Q12>) -> Result<(), KemErrors> {
         let finv = f.recip3::<P_PLUS_ONE>()?;
         let ginv = g.recip()?;
-        let h = finv.mult_small::<P_TWICE_MINUS_ONE>(&g);
+        let h = finv.mult_r3::<P_TWICE_MINUS_ONE>(&g);
 
         self.priv_key = PrivKey::from(f, ginv);
         self.pub_key = PubKey::from(h);
@@ -101,7 +101,7 @@ impl<
         let ginv: R3<P, Q, Q12> = R3::from(r3_decode(&sk[..Self::R3_BYTES]));
         let g = ginv.recip()?;
         let finv = f.recip3::<P_PLUS_ONE>()?;
-        let h = finv.mult_small::<P_TWICE_MINUS_ONE>(&g);
+        let h = finv.mult_r3::<P_TWICE_MINUS_ONE>(&g);
 
         self.priv_key.ginv = ginv;
         self.priv_key.f = f;
