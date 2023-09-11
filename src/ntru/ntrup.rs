@@ -6,7 +6,7 @@ use super::{errors::NTRUErrors, params::check_params};
 use crate::ntru::cipher::{r3_encrypt, rq_decrypt};
 use crate::{
     encode::{r3, rq},
-    kem::{f3::round, r3::R3, rq::Rq},
+    kem::{r3::R3, rq::Rq},
     key::pair::KeyPair,
     random::{CommonRandom, NTRURandom},
 };

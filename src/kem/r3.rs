@@ -26,27 +26,34 @@ impl<const P: usize, const Q: usize, const Q12: usize> R3<P, Q, Q12> {
     }
 
     // h = f*g in the ring R3
-    pub fn mult(&self, g3: &R3<P, Q, Q12>) -> R3<P, Q, Q12> {
-        // TODO Add hyperthreading.
+    pub fn mult<const P_TWICE_MINUS_ONE: usize>(&self, g3: &R3<P, Q, Q12>) -> R3<P, Q, Q12> {
         let f = self.coeffs;
         let g = g3.coeffs;
         let mut out = [0i8; P];
-        let mut fg = vec![0i8; P * 2 - 1];
+        let mut fg = [0i8; P_TWICE_MINUS_ONE];
+
+        let quotient = |r: i8, f: i8, g: i8| {
+            let x = r + f * g;
+
+            f3::freeze(x as i16)
+        };
 
         for i in 0..P {
             let mut r = 0i8;
             for j in 0..=i {
-                let x = r + f[j] * g[i - j];
-
-                r = f3::freeze(x as i16);
+                r = quotient(r, f[j], g[i - j]);
+                // let x = r + f[j] * g[i - j];
+                // r = f3::freeze(x as i16);
             }
             fg[i] = r;
         }
-        for i in P..(P * 2 - 1) {
+        for i in P..P_TWICE_MINUS_ONE {
             let mut r = 0i8;
             for j in (i - P + 1)..P {
-                let x = r + f[j] * g[i - j];
-                r = f3::freeze(x as i16);
+                // let x = r + f[j] * g[i - j];
+                // r = f3::freeze(x as i16);
+
+                r = quotient(r, f[j], g[i - j]);
             }
             fg[i] = r;
         }
@@ -176,6 +183,7 @@ mod test_r3 {
         const P: usize = 761;
         const Q: usize = 4591;
         const Q12: usize = (Q - 1) / 2;
+        const P_TWICE_MINUS_ONE: usize = P + P - 1;
 
         let f: R3<P, Q, Q12> = R3::from([
             1, 0, -1, 0, 1, -1, 0, 0, -1, 0, -1, 1, -1, -1, 0, 1, 1, 0, 0, 0, 0, -1, 0, -1, 0, 1,
@@ -237,7 +245,7 @@ mod test_r3 {
             0, 0, 1, 1, 1, -1, -1, -1, 0, 0, 0, 0, 1, -1, 1, 0, 0, 0, 0, 0, 1, 0, -1, 0, 1, -1, 0,
             0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, -1, 1,
         ]);
-        let h = f.mult(&g);
+        let h = f.mult::<P_TWICE_MINUS_ONE>(&g);
 
         assert_eq!(
             h.coeffs,
@@ -282,6 +290,8 @@ mod test_r3 {
         const P: usize = 761;
         const Q: usize = 4591;
         const Q12: usize = (Q - 1) / 2;
+        const P_PLUS_ONE: usize = P + 1;
+        const P_TWICE_MINUS_ONE: usize = P + P - 1;
 
         let mut random: NTRURandom<P> = NTRURandom::new();
 
@@ -289,7 +299,7 @@ mod test_r3 {
             let r3: R3<P, Q, Q12> = R3::from(random.random_small().unwrap());
 
             let out = r3.recip().unwrap();
-            let one = out.mult(&r3);
+            let one = out.mult::<P_TWICE_MINUS_ONE>(&r3);
 
             assert_eq!(one.coeffs[0], 1);
             assert!(one.eq_one());

@@ -18,7 +18,7 @@ pub fn rq_decrypt<
     let cf: Rq<P, Q, Q12> = c.mult_r3::<P_TWICE_MINUS_ONE>(&f.r3_from_rq());
     let cf3: Rq<P, Q, Q12> = cf.mult3();
     let e: R3<P, Q, Q12> = cf3.r3_from_rq();
-    let ev: R3<P, Q, Q12> = e.mult(&ginv);
+    let ev: R3<P, Q, Q12> = e.mult::<P_TWICE_MINUS_ONE>(&ginv);
     #[allow(unused_assignments)]
     let mut mask: i16 = 0;
 
