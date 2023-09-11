@@ -42,7 +42,7 @@ impl<
     > NTRUPrime<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES, P_PLUS_ONE, P_TWICE_MINUS_ONE>
 {
     pub fn new() -> Result<Self, NTRUErrors<'static>> {
-        check_params::<P, Q, W, Q12, P_PLUS_ONE>()?;
+        check_params::<P, Q, W, Q12, P_PLUS_ONE, P_TWICE_MINUS_ONE>()?;
 
         let key_pair: KeyPair<P, Q, Q12, RQ_BYTES, P_PLUS_ONE, P_TWICE_MINUS_ONE> = KeyPair::new();
         let num_threads = num_cpus::get();

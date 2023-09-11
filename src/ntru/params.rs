@@ -7,6 +7,7 @@ pub fn check_params<
     const W: usize,
     const Q12: usize,
     const P_PLUS_ONE: usize,
+    const P_TWICE_MINUS_ONE: usize,
 >() -> Result<(), NTRUErrors<'static>> {
     if !math::prime::is_prime(P) {
         return Err(NTRUErrors::ParamsError("P should be Prime number"));
@@ -24,12 +25,15 @@ pub fn check_params<
         return Err(NTRUErrors::ParamsError("Q should be more or eq then W + 1"));
     }
     if !(Q % 6 == 1) {
-        // spec allows 5 but these tests do not
         return Err(NTRUErrors::ParamsError("Q mod 6 should be eq 1"));
     }
     if P + 1 != P_PLUS_ONE {
-        // spec allows 5 but these tests do not
         return Err(NTRUErrors::ParamsError("P_PLUS_ONE should be eq P + 1"));
+    }
+    if P * 2 - 1 != P_TWICE_MINUS_ONE {
+        return Err(NTRUErrors::ParamsError(
+            "P_TWICE_MINUS_ONE should be eq 2P-1",
+        ));
     }
 
     Ok(())

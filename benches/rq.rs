@@ -12,8 +12,12 @@ fn rq_benchmark(cb: &mut Criterion) {
     const Q12: usize = (Q - 1) / 2;
     const RQ_BYTES: usize = 1158;
     const ROUNDED_BYTES: usize = 1007;
+    const P_PLUS_ONE: usize = P + 1;
+    const P_TWICE_MINUS_ONE: usize = P + P - 1;
 
-    let mut ntrup = NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES>::new().unwrap();
+    let mut ntrup =
+        NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES, P_PLUS_ONE, P_TWICE_MINUS_ONE>::new()
+            .unwrap();
 
     ntrup.key_pair_gen(rand::thread_rng()).unwrap();
 
@@ -23,13 +27,13 @@ fn rq_benchmark(cb: &mut Criterion) {
 
     cb.bench_function("rq_mull_r3: p=761", |b| {
         b.iter(|| {
-            rq.mult_small(&r3);
+            rq.mult_r3::<P_TWICE_MINUS_ONE>(&r3);
         });
     });
 
     cb.bench_function("rq_recip3: p=761", |b| {
         b.iter(|| {
-            rq.recip3().unwrap();
+            rq.recip3::<P_PLUS_ONE>().unwrap();
         });
     });
 
