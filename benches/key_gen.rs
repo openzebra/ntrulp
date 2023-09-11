@@ -12,9 +12,10 @@ fn key_gen_benchmark(c: &mut Criterion) {
             const Q: usize = 4591;
             const W: usize = 286;
             const Q12: usize = (Q - 1) / 2;
+            const RQ_BYTES: usize = 1158;
 
             let mut random: NTRURandom<P> = NTRURandom::new();
-            let mut pair: KeyPair<P, Q, Q12> = KeyPair::new();
+            let mut pair: KeyPair<P, Q, Q12, RQ_BYTES> = KeyPair::new();
 
             loop {
                 let f: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap());
@@ -32,10 +33,11 @@ fn key_gen_benchmark(c: &mut Criterion) {
             const P: usize = 857;
             const Q: usize = 5167;
             const W: usize = 322;
+            const RQ_BYTES: usize = 1322;
             const Q12: usize = (Q - 1) / 2;
 
             let mut random: NTRURandom<P> = NTRURandom::new();
-            let mut pair: KeyPair<P, Q, Q12> = KeyPair::new();
+            let mut pair: KeyPair<P, Q, Q12, RQ_BYTES> = KeyPair::new();
 
             loop {
                 let f: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap());
@@ -54,9 +56,10 @@ fn key_gen_benchmark(c: &mut Criterion) {
             const Q: usize = 6343;
             const W: usize = 396;
             const Q12: usize = (Q - 1) / 2;
+            const RQ_BYTES: usize = 1505;
 
             let mut random: NTRURandom<P> = NTRURandom::new();
-            let mut pair: KeyPair<P, Q, Q12> = KeyPair::new();
+            let mut pair: KeyPair<P, Q, Q12, RQ_BYTES> = KeyPair::new();
 
             loop {
                 let f: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap());
@@ -75,9 +78,10 @@ fn key_gen_benchmark(c: &mut Criterion) {
             const Q: usize = 7177;
             const W: usize = 448;
             const Q12: usize = (Q - 1) / 2;
+            const RQ_BYTES: usize = 1623;
 
             let mut random: NTRURandom<P> = NTRURandom::new();
-            let mut pair: KeyPair<P, Q, Q12> = KeyPair::new();
+            let mut pair: KeyPair<P, Q, Q12, RQ_BYTES> = KeyPair::new();
 
             loop {
                 let f: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap());
@@ -96,9 +100,10 @@ fn key_gen_benchmark(c: &mut Criterion) {
             const Q: usize = 7879;
             const W: usize = 492;
             const Q12: usize = (Q - 1) / 2;
+            const RQ_BYTES: usize = 2067;
 
             let mut random: NTRURandom<P> = NTRURandom::new();
-            let mut pair: KeyPair<P, Q, Q12> = KeyPair::new();
+            let mut pair: KeyPair<P, Q, Q12, RQ_BYTES> = KeyPair::new();
 
             loop {
                 let f: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap());

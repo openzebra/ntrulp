@@ -7,13 +7,15 @@ use ntrulpr::{
 
 fn rq_benchmark(cb: &mut Criterion) {
     const P: usize = 761;
-    const Q: usize = 4591;
     const W: usize = 286;
+    const Q: usize = 4591;
     const Q12: usize = (Q - 1) / 2;
+    const RQ_BYTES: usize = 1158;
+    const ROUNDED_BYTES: usize = 1007;
 
-    let mut ntrup = NTRUPrime::<P, Q, W, Q12>::new().unwrap();
+    let mut ntrup = NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES>::new().unwrap();
 
-    ntrup.key_pair_gen().unwrap();
+    ntrup.key_pair_gen(rand::thread_rng()).unwrap();
 
     let mut rng: NTRURandom<P> = NTRURandom::new();
     let r3: R3<P, Q, Q12> = R3::from(rng.random_small().unwrap());
