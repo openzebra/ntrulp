@@ -41,6 +41,7 @@ fn key_gen_benchmark(c: &mut Criterion) {
             const P_PLUS_ONE: usize = P + 1;
             const P_TWICE_MINUS_ONE: usize = P + P - 1;
 
+            let mut random: NTRURandom<P> = NTRURandom::new();
             let mut pair: KeyPair<P, Q, Q12, RQ_BYTES, P_PLUS_ONE, P_TWICE_MINUS_ONE> =
                 KeyPair::new();
 
