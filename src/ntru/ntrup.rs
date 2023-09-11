@@ -16,13 +16,19 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-fn rq_decrypt<const P: usize, const Q: usize, const W: usize, const Q12: usize>(
+fn rq_decrypt<
+    const P: usize,
+    const Q: usize,
+    const W: usize,
+    const Q12: usize,
+    const P_TWICE_MINUS_ONE: usize,
+>(
     c: &Rq<P, Q, Q12>,
     f: &Rq<P, Q, Q12>,
     ginv: &R3<P, Q, Q12>,
 ) -> R3<P, Q, Q12> {
     let mut r = [0i8; P];
-    let cf: Rq<P, Q, Q12> = c.mult_small(&f.r3_from_rq());
+    let cf: Rq<P, Q, Q12> = c.mult_small::<P_TWICE_MINUS_ONE>(&f.r3_from_rq());
     let cf3: Rq<P, Q, Q12> = cf.mult3();
     let e: R3<P, Q, Q12> = cf3.r3_from_rq();
     let ev: R3<P, Q, Q12> = e.mult(&ginv);
@@ -50,8 +56,9 @@ pub struct NTRUPrime<
     const ROUNDED_BYTES: usize,
     const RQ_BYTES: usize,
     const P_PLUS_ONE: usize,
+    const P_TWICE_MINUS_ONE: usize,
 > {
-    pub key_pair: KeyPair<P, Q, Q12, RQ_BYTES, P_PLUS_ONE>,
+    pub key_pair: KeyPair<P, Q, Q12, RQ_BYTES, P_PLUS_ONE, P_TWICE_MINUS_ONE>,
     pub num_threads: usize,
 }
 
@@ -63,12 +70,13 @@ impl<
         const ROUNDED_BYTES: usize,
         const RQ_BYTES: usize,
         const P_PLUS_ONE: usize,
-    > NTRUPrime<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES, P_PLUS_ONE>
+        const P_TWICE_MINUS_ONE: usize,
+    > NTRUPrime<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES, P_PLUS_ONE, P_TWICE_MINUS_ONE>
 {
     pub fn new() -> Result<Self, NTRUErrors<'static>> {
         check_params::<P, Q, W, Q12, P_PLUS_ONE>()?;
 
-        let key_pair: KeyPair<P, Q, Q12, RQ_BYTES, P_PLUS_ONE> = KeyPair::new();
+        let key_pair: KeyPair<P, Q, Q12, RQ_BYTES, P_PLUS_ONE, P_TWICE_MINUS_ONE> = KeyPair::new();
         let num_threads = num_cpus::get();
 
         Ok(NTRUPrime {
@@ -93,7 +101,7 @@ impl<
             let enc_ref = Arc::clone(&enc);
             let handle = thread::spawn(move || {
                 let r3: R3<P, Q, Q12> = R3::from(chunk);
-                let mut hr = h_ref.mult_small(&r3);
+                let mut hr = h_ref.mult_small::<P_TWICE_MINUS_ONE>(&r3);
 
                 round(&mut hr.coeffs);
 
@@ -162,7 +170,7 @@ impl<
                 let rq: Rq<P, Q, Q12> = Rq::from(rq_coeffs);
                 let f: Rq<P, Q, Q12> = Rq::from(*f_ref);
                 let ginv: R3<P, Q, Q12> = R3::from(*ginv_ref);
-                let r3 = rq_decrypt::<P, Q, W, Q12>(&rq, &f, &ginv);
+                let r3 = rq_decrypt::<P, Q, W, Q12, P_TWICE_MINUS_ONE>(&rq, &f, &ginv);
 
                 let mut sync_map = sync_map_ref.lock().unwrap();
 
@@ -199,7 +207,7 @@ impl<
     }
 
     pub fn r3_encrypt(&self, r: &R3<P, Q, Q12>, h: &Rq<P, Q, Q12>) -> Rq<P, Q, Q12> {
-        let mut hr = h.mult_small(&r);
+        let mut hr = h.mult_small::<P_TWICE_MINUS_ONE>(&r);
 
         round(&mut hr.coeffs);
 
@@ -210,7 +218,7 @@ impl<
         let f = &self.key_pair.priv_key.f;
         let ginv = &self.key_pair.priv_key.ginv;
 
-        rq_decrypt::<P, Q, W, Q12>(c, f, ginv)
+        rq_decrypt::<P, Q, W, Q12, P_TWICE_MINUS_ONE>(c, f, ginv)
     }
 
     pub fn key_pair_gen(&mut self, rng: ThreadRng) -> Result<(), NTRUErrors> {
@@ -257,7 +265,10 @@ impl<
         Ok(())
     }
 
-    pub fn set_key_pair(&mut self, key_pair: KeyPair<P, Q, Q12, RQ_BYTES, P_PLUS_ONE>) {
+    pub fn set_key_pair(
+        &mut self,
+        key_pair: KeyPair<P, Q, Q12, RQ_BYTES, P_PLUS_ONE, P_TWICE_MINUS_ONE>,
+    ) {
         self.key_pair = key_pair;
     }
 
@@ -289,47 +300,47 @@ mod tests {
 
     #[test]
     fn test_init_params() {
-        NTRUPrime::<761, 4591, 286, 4590, 1007, 1158, 762>::new().unwrap();
-        NTRUPrime::<857, 5167, 322, 5166, 1152, 1322, 858>::new().unwrap();
-        NTRUPrime::<653, 4621, 288, 4620, 865, 994, 654>::new().unwrap();
-        NTRUPrime::<953, 6343, 396, 6342, 1317, 1505, 954>::new().unwrap();
-        NTRUPrime::<1013, 7177, 448, 7176, 1423, 1623, 1014>::new().unwrap();
-        NTRUPrime::<1277, 7879, 492, 7878, 1815, 2067, 1278>::new().unwrap();
+        NTRUPrime::<761, 4591, 286, 4590, 1007, 1158, 762, 1521>::new().unwrap();
+        NTRUPrime::<857, 5167, 322, 5166, 1152, 1322, 858, 1713>::new().unwrap();
+        NTRUPrime::<653, 4621, 288, 4620, 865, 994, 654, 1305>::new().unwrap();
+        NTRUPrime::<953, 6343, 396, 6342, 1317, 1505, 954, 1905>::new().unwrap();
+        NTRUPrime::<1013, 7177, 448, 7176, 1423, 1623, 1014, 2025>::new().unwrap();
+        NTRUPrime::<1277, 7879, 492, 7878, 1815, 2067, 1278, 2553>::new().unwrap();
     }
 
     #[test]
     fn test_gen_key_pair() {
-        let mut ntrup = NTRUPrime::<761, 4591, 286, 4590, 1007, 1158, 762>::new().unwrap();
+        let mut ntrup = NTRUPrime::<761, 4591, 286, 4590, 1007, 1158, 762, 1521>::new().unwrap();
 
         ntrup.key_pair_gen(rand::thread_rng()).unwrap();
 
         assert!(ntrup.key_pair.verify());
 
-        let mut ntrup = NTRUPrime::<857, 5167, 322, 5166, 1152, 1322, 858>::new().unwrap();
+        let mut ntrup = NTRUPrime::<857, 5167, 322, 5166, 1152, 1322, 858, 1713>::new().unwrap();
 
         ntrup.key_pair_gen(rand::thread_rng()).unwrap();
 
         assert!(ntrup.key_pair.verify());
 
-        let mut ntrup = NTRUPrime::<653, 4621, 288, 4620, 865, 994, 654>::new().unwrap();
+        let mut ntrup = NTRUPrime::<653, 4621, 288, 4620, 865, 994, 654, 1305>::new().unwrap();
 
         ntrup.key_pair_gen(rand::thread_rng()).unwrap();
 
         assert!(ntrup.key_pair.verify());
 
-        let mut ntrup = NTRUPrime::<953, 6343, 396, 6342, 1317, 1505, 954>::new().unwrap();
+        let mut ntrup = NTRUPrime::<953, 6343, 396, 6342, 1317, 1505, 954, 1905>::new().unwrap();
 
         ntrup.key_pair_gen(rand::thread_rng()).unwrap();
 
         assert!(ntrup.key_pair.verify());
 
-        let mut ntrup = NTRUPrime::<1013, 7177, 448, 7176, 1423, 1623, 1014>::new().unwrap();
+        let mut ntrup = NTRUPrime::<1013, 7177, 448, 7176, 1423, 1623, 1014, 2025>::new().unwrap();
 
         ntrup.key_pair_gen(rand::thread_rng()).unwrap();
 
         assert!(ntrup.key_pair.verify());
 
-        let mut ntrup = NTRUPrime::<1277, 7879, 492, 7878, 1815, 2067, 1278>::new().unwrap();
+        let mut ntrup = NTRUPrime::<1277, 7879, 492, 7878, 1815, 2067, 1278, 2553>::new().unwrap();
 
         ntrup.key_pair_gen(rand::thread_rng()).unwrap();
 
@@ -345,9 +356,12 @@ mod tests {
         const RQ_BYTES: usize = 1158;
         const ROUNDED_BYTES: usize = 1007;
         const P_PLUS_ONE: usize = P + 1;
+        const P_TWICE_MINUS_ONE: usize = P + P - 1;
 
         let mut ntrup =
-            NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES, P_PLUS_ONE>::new().unwrap();
+            NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES, P_PLUS_ONE, P_TWICE_MINUS_ONE>::new(
+            )
+            .unwrap();
 
         ntrup.key_pair_gen(rand::thread_rng()).unwrap();
 
@@ -369,9 +383,12 @@ mod tests {
         const P_PLUS_ONE: usize = P + 1;
         const RQ_BYTES: usize = 1322;
         const ROUNDED_BYTES: usize = 1152;
+        const P_TWICE_MINUS_ONE: usize = P + P - 1;
 
         let mut ntrup =
-            NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES, P_PLUS_ONE>::new().unwrap();
+            NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES, P_PLUS_ONE, P_TWICE_MINUS_ONE>::new(
+            )
+            .unwrap();
 
         ntrup.key_pair_gen(rand::thread_rng()).unwrap();
 
@@ -392,10 +409,13 @@ mod tests {
         const Q12: usize = (Q - 1) / 2;
         const P_PLUS_ONE: usize = P + 1;
         const RQ_BYTES: usize = 994;
+        const P_TWICE_MINUS_ONE: usize = P + P - 1;
         const ROUNDED_BYTES: usize = 865;
 
         let mut ntrup =
-            NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES, P_PLUS_ONE>::new().unwrap();
+            NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES, P_PLUS_ONE, P_TWICE_MINUS_ONE>::new(
+            )
+            .unwrap();
 
         ntrup.key_pair_gen(rand::thread_rng()).unwrap();
 
@@ -416,10 +436,13 @@ mod tests {
         const Q12: usize = (Q - 1) / 2;
         const P_PLUS_ONE: usize = P + 1;
         const RQ_BYTES: usize = 1505;
+        const P_TWICE_MINUS_ONE: usize = P + P - 1;
         const ROUNDED_BYTES: usize = 1317;
 
         let mut ntrup =
-            NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES, P_PLUS_ONE>::new().unwrap();
+            NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES, P_PLUS_ONE, P_TWICE_MINUS_ONE>::new(
+            )
+            .unwrap();
 
         ntrup.key_pair_gen(rand::thread_rng()).unwrap();
 
@@ -441,9 +464,12 @@ mod tests {
         const P_PLUS_ONE: usize = P + 1;
         const RQ_BYTES: usize = 1623;
         const ROUNDED_BYTES: usize = 1423;
+        const P_TWICE_MINUS_ONE: usize = P + P - 1;
 
         let mut ntrup =
-            NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES, P_PLUS_ONE>::new().unwrap();
+            NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES, P_PLUS_ONE, P_TWICE_MINUS_ONE>::new(
+            )
+            .unwrap();
 
         ntrup.key_pair_gen(rand::thread_rng()).unwrap();
 
@@ -465,9 +491,12 @@ mod tests {
         const P_PLUS_ONE: usize = P + 1;
         const RQ_BYTES: usize = 2067;
         const ROUNDED_BYTES: usize = 1815;
+        const P_TWICE_MINUS_ONE: usize = P + P - 1;
 
         let mut ntrup =
-            NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES, P_PLUS_ONE>::new().unwrap();
+            NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES, P_PLUS_ONE, P_TWICE_MINUS_ONE>::new(
+            )
+            .unwrap();
 
         ntrup.key_pair_gen(rand::thread_rng()).unwrap();
 
@@ -489,9 +518,13 @@ mod tests {
         const P_PLUS_ONE: usize = P + 1;
         const RQ_BYTES: usize = 1158;
         const ROUNDED_BYTES: usize = 1007;
+        const P_TWICE_MINUS_ONE: usize = P + P - 1;
 
         let mut rng = rand::thread_rng();
-        let ntrup = NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES, P_PLUS_ONE>::new().unwrap();
+        let ntrup =
+            NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES, P_PLUS_ONE, P_TWICE_MINUS_ONE>::new(
+            )
+            .unwrap();
         let usize_list: Vec<usize> = (0..1000).map(|_| rng.gen::<usize>()).collect();
         let bytes = ntrup.usize_vec_to_bytes(&usize_list);
         let out = ntrup.byte_to_usize_vec(&bytes);
@@ -507,12 +540,15 @@ mod tests {
         const Q12: usize = (Q - 1) / 2;
         const P_PLUS_ONE: usize = P + 1;
         const RQ_BYTES: usize = 1158;
+        const P_TWICE_MINUS_ONE: usize = P + P - 1;
         const ROUNDED_BYTES: usize = 1007;
 
         let mut rng = rand::thread_rng();
         let rand_len = rng.gen_range(5..10_000);
         let mut ntrup =
-            NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES, P_PLUS_ONE>::new().unwrap();
+            NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES, P_PLUS_ONE, P_TWICE_MINUS_ONE>::new(
+            )
+            .unwrap();
         let bytes: Vec<u8> = (0..rand_len).map(|_| rng.gen::<u8>()).collect();
 
         ntrup.key_pair_gen(rand::thread_rng()).unwrap();
@@ -533,12 +569,15 @@ mod tests {
         const P_PLUS_ONE: usize = P + 1;
         const Q12: usize = (Q - 1) / 2;
         const RQ_BYTES: usize = 1322;
+        const P_TWICE_MINUS_ONE: usize = P + P - 1;
         const ROUNDED_BYTES: usize = 1152;
 
         let mut rng = rand::thread_rng();
         let rand_len = rng.gen_range(5..10_000);
         let mut ntrup =
-            NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES, P_PLUS_ONE>::new().unwrap();
+            NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES, P_PLUS_ONE, P_TWICE_MINUS_ONE>::new(
+            )
+            .unwrap();
         let bytes: Vec<u8> = (0..rand_len).map(|_| rng.gen::<u8>()).collect();
 
         ntrup.key_pair_gen(rand::thread_rng()).unwrap();
@@ -559,12 +598,15 @@ mod tests {
         const Q12: usize = (Q - 1) / 2;
         const P_PLUS_ONE: usize = P + 1;
         const RQ_BYTES: usize = 994;
+        const P_TWICE_MINUS_ONE: usize = P + P - 1;
         const ROUNDED_BYTES: usize = 865;
 
         let mut rng = rand::thread_rng();
         let rand_len = rng.gen_range(5..10_000);
         let mut ntrup =
-            NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES, P_PLUS_ONE>::new().unwrap();
+            NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES, P_PLUS_ONE, P_TWICE_MINUS_ONE>::new(
+            )
+            .unwrap();
         let bytes: Vec<u8> = (0..rand_len).map(|_| rng.gen::<u8>()).collect();
 
         ntrup.key_pair_gen(rand::thread_rng()).unwrap();
@@ -585,12 +627,15 @@ mod tests {
         const P_PLUS_ONE: usize = P + 1;
         const Q12: usize = (Q - 1) / 2;
         const RQ_BYTES: usize = 1505;
+        const P_TWICE_MINUS_ONE: usize = P + P - 1;
         const ROUNDED_BYTES: usize = 1317;
 
         let mut rng = rand::thread_rng();
         let rand_len = rng.gen_range(5..10_000);
         let mut ntrup =
-            NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES, P_PLUS_ONE>::new().unwrap();
+            NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES, P_PLUS_ONE, P_TWICE_MINUS_ONE>::new(
+            )
+            .unwrap();
         let bytes: Vec<u8> = (0..rand_len).map(|_| rng.gen::<u8>()).collect();
 
         ntrup.key_pair_gen(rand::thread_rng()).unwrap();
@@ -611,12 +656,15 @@ mod tests {
         const Q12: usize = (Q - 1) / 2;
         const P_PLUS_ONE: usize = P + 1;
         const RQ_BYTES: usize = 1623;
+        const P_TWICE_MINUS_ONE: usize = P + P - 1;
         const ROUNDED_BYTES: usize = 1423;
 
         let mut rng = rand::thread_rng();
         let rand_len = rng.gen_range(5..10_000);
         let mut ntrup =
-            NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES, P_PLUS_ONE>::new().unwrap();
+            NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES, P_PLUS_ONE, P_TWICE_MINUS_ONE>::new(
+            )
+            .unwrap();
         let bytes: Vec<u8> = (0..rand_len).map(|_| rng.gen::<u8>()).collect();
 
         ntrup.key_pair_gen(rand::thread_rng()).unwrap();
@@ -637,12 +685,15 @@ mod tests {
         const Q12: usize = (Q - 1) / 2;
         const P_PLUS_ONE: usize = P + 1;
         const RQ_BYTES: usize = 2067;
+        const P_TWICE_MINUS_ONE: usize = P + P - 1;
         const ROUNDED_BYTES: usize = 1815;
 
         let mut rng = rand::thread_rng();
         let rand_len = rng.gen_range(5..10_000);
         let mut ntrup =
-            NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES, P_PLUS_ONE>::new().unwrap();
+            NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES, P_PLUS_ONE, P_TWICE_MINUS_ONE>::new(
+            )
+            .unwrap();
         let bytes: Vec<u8> = (0..rand_len).map(|_| rng.gen::<u8>()).collect();
 
         ntrup.key_pair_gen(rand::thread_rng()).unwrap();

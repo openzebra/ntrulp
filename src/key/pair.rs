@@ -15,6 +15,7 @@ pub struct KeyPair<
     const Q12: usize,
     const RQ_BYTES: usize,
     const P_PLUS_ONE: usize,
+    const P_TWICE_MINUS_ONE: usize,
 > {
     pub pub_key: PubKey<P, Q, Q12>,
     pub priv_key: PrivKey<P, Q, Q12>,
@@ -26,7 +27,8 @@ impl<
         const Q12: usize,
         const RQ_BYTES: usize,
         const P_PLUS_ONE: usize,
-    > KeyPair<P, Q, Q12, RQ_BYTES, P_PLUS_ONE>
+        const P_TWICE_MINUS_ONE: usize,
+    > KeyPair<P, Q, Q12, RQ_BYTES, P_PLUS_ONE, P_TWICE_MINUS_ONE>
 {
     const R3_BYTES: usize = (P + 3) / 4;
 
@@ -41,7 +43,7 @@ impl<
     pub fn from_seed(&mut self, g: R3<P, Q, Q12>, f: Rq<P, Q, Q12>) -> Result<(), KemErrors> {
         let finv = f.recip3::<P_PLUS_ONE>()?;
         let ginv = g.recip()?;
-        let h = finv.mult_small(&g);
+        let h = finv.mult_small::<P_TWICE_MINUS_ONE>(&g);
 
         self.priv_key = PrivKey::from(f, ginv);
         self.pub_key = PubKey::from(h);
@@ -99,7 +101,7 @@ impl<
         let ginv: R3<P, Q, Q12> = R3::from(r3_decode(&sk[..Self::R3_BYTES]));
         let g = ginv.recip()?;
         let finv = f.recip3::<P_PLUS_ONE>()?;
-        let h = finv.mult_small(&g);
+        let h = finv.mult_small::<P_TWICE_MINUS_ONE>(&g);
 
         self.priv_key.ginv = ginv;
         self.priv_key.f = f;
@@ -122,11 +124,12 @@ mod test_pair {
         const Q: usize = 4591;
         const W: usize = 286;
         const Q12: usize = (Q - 1) / 2;
+        const P_TWICE_MINUS_ONE: usize = P + P - 1;
         const P_PLUS_ONE: usize = P + 1;
         const RQ_BYTES: usize = 1158;
 
         let mut random: NTRURandom<P> = NTRURandom::new();
-        let mut pair: KeyPair<P, Q, Q12, RQ_BYTES, P_PLUS_ONE> = KeyPair::new();
+        let mut pair: KeyPair<P, Q, Q12, RQ_BYTES, P_PLUS_ONE, P_TWICE_MINUS_ONE> = KeyPair::new();
         let f: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap());
         let g: R3<P, Q, Q12> = R3::from(random.random_small().unwrap());
 
@@ -140,14 +143,15 @@ mod test_pair {
         const P: usize = 761;
         const Q: usize = 4591;
         const W: usize = 286;
+        const P_TWICE_MINUS_ONE: usize = P + P - 1;
         const Q12: usize = (Q - 1) / 2;
         const P_PLUS_ONE: usize = P + 1;
         const RQ_BYTES: usize = 1158;
 
         let mut random: NTRURandom<P> = NTRURandom::new();
-        let mut pair0: KeyPair<P, Q, Q12, RQ_BYTES, P_PLUS_ONE> = KeyPair::new();
-        let mut pair1: KeyPair<P, Q, Q12, RQ_BYTES, P_PLUS_ONE> = KeyPair::new();
-        let mut pair2: KeyPair<P, Q, Q12, RQ_BYTES, P_PLUS_ONE> = KeyPair::new();
+        let mut pair0: KeyPair<P, Q, Q12, RQ_BYTES, P_PLUS_ONE, P_TWICE_MINUS_ONE> = KeyPair::new();
+        let mut pair1: KeyPair<P, Q, Q12, RQ_BYTES, P_PLUS_ONE, P_TWICE_MINUS_ONE> = KeyPair::new();
+        let mut pair2: KeyPair<P, Q, Q12, RQ_BYTES, P_PLUS_ONE, P_TWICE_MINUS_ONE> = KeyPair::new();
         let f: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap());
         let g: R3<P, Q, Q12> = R3::from(random.random_small().unwrap());
 
