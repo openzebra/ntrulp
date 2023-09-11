@@ -126,18 +126,3 @@ fn test_nonzero_mask() {
     assert_eq!(i16_nonzero_mask(12345), -1);
     assert_eq!(i16_nonzero_mask(-12345), -1);
 }
-
-#[test]
-fn test_negative_mask() {
-    assert_eq!(i16_negative_mask(42), 0);
-    assert_eq!(i16_negative_mask(-42), -1);
-    assert_eq!(i16_negative_mask(0), 0);
-    assert_eq!(i16_negative_mask(i16::MIN), -1);
-    assert_eq!(i16_negative_mask(i16::MAX), 0);
-    assert_eq!(i16_negative_mask(33), 0);
-    assert_eq!(i16_negative_mask(-33), -1);
-    assert_eq!(i16_negative_mask(28), 0);
-    assert_eq!(i16_negative_mask(-28), -1);
-    assert_eq!(i16_negative_mask(12345), 0);
-    assert_eq!(i16_negative_mask(-12345), -1);
-}

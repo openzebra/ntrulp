@@ -205,11 +205,14 @@ mod rq_encoder_tests {
         const P: usize = 761;
         const W: usize = 286;
         const Q: usize = 4591;
+        const P_PLUS_ONE: usize = P + 1;
         const Q12: usize = (Q - 1) / 2;
         const RQ_BYTES: usize = 1158;
 
         let mut random: NTRURandom<P> = NTRURandom::new();
-        let rq: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap()).recip3().unwrap();
+        let rq: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap())
+            .recip3::<P_PLUS_ONE>()
+            .unwrap();
         let out = rq_encode::<P, Q, Q12, RQ_BYTES>(&rq.coeffs);
         let dec = rq_decode::<P, Q, Q12, RQ_BYTES>(&out);
 
@@ -222,10 +225,13 @@ mod rq_encoder_tests {
         const Q: usize = 5167;
         const W: usize = 322;
         const Q12: usize = (Q - 1) / 2;
+        const P_PLUS_ONE: usize = P + 1;
         const RQ_BYTES: usize = 1322;
 
         let mut random: NTRURandom<P> = NTRURandom::new();
-        let rq: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap()).recip3().unwrap();
+        let rq: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap())
+            .recip3::<P_PLUS_ONE>()
+            .unwrap();
         let out = rq_encode::<P, Q, Q12, RQ_BYTES>(&rq.coeffs);
         let dec = rq_decode::<P, Q, Q12, RQ_BYTES>(&out);
 
@@ -238,10 +244,13 @@ mod rq_encoder_tests {
         const Q: usize = 4621;
         const W: usize = 288;
         const Q12: usize = (Q - 1) / 2;
+        const P_PLUS_ONE: usize = P + 1;
         const RQ_BYTES: usize = 994;
 
         let mut random: NTRURandom<P> = NTRURandom::new();
-        let rq: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap()).recip3().unwrap();
+        let rq: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap())
+            .recip3::<P_PLUS_ONE>()
+            .unwrap();
         let out = rq_encode::<P, Q, Q12, RQ_BYTES>(&rq.coeffs);
         let dec = rq_decode::<P, Q, Q12, RQ_BYTES>(&out);
 
@@ -254,10 +263,13 @@ mod rq_encoder_tests {
         const Q: usize = 6343;
         const W: usize = 396;
         const Q12: usize = (Q - 1) / 2;
+        const P_PLUS_ONE: usize = P + 1;
         const RQ_BYTES: usize = 1505;
 
         let mut random: NTRURandom<P> = NTRURandom::new();
-        let rq: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap()).recip3().unwrap();
+        let rq: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap())
+            .recip3::<P_PLUS_ONE>()
+            .unwrap();
         let out = rq_encode::<P, Q, Q12, RQ_BYTES>(&rq.coeffs);
         let dec = rq_decode::<P, Q, Q12, RQ_BYTES>(&out);
 
@@ -270,10 +282,13 @@ mod rq_encoder_tests {
         const Q: usize = 7177;
         const W: usize = 448;
         const Q12: usize = (Q - 1) / 2;
+        const P_PLUS_ONE: usize = P + 1;
         const RQ_BYTES: usize = 1623;
 
         let mut random: NTRURandom<P> = NTRURandom::new();
-        let rq: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap()).recip3().unwrap();
+        let rq: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap())
+            .recip3::<P_PLUS_ONE>()
+            .unwrap();
         let out = rq_encode::<P, Q, Q12, RQ_BYTES>(&rq.coeffs);
         let dec = rq_decode::<P, Q, Q12, RQ_BYTES>(&out);
 
@@ -286,10 +301,13 @@ mod rq_encoder_tests {
         const Q: usize = 7879;
         const W: usize = 492;
         const Q12: usize = (Q - 1) / 2;
+        const P_PLUS_ONE: usize = P + 1;
         const RQ_BYTES: usize = 2067;
 
         let mut random: NTRURandom<P> = NTRURandom::new();
-        let rq: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap()).recip3().unwrap();
+        let rq: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap())
+            .recip3::<P_PLUS_ONE>()
+            .unwrap();
         let out = rq_encode::<P, Q, Q12, RQ_BYTES>(&rq.coeffs);
         let dec = rq_decode::<P, Q, Q12, RQ_BYTES>(&out);
 

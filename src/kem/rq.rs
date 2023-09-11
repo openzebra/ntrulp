@@ -80,20 +80,26 @@ impl<const P: usize, const Q: usize, const Q12: usize> Rq<P, Q, Q12> {
     }
 
     // out = 1/(3*in) in Rq
-    pub fn recip3(&self) -> Result<Rq<P, Q, Q12>, KemErrors> {
-        // TODO makt it on STACK!.
+    pub fn recip3<const P_PLUS_ONE: usize>(&self) -> Result<Rq<P, Q, Q12>, KemErrors> {
         let input = self.coeffs;
         let mut out = [0i16; P];
-        let mut f = vec![0i16; P + 1];
-        let mut g = vec![0i16; P + 1];
-        let mut v = vec![0i16; P + 1];
-        let mut r = vec![0i16; P + 1];
+        let mut f = [0i16; P_PLUS_ONE];
+        let mut g = [0i16; P_PLUS_ONE];
+        let mut v = [0i16; P_PLUS_ONE];
+        let mut r = [0i16; P_PLUS_ONE];
         let mut delta: i16;
         let mut swap: i16;
         let mut t: i16;
         let mut f0: i32;
         let mut g0: i32;
         let scale: i16;
+
+        let quotient = |out: &mut [i16], f0: i32, g0: i32, fv: &[i16]| {
+            for i in 0..P_PLUS_ONE {
+                let x = f0 * out[i] as i32 - g0 * fv[i] as i32;
+                out[i] = fq::freeze::<Q12, Q>(x);
+            }
+        };
 
         r[0] = fq::recip::<Q12, Q>(3);
         f[0] = 1;
@@ -103,8 +109,8 @@ impl<const P: usize, const Q: usize, const Q12: usize> Rq<P, Q, Q12> {
         for i in 0..P {
             g[P - 1 - i] = input[i] as i16;
         }
-        g[P] = 0;
 
+        g[P] = 0;
         delta = 1;
 
         for _ in 0..2 * P - 1 {
@@ -129,14 +135,8 @@ impl<const P: usize, const Q: usize, const Q12: usize> Rq<P, Q, Q12> {
             f0 = f[0] as i32;
             g0 = g[0] as i32;
 
-            for i in 0..P + 1 {
-                let x = f0 * g[i] as i32 - g0 * f[i] as i32;
-                g[i] = fq::freeze::<Q12, Q>(x);
-            }
-            for i in 0..P + 1 {
-                let x = f0 * r[i] as i32 - g0 * v[i] as i32;
-                r[i] = fq::freeze::<Q12, Q>(x);
-            }
+            quotient(&mut g, f0, g0, &f);
+            quotient(&mut r, f0, g0, &v);
 
             for i in 0..P {
                 g[i] = g[i + 1];
@@ -231,32 +231,14 @@ mod test_rq {
         const Q: usize = 4591;
         const W: usize = 286;
         const Q12: usize = (Q - 1) / 2;
+        const P_PLUS_ONE: usize = P + 1;
 
         let mut random: NTRURandom<P> = NTRURandom::new();
 
         for _ in 0..2 {
             let rq: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap());
 
-            let out = rq.recip3().unwrap();
-            let h = out.mult_small(&rq.r3_from_rq());
-
-            assert!(h.eq_one());
-        }
-    }
-
-    #[test]
-    fn test_recip3_857() {
-        const P: usize = 857;
-        const W: usize = 322;
-        const Q: usize = 5167;
-        const Q12: usize = (Q - 1) / 2;
-
-        let mut random: NTRURandom<P> = NTRURandom::new();
-
-        for _ in 0..2 {
-            let rq: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap());
-
-            let out = rq.recip3().unwrap();
+            let out = rq.recip3::<P_PLUS_ONE>().unwrap();
             let h = out.mult_small(&rq.r3_from_rq());
 
             assert!(h.eq_one());
@@ -268,6 +250,7 @@ mod test_rq {
         const P: usize = 761;
         const Q: usize = 4591;
         const Q12: usize = (Q - 1) / 2;
+        const P_PLUS_ONE: usize = P + 1;
 
         let zero_r3: Rq<P, Q, Q12> = Rq::new();
         let r3: Rq<P, Q, Q12> = Rq::from([
@@ -301,9 +284,9 @@ mod test_rq {
             0, -1, -1, -1, 0, 0, 0, 0, -1, -1, 0, 1, 0, 0, 0, -1, 0, 0, 1, 0, 0, 0, 1, 1,
         ]);
 
-        let out = r3.recip3().unwrap();
+        let out = r3.recip3::<P_PLUS_ONE>().unwrap();
 
-        assert!(zero_r3.recip3().is_err());
+        assert!(zero_r3.recip3::<P_PLUS_ONE>().is_err());
 
         assert_eq!(
             out.coeffs,

@@ -1,11 +1,6 @@
 #[derive(Debug)]
-pub enum NTRUErrors {
-    PMustBePrimeNumber,
-    QMustbePrimeNumber,
-    WCannotBeLessZero,
-    DubblePShouldBeMoreOrEqTripleW,
-    QShouldBeMoreOrEq17MulWPlusOne,
-    QModeSixShouldBeEqOne,
-    KeyPairGen,
-    KeysIsEmpty,
+pub enum NTRUErrors<'a> {
+    ParamsError(&'a str),
+    KeyGenError(&'a str),
+    KeyExportError(&'a str),
 }

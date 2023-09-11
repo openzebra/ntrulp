@@ -22,9 +22,12 @@ fn test_round() {
     const W: usize = 286;
     const Q: usize = 4591;
     const Q12: usize = (Q - 1) / 2;
+    const P_PLUS_ONE: usize = P + 1;
 
     let mut random: NTRURandom<P> = NTRURandom::new();
-    let mut r3: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap()).recip3().unwrap();
+    let mut r3: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap())
+        .recip3::<P_PLUS_ONE>()
+        .unwrap();
 
     fn round3(h: &mut [i16; 761]) {
         let f: [i16; 761] = *h;
