@@ -42,6 +42,9 @@ let decrypted = ntrup.decrypt(encrypted).unwrap();
 assert_eq!(decrypted, bytes);
 ```
 
+## TODO
+ - add Falcon algorithm for sign,verify signature
+
 ## Warnings
 
 #### Implementation 
