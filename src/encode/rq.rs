@@ -128,15 +128,14 @@ pub fn rq_encode<const P: usize, const Q: usize, const Q12: usize, const RQ_BYTE
     out
 }
 
-/// TODO: Add const because s=1158 elements!.
 pub fn rq_decode<const P: usize, const Q: usize, const Q12: usize, const RQ_BYTES: usize>(
-    s: &[u8],
+    s: &[u8; RQ_BYTES],
 ) -> [i16; P] {
     let mut rq = [0i16; P];
     let mut r = [0u16; P];
     let m = [Q as u16; P];
 
-    decode(&mut r, &s, &m, P);
+    decode(&mut r, s, &m, P);
 
     for i in 0..P {
         rq[i] = (r[i] as i16) - Q12 as i16;

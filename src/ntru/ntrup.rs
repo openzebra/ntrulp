@@ -55,7 +55,11 @@ impl<
 
     // return bytes where
     // content = [content, chunk_size, 8_bytes_usize_len_chunks_size_bytes]
-    pub fn encrypt(&self, bytes: &[u8], pk: &[u8]) -> Result<Vec<u8>, NTRUErrors<'static>> {
+    pub fn encrypt(
+        &self,
+        bytes: &[u8],
+        pk: &[u8; RQ_BYTES],
+    ) -> Result<Vec<u8>, NTRUErrors<'static>> {
         let unlimted_poly = r3::r3_decode_chunks(bytes);
         let pub_key_coeffs = rq::rq_decode::<P, Q, Q12, RQ_BYTES>(pk);
         let h: Arc<Rq<P, Q, Q12>> = Arc::new(Rq::from(pub_key_coeffs));

@@ -82,7 +82,7 @@ impl<
         Ok((pk, sk))
     }
 
-    pub fn import_pair(&mut self, pk: &[u8], sk: &[u8]) {
+    pub fn import_pair(&mut self, pk: &[u8; RQ_BYTES], sk: &[u8]) {
         let mut h: Rq<P, Q, Q12> = Rq::new();
         let mut f: R3<P, Q, Q12> = R3::new();
         let mut ginv: R3<P, Q, Q12> = R3::new();
