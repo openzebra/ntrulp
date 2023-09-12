@@ -6,7 +6,7 @@ publish = true
 authors = ["Rinat hicc0rus@gmail.com"]
 readme = "README.md"
 license-file = "LICENSE"
-keywords = ["NTRU Prime", "NTRU", "rust", "ideal-lattice-based", "cryptography"]
+keywords = ["NTRU", "rust", "ideal-lattice-based", "cryptography"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
