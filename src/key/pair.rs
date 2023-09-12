@@ -56,9 +56,19 @@ impl<
             return false;
         }
 
-        // TODO: calc inverse and add verify method.
+        let f = &self.priv_key.f;
+        let ginv = &self.priv_key.ginv;
+        let g = match ginv.recip::<P_PLUS_ONE>() {
+            Ok(g) => g,
+            Err(_) => return false,
+        };
+        let finv = match f.recip3::<P_PLUS_ONE>() {
+            Ok(finv) => finv,
+            Err(_) => return false,
+        };
+        let h = finv.mult_r3::<P_TWICE_MINUS_ONE>(&g);
 
-        true
+        &h.coeffs == &self.pub_key.h.coeffs
     }
 
     // (PublicKey, SecretKey)
@@ -117,6 +127,27 @@ mod test_pair {
 
     use crate::random::CommonRandom;
     use crate::random::NTRURandom;
+
+    #[test]
+    fn test_verify() {
+        const P: usize = 761;
+        const Q: usize = 4591;
+        const W: usize = 286;
+        const Q12: usize = (Q - 1) / 2;
+        const P_TWICE_MINUS_ONE: usize = P + P - 1;
+        const P_PLUS_ONE: usize = P + 1;
+        const RQ_BYTES: usize = 1158;
+
+        let mut random: NTRURandom<P> = NTRURandom::new();
+        let mut pair: KeyPair<P, Q, Q12, RQ_BYTES, P_PLUS_ONE, P_TWICE_MINUS_ONE> = KeyPair::new();
+
+        let f: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap());
+        let g: R3<P, Q, Q12> = R3::from(random.random_small().unwrap());
+
+        pair.from_seed(g, f).unwrap();
+
+        assert!(pair.verify());
+    }
 
     #[test]
     fn test_key_gen_from_seed() {
