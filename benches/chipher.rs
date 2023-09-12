@@ -193,9 +193,9 @@ fn encrypt_benchmark(cb: &mut Criterion) {
         let (pk, _) = ntrup.key_pair.export_pair().unwrap();
 
         b.iter(|| {
-            let encrypted = ntrup.encrypt(&bytes, &pk);
+            let encrypted = ntrup.encrypt(&bytes, &pk).unwrap();
 
-            ntrup.decrypt(encrypted);
+            ntrup.decrypt(encrypted).unwrap();
         });
     });
 
@@ -222,9 +222,9 @@ fn encrypt_benchmark(cb: &mut Criterion) {
         let (pk, _) = ntrup.key_pair.export_pair().unwrap();
 
         b.iter(|| {
-            let encrypted = ntrup.encrypt(&bytes, &pk);
+            let encrypted = ntrup.encrypt(&bytes, &pk).unwrap();
 
-            ntrup.decrypt(encrypted);
+            ntrup.decrypt(encrypted).unwrap();
         });
     });
 
@@ -251,9 +251,9 @@ fn encrypt_benchmark(cb: &mut Criterion) {
         let (pk, _) = ntrup.key_pair.export_pair().unwrap();
 
         b.iter(|| {
-            let encrypted = ntrup.encrypt(&bytes, &pk);
+            let encrypted = ntrup.encrypt(&bytes, &pk).unwrap();
 
-            ntrup.decrypt(encrypted);
+            ntrup.decrypt(encrypted).unwrap();
         });
     });
 
@@ -280,9 +280,9 @@ fn encrypt_benchmark(cb: &mut Criterion) {
         let (pk, _) = ntrup.key_pair.export_pair().unwrap();
 
         b.iter(|| {
-            let encrypted = ntrup.encrypt(&bytes, &pk);
+            let encrypted = ntrup.encrypt(&bytes, &pk).unwrap();
 
-            ntrup.decrypt(encrypted);
+            ntrup.decrypt(encrypted).unwrap();
         });
     });
 
@@ -309,9 +309,9 @@ fn encrypt_benchmark(cb: &mut Criterion) {
         let (pk, _) = ntrup.key_pair.export_pair().unwrap();
 
         b.iter(|| {
-            let encrypted = ntrup.encrypt(&bytes, &pk);
+            let encrypted = ntrup.encrypt(&bytes, &pk).unwrap();
 
-            ntrup.decrypt(encrypted);
+            ntrup.decrypt(encrypted).unwrap();
         });
     });
 
@@ -338,9 +338,9 @@ fn encrypt_benchmark(cb: &mut Criterion) {
         let (pk, _) = ntrup.key_pair.export_pair().unwrap();
 
         b.iter(|| {
-            let encrypted = ntrup.encrypt(&bytes, &pk);
+            let encrypted = ntrup.encrypt(&bytes, &pk).unwrap();
 
-            ntrup.decrypt(encrypted);
+            ntrup.decrypt(encrypted).unwrap();
         });
     });
 }
