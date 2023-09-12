@@ -23,7 +23,7 @@ fn encrypt_benchmark(cb: &mut Criterion) {
             )
             .unwrap();
 
-        ntrup.key_pair_gen(rand::thread_rng()).unwrap();
+        ntrup.key_pair_gen().unwrap();
 
         let mut rng: NTRURandom<P> = NTRURandom::new();
         let c: R3<P, Q, Q12> = Rq::from(rng.short_random(W).unwrap()).r3_from_rq();
@@ -50,7 +50,7 @@ fn encrypt_benchmark(cb: &mut Criterion) {
             )
             .unwrap();
 
-        ntrup.key_pair_gen(rand::thread_rng()).unwrap();
+        ntrup.key_pair_gen().unwrap();
 
         let mut rng: NTRURandom<P> = NTRURandom::new();
         let c: R3<P, Q, Q12> = Rq::from(rng.short_random(W).unwrap()).r3_from_rq();
@@ -77,7 +77,7 @@ fn encrypt_benchmark(cb: &mut Criterion) {
             )
             .unwrap();
 
-        ntrup.key_pair_gen(rand::thread_rng()).unwrap();
+        ntrup.key_pair_gen().unwrap();
 
         let mut rng: NTRURandom<P> = NTRURandom::new();
         let c: R3<P, Q, Q12> = Rq::from(rng.short_random(W).unwrap()).r3_from_rq();
@@ -104,7 +104,7 @@ fn encrypt_benchmark(cb: &mut Criterion) {
             )
             .unwrap();
 
-        ntrup.key_pair_gen(rand::thread_rng()).unwrap();
+        ntrup.key_pair_gen().unwrap();
 
         let mut rng: NTRURandom<P> = NTRURandom::new();
         let c: R3<P, Q, Q12> = Rq::from(rng.short_random(W).unwrap()).r3_from_rq();
@@ -131,7 +131,7 @@ fn encrypt_benchmark(cb: &mut Criterion) {
             )
             .unwrap();
 
-        ntrup.key_pair_gen(rand::thread_rng()).unwrap();
+        ntrup.key_pair_gen().unwrap();
 
         let mut rng: NTRURandom<P> = NTRURandom::new();
         let c: R3<P, Q, Q12> = Rq::from(rng.short_random(W).unwrap()).r3_from_rq();
@@ -158,7 +158,7 @@ fn encrypt_benchmark(cb: &mut Criterion) {
             )
             .unwrap();
 
-        ntrup.key_pair_gen(rand::thread_rng()).unwrap();
+        ntrup.key_pair_gen().unwrap();
 
         let mut rng: NTRURandom<P> = NTRURandom::new();
         let c: R3<P, Q, Q12> = Rq::from(rng.short_random(W).unwrap()).r3_from_rq();
@@ -185,7 +185,7 @@ fn encrypt_benchmark(cb: &mut Criterion) {
             )
             .unwrap();
 
-        ntrup.key_pair_gen(rand::thread_rng()).unwrap();
+        ntrup.key_pair_gen().unwrap();
 
         let mut rng = rand::thread_rng();
         let rand_len = rng.gen_range(5..10_000);
@@ -214,7 +214,7 @@ fn encrypt_benchmark(cb: &mut Criterion) {
             )
             .unwrap();
 
-        ntrup.key_pair_gen(rand::thread_rng()).unwrap();
+        ntrup.key_pair_gen().unwrap();
 
         let mut rng = rand::thread_rng();
         let rand_len = rng.gen_range(5..10_000);
@@ -243,7 +243,7 @@ fn encrypt_benchmark(cb: &mut Criterion) {
             )
             .unwrap();
 
-        ntrup.key_pair_gen(rand::thread_rng()).unwrap();
+        ntrup.key_pair_gen().unwrap();
 
         let mut rng = rand::thread_rng();
         let rand_len = rng.gen_range(5..10_000);
@@ -272,7 +272,7 @@ fn encrypt_benchmark(cb: &mut Criterion) {
             )
             .unwrap();
 
-        ntrup.key_pair_gen(rand::thread_rng()).unwrap();
+        ntrup.key_pair_gen().unwrap();
 
         let mut rng = rand::thread_rng();
         let rand_len = rng.gen_range(5..10_000);
@@ -301,7 +301,7 @@ fn encrypt_benchmark(cb: &mut Criterion) {
             )
             .unwrap();
 
-        ntrup.key_pair_gen(rand::thread_rng()).unwrap();
+        ntrup.key_pair_gen().unwrap();
 
         let mut rng = rand::thread_rng();
         let rand_len = rng.gen_range(5..10_000);
@@ -330,7 +330,7 @@ fn encrypt_benchmark(cb: &mut Criterion) {
             )
             .unwrap();
 
-        ntrup.key_pair_gen(rand::thread_rng()).unwrap();
+        ntrup.key_pair_gen().unwrap();
 
         let mut rng = rand::thread_rng();
         let rand_len = rng.gen_range(5..10_000);

@@ -1,7 +1,5 @@
 extern crate num_cpus;
 
-use rand::rngs::ThreadRng;
-
 use super::{errors::NTRUErrors, params::check_params};
 use crate::ntru::cipher::{r3_encrypt, rq_decrypt};
 use crate::{
@@ -27,6 +25,7 @@ pub struct NTRUPrime<
     const P_TWICE_MINUS_ONE: usize,
 > {
     pub key_pair: KeyPair<P, Q, Q12, RQ_BYTES, P_PLUS_ONE, P_TWICE_MINUS_ONE>,
+    pub rng: NTRURandom<P>,
     pub num_threads: usize,
 }
 
@@ -44,10 +43,12 @@ impl<
     pub fn new() -> Result<Self, NTRUErrors<'static>> {
         check_params::<P, Q, W, Q12, P_PLUS_ONE, P_TWICE_MINUS_ONE>()?;
 
+        let rng: NTRURandom<P> = NTRURandom::new();
         let key_pair: KeyPair<P, Q, Q12, RQ_BYTES, P_PLUS_ONE, P_TWICE_MINUS_ONE> = KeyPair::new();
         let num_threads = num_cpus::get();
 
         Ok(NTRUPrime {
+            rng,
             key_pair,
             num_threads,
         })
@@ -244,10 +245,9 @@ impl<
         rq_decrypt::<P, Q, W, Q12, P_TWICE_MINUS_ONE>(c, f, ginv)
     }
 
-    pub fn key_pair_gen(&mut self, rng: ThreadRng) -> Result<(), NTRUErrors> {
+    pub fn key_pair_gen(&mut self) -> Result<(), NTRUErrors> {
         const MAX_TRY: usize = 100;
 
-        let mut ntru_rng: NTRURandom<P> = NTRURandom::from(rng);
         let mut k: usize = 0;
 
         loop {
@@ -257,14 +257,14 @@ impl<
                 ));
             }
 
-            let short_entropy = match ntru_rng.short_random(W) {
+            let short_entropy = match self.rng.short_random(W) {
                 Ok(s) => s,
                 Err(_) => {
                     k += 1;
                     continue;
                 }
             };
-            let small_entropy = match ntru_rng.random_small() {
+            let small_entropy = match self.rng.random_small() {
                 Ok(s) => s,
                 Err(_) => {
                     k += 1;
@@ -335,37 +335,37 @@ mod tests {
     fn test_gen_key_pair() {
         let mut ntrup = NTRUPrime::<761, 4591, 286, 4590, 1007, 1158, 762, 1521>::new().unwrap();
 
-        ntrup.key_pair_gen(rand::thread_rng()).unwrap();
+        ntrup.key_pair_gen().unwrap();
 
         assert!(ntrup.key_pair.verify());
 
         let mut ntrup = NTRUPrime::<857, 5167, 322, 5166, 1152, 1322, 858, 1713>::new().unwrap();
 
-        ntrup.key_pair_gen(rand::thread_rng()).unwrap();
+        ntrup.key_pair_gen().unwrap();
 
         assert!(ntrup.key_pair.verify());
 
         let mut ntrup = NTRUPrime::<653, 4621, 288, 4620, 865, 994, 654, 1305>::new().unwrap();
 
-        ntrup.key_pair_gen(rand::thread_rng()).unwrap();
+        ntrup.key_pair_gen().unwrap();
 
         assert!(ntrup.key_pair.verify());
 
         let mut ntrup = NTRUPrime::<953, 6343, 396, 6342, 1317, 1505, 954, 1905>::new().unwrap();
 
-        ntrup.key_pair_gen(rand::thread_rng()).unwrap();
+        ntrup.key_pair_gen().unwrap();
 
         assert!(ntrup.key_pair.verify());
 
         let mut ntrup = NTRUPrime::<1013, 7177, 448, 7176, 1423, 1623, 1014, 2025>::new().unwrap();
 
-        ntrup.key_pair_gen(rand::thread_rng()).unwrap();
+        ntrup.key_pair_gen().unwrap();
 
         assert!(ntrup.key_pair.verify());
 
         let mut ntrup = NTRUPrime::<1277, 7879, 492, 7878, 1815, 2067, 1278, 2553>::new().unwrap();
 
-        ntrup.key_pair_gen(rand::thread_rng()).unwrap();
+        ntrup.key_pair_gen().unwrap();
 
         assert!(ntrup.key_pair.verify());
     }
@@ -386,7 +386,7 @@ mod tests {
             )
             .unwrap();
 
-        ntrup.key_pair_gen(rand::thread_rng()).unwrap();
+        ntrup.key_pair_gen().unwrap();
 
         let mut rng: NTRURandom<P> = NTRURandom::new();
         let c: R3<P, Q, Q12> = Rq::from(rng.short_random(W).unwrap()).r3_from_rq();
@@ -413,7 +413,7 @@ mod tests {
             )
             .unwrap();
 
-        ntrup.key_pair_gen(rand::thread_rng()).unwrap();
+        ntrup.key_pair_gen().unwrap();
 
         let mut rng: NTRURandom<P> = NTRURandom::new();
         let c: R3<P, Q, Q12> = Rq::from(rng.short_random(W).unwrap()).r3_from_rq();
@@ -440,7 +440,7 @@ mod tests {
             )
             .unwrap();
 
-        ntrup.key_pair_gen(rand::thread_rng()).unwrap();
+        ntrup.key_pair_gen().unwrap();
 
         let mut rng: NTRURandom<P> = NTRURandom::new();
         let c: R3<P, Q, Q12> = Rq::from(rng.short_random(W).unwrap()).r3_from_rq();
@@ -467,7 +467,7 @@ mod tests {
             )
             .unwrap();
 
-        ntrup.key_pair_gen(rand::thread_rng()).unwrap();
+        ntrup.key_pair_gen().unwrap();
 
         let mut rng: NTRURandom<P> = NTRURandom::new();
         let c: R3<P, Q, Q12> = Rq::from(rng.short_random(W).unwrap()).r3_from_rq();
@@ -494,7 +494,7 @@ mod tests {
             )
             .unwrap();
 
-        ntrup.key_pair_gen(rand::thread_rng()).unwrap();
+        ntrup.key_pair_gen().unwrap();
 
         let mut rng: NTRURandom<P> = NTRURandom::new();
         let c: R3<P, Q, Q12> = Rq::from(rng.short_random(W).unwrap()).r3_from_rq();
@@ -521,7 +521,7 @@ mod tests {
             )
             .unwrap();
 
-        ntrup.key_pair_gen(rand::thread_rng()).unwrap();
+        ntrup.key_pair_gen().unwrap();
 
         let mut rng: NTRURandom<P> = NTRURandom::new();
         let c: R3<P, Q, Q12> = Rq::from(rng.short_random(W).unwrap()).r3_from_rq();
@@ -574,7 +574,7 @@ mod tests {
             .unwrap();
         let bytes: Vec<u8> = (0..rand_len).map(|_| rng.gen::<u8>()).collect();
 
-        ntrup.key_pair_gen(rand::thread_rng()).unwrap();
+        ntrup.key_pair_gen().unwrap();
 
         let (pk, _) = ntrup.key_pair.export_pair().unwrap();
 
@@ -603,7 +603,7 @@ mod tests {
             .unwrap();
         let bytes: Vec<u8> = (0..rand_len).map(|_| rng.gen::<u8>()).collect();
 
-        ntrup.key_pair_gen(rand::thread_rng()).unwrap();
+        ntrup.key_pair_gen().unwrap();
 
         let (pk, _) = ntrup.key_pair.export_pair().unwrap();
 
@@ -632,7 +632,7 @@ mod tests {
             .unwrap();
         let bytes: Vec<u8> = (0..rand_len).map(|_| rng.gen::<u8>()).collect();
 
-        ntrup.key_pair_gen(rand::thread_rng()).unwrap();
+        ntrup.key_pair_gen().unwrap();
 
         let (pk, _) = ntrup.key_pair.export_pair().unwrap();
 
@@ -661,7 +661,7 @@ mod tests {
             .unwrap();
         let bytes: Vec<u8> = (0..rand_len).map(|_| rng.gen::<u8>()).collect();
 
-        ntrup.key_pair_gen(rand::thread_rng()).unwrap();
+        ntrup.key_pair_gen().unwrap();
 
         let (pk, _) = ntrup.key_pair.export_pair().unwrap();
 
@@ -690,7 +690,7 @@ mod tests {
             .unwrap();
         let bytes: Vec<u8> = (0..rand_len).map(|_| rng.gen::<u8>()).collect();
 
-        ntrup.key_pair_gen(rand::thread_rng()).unwrap();
+        ntrup.key_pair_gen().unwrap();
 
         let (pk, _) = ntrup.key_pair.export_pair().unwrap();
 
@@ -719,7 +719,7 @@ mod tests {
             .unwrap();
         let bytes: Vec<u8> = (0..rand_len).map(|_| rng.gen::<u8>()).collect();
 
-        ntrup.key_pair_gen(rand::thread_rng()).unwrap();
+        ntrup.key_pair_gen().unwrap();
 
         let (pk, _) = ntrup.key_pair.export_pair().unwrap();
 

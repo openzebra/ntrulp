@@ -19,7 +19,7 @@ fn rq_benchmark(cb: &mut Criterion) {
         NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES, P_PLUS_ONE, P_TWICE_MINUS_ONE>::new()
             .unwrap();
 
-    ntrup.key_pair_gen(rand::thread_rng()).unwrap();
+    ntrup.key_pair_gen().unwrap();
 
     let mut rng: NTRURandom<P> = NTRURandom::new();
     let r3: R3<P, Q, Q12> = R3::from(rng.random_small().unwrap());
