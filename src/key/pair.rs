@@ -73,8 +73,8 @@ impl<
 
         let pk = rq_encode::<P, Q, Q12, RQ_BYTES>(&h);
         let mut sk = vec![0u8; Self::R3_BYTES * 2];
-        let fencoded = r3_encode(&f).to_vec();
-        let ginv_encoded = r3_encode(&ginv);
+        let fencoded = r3_encode(&f)?.to_vec();
+        let ginv_encoded = r3_encode(&ginv)?;
 
         sk[..Self::R3_BYTES].copy_from_slice(&ginv_encoded);
         sk[Self::R3_BYTES..].copy_from_slice(&fencoded);

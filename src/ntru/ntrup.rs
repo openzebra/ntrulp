@@ -55,7 +55,7 @@ impl<
 
     // return bytes where
     // content = [content, chunk_size, 8_bytes_usize_len_chunks_size_bytes]
-    pub fn encrypt(&self, bytes: &[u8], pk: &[u8]) -> Vec<u8> {
+    pub fn encrypt(&self, bytes: &[u8], pk: &[u8]) -> Result<Vec<u8>, NTRUErrors<'static>> {
         let unlimted_poly = r3::r3_decode_chunks(bytes);
         let pub_key_coeffs = rq::rq_decode::<P, Q, Q12, RQ_BYTES>(pk);
         let h: Arc<Rq<P, Q, Q12>> = Arc::new(Rq::from(pub_key_coeffs));
@@ -72,9 +72,14 @@ impl<
                 let h = h_ref;
                 let hr = r3_encrypt::<P, Q, Q12, P_TWICE_MINUS_ONE>(&r3, &h);
                 let rq_bytes = rq::rq_rounded_encode::<P, Q, Q12, ROUNDED_BYTES>(&hr.coeffs);
-                let mut enc = enc_ref.lock().unwrap();
+                let mut enc = match enc_ref.lock() {
+                    Ok(v) => v,
+                    Err(_) => return Err(NTRUErrors::ThreadError("cannot lock enc arc value")),
+                };
 
                 enc.insert(index, rq_bytes);
+
+                Ok(())
             });
 
             threads.push(handle);
@@ -82,15 +87,33 @@ impl<
             if threads.len() >= self.num_threads {
                 let handle = threads.remove(0);
 
-                handle.join().unwrap();
+                match handle.join() {
+                    Ok(_) => continue,
+                    Err(_) => {
+                        return Err(NTRUErrors::ThreadError(
+                            "Cannot done the thread, check your init params!",
+                        ))
+                    }
+                };
             }
         }
 
+        // Done all jobs.
         for h in threads {
-            h.join().unwrap();
+            match h.join() {
+                Ok(_) => continue,
+                Err(_) => {
+                    return Err(NTRUErrors::ThreadError(
+                        "Cannot done the thread, check your init params!",
+                    ))
+                }
+            };
         }
 
-        let enc_ref = enc.lock().unwrap();
+        let enc_ref = match enc.lock() {
+            Ok(v) => v,
+            Err(_) => return Err(NTRUErrors::ThreadError("cannot lock enc arc value!")),
+        };
         let size_bytes = self.usize_vec_to_bytes(&size);
         let size_len = size_bytes.len().to_ne_bytes().to_vec();
         let mut bytes: Vec<u8> = Vec::with_capacity(P * size.len());
@@ -98,15 +121,18 @@ impl<
         for i in 0..size.len() {
             match enc_ref.get(&i) {
                 Some(v) => bytes.extend(v),
-                None => panic!("cannot find from enc"), // TODO: add error handler, remove all
-                                                        // unwrap!
+                None => {
+                    return Err(NTRUErrors::ThreadError(
+                        "Mutex error check your init params!",
+                    ))
+                }
             }
         }
 
         bytes.extend(size_bytes);
         bytes.extend(size_len);
 
-        bytes
+        Ok(bytes)
     }
 
     pub fn decrypt(&self, bytes: Vec<u8>) -> Vec<u8> {
@@ -517,7 +543,7 @@ mod tests {
 
         let (pk, _) = ntrup.key_pair.export_pair().unwrap();
 
-        let encrypted = ntrup.encrypt(&bytes, &pk);
+        let encrypted = ntrup.encrypt(&bytes, &pk).unwrap();
         let decrypted = ntrup.decrypt(encrypted);
 
         assert_eq!(decrypted, bytes);
@@ -546,7 +572,7 @@ mod tests {
 
         let (pk, _) = ntrup.key_pair.export_pair().unwrap();
 
-        let encrypted = ntrup.encrypt(&bytes, &pk);
+        let encrypted = ntrup.encrypt(&bytes, &pk).unwrap();
         let decrypted = ntrup.decrypt(encrypted);
 
         assert_eq!(decrypted, bytes);
@@ -575,7 +601,7 @@ mod tests {
 
         let (pk, _) = ntrup.key_pair.export_pair().unwrap();
 
-        let encrypted = ntrup.encrypt(&bytes, &pk);
+        let encrypted = ntrup.encrypt(&bytes, &pk).unwrap();
         let decrypted = ntrup.decrypt(encrypted);
 
         assert_eq!(decrypted, bytes);
@@ -604,7 +630,7 @@ mod tests {
 
         let (pk, _) = ntrup.key_pair.export_pair().unwrap();
 
-        let encrypted = ntrup.encrypt(&bytes, &pk);
+        let encrypted = ntrup.encrypt(&bytes, &pk).unwrap();
         let decrypted = ntrup.decrypt(encrypted);
 
         assert_eq!(decrypted, bytes);
@@ -633,7 +659,7 @@ mod tests {
 
         let (pk, _) = ntrup.key_pair.export_pair().unwrap();
 
-        let encrypted = ntrup.encrypt(&bytes, &pk);
+        let encrypted = ntrup.encrypt(&bytes, &pk).unwrap();
         let decrypted = ntrup.decrypt(encrypted);
 
         assert_eq!(decrypted, bytes);
@@ -662,7 +688,7 @@ mod tests {
 
         let (pk, _) = ntrup.key_pair.export_pair().unwrap();
 
-        let encrypted = ntrup.encrypt(&bytes, &pk);
+        let encrypted = ntrup.encrypt(&bytes, &pk).unwrap();
         let decrypted = ntrup.decrypt(encrypted);
 
         assert_eq!(decrypted, bytes);

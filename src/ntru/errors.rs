@@ -3,4 +3,6 @@ pub enum NTRUErrors<'a> {
     ParamsError(&'a str),
     KeyGenError(&'a str),
     KeyExportError(&'a str),
+    ThreadError(&'a str),
+    R3EncodeError(&'a str),
 }

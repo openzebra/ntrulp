@@ -1,5 +1,7 @@
 use rand::Rng;
 
+use crate::ntru::errors::NTRUErrors;
+
 pub const BITS_SIZE: usize = 6;
 
 fn convert_to_ternary(num: u8) -> [i8; BITS_SIZE] {
@@ -37,26 +39,30 @@ fn convert_to_decimal(ternary: [i8; BITS_SIZE]) -> u8 {
     result as u8
 }
 
-pub fn r3_encode<const P: usize>(f: &[i8; P]) -> Vec<u8> {
+pub fn r3_encode<const P: usize>(f: &[i8; P]) -> Result<Vec<u8>, NTRUErrors<'static>> {
     let lenght = P / 4;
     let mut s = vec![0u8; lenght + 1];
     let mut x: i8;
     let mut f_iter = f.iter();
 
+    let mut next_f = move || match f_iter.next() {
+        Some(v) => Ok(v + 1),
+        None => Err(NTRUErrors::R3EncodeError("input array is not enough big")),
+    };
+
     for i in 0..lenght {
-        // TODO: Remove unwrap.
-        x = *f_iter.next().unwrap() + 1;
-        x += (f_iter.next().unwrap() + 1) << 2;
-        x += (f_iter.next().unwrap() + 1) << 4;
-        x += (f_iter.next().unwrap() + 1) << 6;
+        x = next_f()?;
+        x += next_f()? << 2;
+        x += next_f()? << 4;
+        x += next_f()? << 6;
 
         s[i] = x as u8;
     }
 
-    x = f_iter.next().unwrap() + 1;
+    x = next_f()?;
     s[lenght] = x as u8;
 
-    s
+    Ok(s)
 }
 
 pub fn r3_decode<const P: usize>(s: &[u8]) -> [i8; P] {
@@ -197,7 +203,7 @@ mod r3_encoder_tests {
 
         let mut random: NTRURandom<P> = NTRURandom::new();
         let r3: [i8; P] = random.random_small().unwrap();
-        let bytes = r3_encode::<P>(&r3);
+        let bytes = r3_encode::<P>(&r3).unwrap();
         let dec = r3_decode::<P>(&bytes);
 
         assert_eq!(dec, r3);
