@@ -1,5 +1,5 @@
 
-# NTRUP-rs
+# NTRUP Rust
 
 This repository presents an implementation of high-security prime-degree large-Galois-group inert-modulus ideal-lattice-based cryptography on rust programing langudge.
 “Prime degree” etc. are defenses against potential attacks; see [official website](https://www.ntru.org/).
@@ -13,6 +13,21 @@ This implementation uses: Fields of the form (Z/q)[x]/(xp −x−1), where p is 
 * p = 953, q = 6343, w = 396, RQ_BYTES=1505, ROUNDED_BYTES=1317
 * p = 1013, q = 7177, w = 448, RQ_BYTES=1623, ROUNDED_BYTES=1423
 * p = 1277, q = 7879, w = 492, RQ_BYTES=2067, ROUNDED_BYTES=1815
+
+### install
+```bash
+cargo add ntrulp
+```
+
+### Testing
+
+```bash
+cargo test
+```
+
+```bash
+cargo bench
+```
 
 ## Encrypt/Decrypt bytes example
 ```rust
