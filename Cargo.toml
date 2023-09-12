@@ -1,5 +1,6 @@
 [package]
 name = "ntrulp"
+description = "Pure implementation of high-security prime-degree large-Galois-group inert-modulus ideal-lattice-based cryptography."
 version = "0.1.4"
 edition = "2021"
 publish = true
