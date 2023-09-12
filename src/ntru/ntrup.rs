@@ -139,9 +139,13 @@ impl<
         Ok(bytes)
     }
 
-    pub fn decrypt(&self, bytes: Vec<u8>) -> Vec<u8> {
+    pub fn decrypt(&self, bytes: Vec<u8>) -> Result<Vec<u8>, NTRUErrors<'static>> {
         let bytes_len = bytes.len();
-        let size_bytes_len: &[u8; 8] = &bytes[bytes_len - 8..].try_into().unwrap(); // TODO: remove unwrap!
+        let binding = bytes[bytes_len - 8..].try_into();
+        let size_bytes_len: &[u8; 8] = match &binding {
+            Ok(v) => v,
+            Err(_) => return Err(NTRUErrors::SliceError("Input bytes Error")),
+        };
         let size_len = usize::from_ne_bytes(*size_bytes_len);
         let size_bytes = &bytes[bytes_len - size_len - 8..(bytes_len - 1)];
         let size = self.byte_to_usize_vec(size_bytes);
@@ -157,8 +161,14 @@ impl<
 
         for (index, chunk) in chunks.into_iter().enumerate() {
             let sync_map_ref = Arc::clone(&sync_hash_map);
-            // TODO: Remove unwrap!
-            let rounded_chunk: [u8; ROUNDED_BYTES] = chunk.try_into().unwrap();
+            let rounded_chunk: [u8; ROUNDED_BYTES] = match chunk.try_into() {
+                Ok(c) => c,
+                Err(_) => {
+                    return Err(NTRUErrors::SliceError(
+                        "Cannot into [u8; ROUNDED_BYTES], Incorrect params!",
+                    ))
+                }
+            };
             let f_ref = Arc::clone(&f);
             let ginv_ref = Arc::clone(&ginv);
             let handle = thread::spawn(move || {
@@ -167,10 +177,12 @@ impl<
                 let f: Rq<P, Q, Q12> = Rq::from(*f_ref);
                 let ginv: R3<P, Q, Q12> = R3::from(*ginv_ref);
                 let r3 = rq_decrypt::<P, Q, W, Q12, P_TWICE_MINUS_ONE>(&rq, &f, &ginv);
+                let mut sync_map = match sync_map_ref.lock() {
+                    Ok(v) => v,
+                    Err(_) => return Err(NTRUErrors::ThreadError("cannot lock enc arc value")),
+                };
 
-                let mut sync_map = sync_map_ref.lock().unwrap();
-
-                sync_map.insert(index, r3.coeffs);
+                Ok(sync_map.insert(index, r3.coeffs))
             });
 
             threads.push(handle);
@@ -178,28 +190,47 @@ impl<
             if threads.len() >= self.num_threads {
                 let handle = threads.remove(0);
 
-                handle.join().unwrap();
+                match handle.join() {
+                    Ok(_) => continue,
+                    Err(_) => {
+                        return Err(NTRUErrors::ThreadError(
+                            "Cannot done the thread, check your init params!",
+                        ))
+                    }
+                };
             }
         }
 
         for h in threads {
-            h.join().unwrap();
+            match h.join() {
+                Ok(_) => continue,
+                Err(_) => {
+                    return Err(NTRUErrors::ThreadError(
+                        "Cannot done the thread, check your init params!",
+                    ))
+                }
+            };
         }
 
-        // TODO: Remove unwrap.
-        let sync_map = sync_hash_map.lock().unwrap();
+        let sync_map = match sync_hash_map.lock() {
+            Ok(v) => v,
+            Err(_) => return Err(NTRUErrors::ThreadError("cannot lock enc arc value!")),
+        };
         let mut r3_chunks = Vec::new();
         for i in 0..size.len() {
             match sync_map.get(&i) {
                 Some(v) => r3_chunks.push(*v),
-                None => panic!("cannot find from enc"), // TODO: add error handler, remove all
-                                                        // unwrap!
+                None => {
+                    return Err(NTRUErrors::ThreadError(
+                        "Mutex error check your init params!",
+                    ))
+                }
             }
         }
 
         let out_r3 = r3::r3_merge_w_chunks::<P>(&r3_chunks, &size);
 
-        r3::r3_encode_chunks(&out_r3)
+        Ok(r3::r3_encode_chunks(&out_r3))
     }
 
     pub fn r3_encrypt(&self, r: &R3<P, Q, Q12>, h: &Rq<P, Q, Q12>) -> Rq<P, Q, Q12> {
@@ -548,7 +579,7 @@ mod tests {
         let (pk, _) = ntrup.key_pair.export_pair().unwrap();
 
         let encrypted = ntrup.encrypt(&bytes, &pk).unwrap();
-        let decrypted = ntrup.decrypt(encrypted);
+        let decrypted = ntrup.decrypt(encrypted).unwrap();
 
         assert_eq!(decrypted, bytes);
     }
@@ -577,7 +608,7 @@ mod tests {
         let (pk, _) = ntrup.key_pair.export_pair().unwrap();
 
         let encrypted = ntrup.encrypt(&bytes, &pk).unwrap();
-        let decrypted = ntrup.decrypt(encrypted);
+        let decrypted = ntrup.decrypt(encrypted).unwrap();
 
         assert_eq!(decrypted, bytes);
     }
@@ -606,7 +637,7 @@ mod tests {
         let (pk, _) = ntrup.key_pair.export_pair().unwrap();
 
         let encrypted = ntrup.encrypt(&bytes, &pk).unwrap();
-        let decrypted = ntrup.decrypt(encrypted);
+        let decrypted = ntrup.decrypt(encrypted).unwrap();
 
         assert_eq!(decrypted, bytes);
     }
@@ -635,7 +666,7 @@ mod tests {
         let (pk, _) = ntrup.key_pair.export_pair().unwrap();
 
         let encrypted = ntrup.encrypt(&bytes, &pk).unwrap();
-        let decrypted = ntrup.decrypt(encrypted);
+        let decrypted = ntrup.decrypt(encrypted).unwrap();
 
         assert_eq!(decrypted, bytes);
     }
@@ -664,7 +695,7 @@ mod tests {
         let (pk, _) = ntrup.key_pair.export_pair().unwrap();
 
         let encrypted = ntrup.encrypt(&bytes, &pk).unwrap();
-        let decrypted = ntrup.decrypt(encrypted);
+        let decrypted = ntrup.decrypt(encrypted).unwrap();
 
         assert_eq!(decrypted, bytes);
     }
@@ -693,7 +724,7 @@ mod tests {
         let (pk, _) = ntrup.key_pair.export_pair().unwrap();
 
         let encrypted = ntrup.encrypt(&bytes, &pk).unwrap();
-        let decrypted = ntrup.decrypt(encrypted);
+        let decrypted = ntrup.decrypt(encrypted).unwrap();
 
         assert_eq!(decrypted, bytes);
     }

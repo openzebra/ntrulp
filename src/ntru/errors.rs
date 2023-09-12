@@ -5,4 +5,5 @@ pub enum NTRUErrors<'a> {
     KeyExportError(&'a str),
     ThreadError(&'a str),
     R3EncodeError(&'a str),
+    SliceError(&'a str),
 }
