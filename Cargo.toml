@@ -5,7 +5,6 @@ edition = "2021"
 publish = true
 authors = ["Rinat hicc0rus@gmail.com"]
 readme = "README.md"
-license = "ISC"
 license-file = "LICENSE"
 keywords = ["NTRU Prime", "NTRU", "rust", "ideal-lattice-based", "cryptography"]
 
