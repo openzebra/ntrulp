@@ -1,120 +1,167 @@
-pub struct Params {
-    pub round1: bool,
-    pub p: usize,
-    pub q: usize,
-    pub w: usize,
-    pub delta: usize,
-    pub tau: usize, // commonnly tau=16
-    pub tau0: usize,
-    pub tau1: usize,
-    pub tau2: usize,
-    pub tau3: usize,
-    pub i: usize,
-    pub top_bytes: usize,    // i/2
-    pub inputs_bytes: usize, // I / 8 or (p + 3) / 4
-    pub seeds_bytes: usize,  // random seeds
-    pub small_bytes: usize,  // (p + 3) / 4
-    pub hash_bytes: usize,   // sha_len / 2 or same confirm_bytes
-    pub secretkeys_bytes: usize,
-    pub publickeys_bytes: usize,
-    pub ciphertexts_bytes: usize,
+#[cfg(feature = "ntrulpr4591761")]
+pub mod params {
+    pub const ROUND1: bool = true;
+    pub const P: usize = 761;
+    pub const Q: usize = 4591;
+    pub const W: usize = 250;
+    pub const DELTA: usize = 292;
+    pub const TAU: usize = 16;
+    pub const TAU0: usize = 2156;
+    pub const TAU1: usize = 114;
+    pub const TAU2: usize = 2007;
+    pub const TAU3: usize = 287;
+    pub const I: usize = 256;
+    pub const SEEDS_BYTES: usize = 32;
+    pub const ROUNDED_BYTES: usize = 1007;
+    pub const TOP_BYTES: usize = I / 2;
+    pub const INPUTS_BYTES: usize = (P + 3) / 4;
+    pub const SMALL_BYTES: usize = INPUTS_BYTES;
+    pub const HASH_BYTES: usize = 32;
+    pub const SECRETKEYS_BYTES: usize = SMALL_BYTES;
+    pub const PUBLICKEYS_BYTES: usize = seeds_bytes + ROUNDED_BYTES;
+    pub const CIPHERTEXTS_BYTES: usize = ROUNDED_BYTES + TOP_BYTES;
 }
 
-#[cfg(feature = "ntrulpr4591761")]
-pub const PARAMS: Params = Params {
-    round1: true, // round1
-    p: 761,       // p
-    q: 4591,      // q
-    w: 250,       // w
-    delta: 292,   // delta
-    tau0: 2156,   // tau0
-    tau1: 114,    // tau1
-    tau2: 2007,   // tau2
-    tau3: 287,    // tau3
-    seeds_bytes: 32,
-};
-
 #[cfg(feature = "ntrulpr761")]
-pub const PARAMS: Params = Params {
-    round1: false, // round1
-    p: 761,        // p
-    q: 4591,       // q
-    w: 250,        // w
-    delta: 292,    // delta
-    tau0: 2156,    // tau0
-    tau1: 114,     // tau1
-    tau2: 2007,    // tau2
-    tau3: 287,     // tau3
-    seeds_bytes: 32,
-};
+pub mod params {
+    pub const ROUND1: bool = false;
+    pub const P: usize = 761;
+    pub const Q: usize = 4591;
+    pub const W: usize = 250;
+    pub const DELTA: usize = 292;
+    pub const TAU: usize = 16;
+    pub const TAU0: usize = 2156;
+    pub const TAU1: usize = 114;
+    pub const TAU2: usize = 2007;
+    pub const TAU3: usize = 287;
+    pub const I: usize = 256;
+    pub const SEEDS_BYTES: usize = 32;
+    pub const ROUNDED_BYTES: usize = 1007;
+    pub const TOP_BYTES: usize = I / 2;
+    pub const INPUTS_BYTES: usize = (P + 3) / 4;
+    pub const SMALL_BYTES: usize = INPUTS_BYTES;
+    pub const HASH_BYTES: usize = 32;
+    pub const SECRETKEYS_BYTES: usize = SMALL_BYTES;
+    pub const PUBLICKEYS_BYTES: usize = SEEDS_BYTES + ROUNDED_BYTES;
+    pub const CIPHERTEXTS_BYTES: usize = ROUNDED_BYTES + TOP_BYTES;
+}
 
 #[cfg(feature = "ntrulpr653")]
-pub const PARAMS: Params = Params {
-    round1: false, // round1
-    p: 653,        // p
-    q: 4621,       // q
-    w: 252,        // w
-    delta: 289,    // delta
-    tau0: 2175,    // tau0
-    tau1: 113,     // tau1
-    tau2: 2031,    // tau2
-    tau3: 290,     // tau3
-    seeds_bytes: 32,
-};
+pub mod params {
+    pub const ROUND1: bool = false;
+    pub const P: usize = 653;
+    pub const Q: usize = 4621;
+    pub const W: usize = 252;
+    pub const DELTA: usize = 289;
+    pub const TAU: usize = 16;
+    pub const TAU0: usize = 2175;
+    pub const TAU1: usize = 113;
+    pub const TAU2: usize = 2031;
+    pub const TAU3: usize = 290;
+    pub const I: usize = 256;
+    pub const SEEDS_BYTES: usize = 32;
+    pub const ROUNDED_BYTES: usize = 1007;
+    pub const TOP_BYTES: usize = I / 2;
+    pub const INPUTS_BYTES: usize = (P + 3) / 4;
+    pub const SMALL_BYTES: usize = INPUTS_BYTES;
+    pub const HASH_BYTES: usize = 32;
+    pub const SECRETKEYS_BYTES: usize = SMALL_BYTES;
+    pub const PUBLICKEYS_BYTES: usize = SEEDS_BYTES + ROUNDED_BYTES;
+    pub const CIPHERTEXTS_BYTES: usize = ROUNDED_BYTES + TOP_BYTES;
+}
 
 #[cfg(feature = "ntrulpr857")]
-pub const PARAMS: Params = Params {
-    round1: false, // round1
-    p: 857,        // p
-    q: 5167,       // q
-    w: 281,        // w
-    delta: 329,    // delta
-    tau0: 2433,    // tau0
-    tau1: 101,     // tau1
-    tau2: 2265,    // tau2
-    tau3: 324,     // tau3
-    seeds_bytes: 32,
-};
+pub mod params {
+    pub const ROUND1: bool = false;
+    pub const P: usize = 857;
+    pub const Q: usize = 5167;
+    pub const W: usize = 281;
+    pub const DELTA: usize = 329;
+    pub const TAU: usize = 16;
+    pub const TAU0: usize = 2433;
+    pub const TAU1: usize = 101;
+    pub const TAU2: usize = 2265;
+    pub const TAU3: usize = 324;
+    pub const I: usize = 256;
+    pub const SEEDS_BYTES: usize = 32;
+    pub const ROUNDED_BYTES: usize = 1007;
+    pub const TOP_BYTES: usize = I / 2;
+    pub const INPUTS_BYTES: usize = (P + 3) / 4;
+    pub const SMALL_BYTES: usize = INPUTS_BYTES;
+    pub const HASH_BYTES: usize = 32;
+    pub const SECRETKEYS_BYTES: usize = SMALL_BYTES;
+    pub const PUBLICKEYS_BYTES: usize = SEEDS_BYTES + ROUNDED_BYTES;
+    pub const CIPHERTEXTS_BYTES: usize = ROUNDED_BYTES + TOP_BYTES;
+}
 
 #[cfg(feature = "ntrulpr953")]
-pub const PARAMS: Params = Params {
-    round1: false, // round1
-    p: 953,        // p
-    q: 6343,       // q
-    w: 345,        // w
-    delta: 404,    // delta
-    tau0: 2997,    // tau0
-    tau1: 82,      // tau1
-    tau2: 2798,    // tau2
-    tau3: 400,     // tau3
-    seeds_bytes: 32,
-};
+pub mod params {
+    pub const ROUND1: bool = false;
+    pub const P: usize = 953;
+    pub const Q: usize = 6343;
+    pub const W: usize = 345;
+    pub const DELTA: usize = 404;
+    pub const TAU: usize = 16;
+    pub const TAU0: usize = 2997;
+    pub const TAU1: usize = 82;
+    pub const TAU2: usize = 2798;
+    pub const TAU3: usize = 400;
+    pub const I: usize = 256;
+    pub const SEEDS_BYTES: usize = 32;
+    pub const ROUNDED_BYTES: usize = 1007;
+    pub const TOP_BYTES: usize = I / 2;
+    pub const INPUTS_BYTES: usize = (P + 3) / 4;
+    pub const SMALL_BYTES: usize = INPUTS_BYTES;
+    pub const HASH_BYTES: usize = 32;
+    pub const SECRETKEYS_BYTES: usize = SMALL_BYTES;
+    pub const PUBLICKEYS_BYTES: usize = SEEDS_BYTES + ROUNDED_BYTES;
+    pub const CIPHERTEXTS_BYTES: usize = ROUNDED_BYTES + TOP_BYTES;
+}
 
 #[cfg(feature = "ntrulpr1013")]
-pub const PARAMS: Params = Params {
-    round1: false, // round1
-    p: 1013,       // p
-    q: 7177,       // q
-    w: 392,        // w
-    lpr: true,     // lpr
-    delta: 450,    // delta
-    tau0: 3367,    // tau0
-    tau1: 73,      // tau1
-    tau2: 3143,    // tau2
-    tau3: 449,     // tau3
-    seeds_bytes: 32,
-};
+pub mod params {
+    pub const ROUND1: bool = false;
+    pub const P: usize = 1013;
+    pub const Q: usize = 7177;
+    pub const W: usize = 392;
+    pub const DELTA: usize = 450;
+    pub const TAU: usize = 16;
+    pub const TAU0: usize = 3367;
+    pub const TAU1: usize = 73;
+    pub const TAU2: usize = 3143;
+    pub const TAU3: usize = 449;
+    pub const I: usize = 256;
+    pub const SEEDS_BYTES: usize = 32;
+    pub const ROUNDED_BYTES: usize = 1007;
+    pub const TOP_BYTES: usize = I / 2;
+    pub const INPUTS_BYTES: usize = (P + 3) / 4;
+    pub const SMALL_BYTES: usize = INPUTS_BYTES;
+    pub const HASH_BYTES: usize = 32;
+    pub const SECRETKEYS_BYTES: usize = SMALL_BYTES;
+    pub const PUBLICKEYS_BYTES: usize = SEEDS_BYTES + ROUNDED_BYTES;
+    pub const CIPHERTEXTS_BYTES: usize = ROUNDED_BYTES + TOP_BYTES;
+}
 
 #[cfg(feature = "ntrulpr1277")]
-pub const PARAMS: Params = Params {
-    round1: false, // round1
-    p: 1277,       // p
-    q: 7879,       // q
-    w: 429,        // w
-    delta: 502,    // delta
-    tau0: 3724,    // tau0
-    tau1: 66,      // tau1
-    tau2: 3469,    // tau2
-    tau3: 496,     // tau3
-    seeds_bytes: 32,
-};
+pub mod params {
+    pub const ROUND1: bool = false;
+    pub const P: usize = 1277;
+    pub const Q: usize = 7879;
+    pub const W: usize = 429;
+    pub const DELTA: usize = 502;
+    pub const TAU: usize = 16;
+    pub const TAU0: usize = 3724;
+    pub const TAU1: usize = 66;
+    pub const TAU2: usize = 3469;
+    pub const TAU3: usize = 496;
+    pub const I: usize = 256;
+    pub const SEEDS_BYTES: usize = 32;
+    pub const ROUNDED_BYTES: usize = 1007;
+    pub const TOP_BYTES: usize = I / 2;
+    pub const INPUTS_BYTES: usize = (P + 3) / 4;
+    pub const SMALL_BYTES: usize = INPUTS_BYTES;
+    pub const HASH_BYTES: usize = 32;
+    pub const SECRETKEYS_BYTES: usize = SMALL_BYTES;
+    pub const PUBLICKEYS_BYTES: usize = SEEDS_BYTES + ROUNDED_BYTES;
+    pub const CIPHERTEXTS_BYTES: usize = ROUNDED_BYTES + TOP_BYTES;
+}
