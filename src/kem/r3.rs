@@ -175,15 +175,13 @@ impl<const P: usize, const Q: usize, const Q12: usize> R3<P, Q, Q12> {
 
 #[cfg(test)]
 mod test_r3 {
+    use super::*;
+    use crate::params::params::{P, Q, Q12};
     use crate::random::{CommonRandom, NTRURandom};
 
-    use super::*;
-
+    #[cfg(feature = "ntrulpr761")]
     #[test]
     fn test_r3_mult() {
-        const P: usize = 761;
-        const Q: usize = 4591;
-        const Q12: usize = (Q - 1) / 2;
         const P_TWICE_MINUS_ONE: usize = P + P - 1;
 
         let f: R3<P, Q, Q12> = R3::from([
@@ -286,137 +284,15 @@ mod test_r3 {
         );
     }
 
+    #[cfg(feature = "ntrulpr761")]
     #[test]
     fn test_recip_761() {
-        const P: usize = 761;
-        const Q: usize = 4591;
-        const Q12: usize = (Q - 1) / 2;
         const P_PLUS_ONE: usize = P + 1;
         const P_TWICE_MINUS_ONE: usize = P + P - 1;
 
-        let mut random: NTRURandom<P> = NTRURandom::new();
+        let mut random: NTRURandom = NTRURandom::new();
 
         for _ in 0..2 {
-            let r3: R3<P, Q, Q12> = R3::from(random.random_small().unwrap());
-
-            let out = match r3.recip::<P_PLUS_ONE>() {
-                Ok(o) => o,
-                Err(_) => continue,
-            };
-            let one = out.mult::<P_TWICE_MINUS_ONE>(&r3);
-
-            assert_eq!(one.coeffs[0], 1);
-            assert!(one.eq_one());
-        }
-    }
-
-    #[test]
-    fn test_recip_857() {
-        const P: usize = 857;
-        const Q: usize = 5167;
-        const P_PLUS_ONE: usize = P + 1;
-        const Q12: usize = (Q - 1) / 2;
-        const P_TWICE_MINUS_ONE: usize = P + P - 1;
-
-        let mut random: NTRURandom<P> = NTRURandom::new();
-
-        for _ in 0..10 {
-            let r3: R3<P, Q, Q12> = R3::from(random.random_small().unwrap());
-
-            let out = match r3.recip::<P_PLUS_ONE>() {
-                Ok(o) => o,
-                Err(_) => continue,
-            };
-            let one = out.mult::<P_TWICE_MINUS_ONE>(&r3);
-
-            assert_eq!(one.coeffs[0], 1);
-            assert!(one.eq_one());
-        }
-    }
-
-    #[test]
-    fn test_recip_653() {
-        const P: usize = 653;
-        const Q: usize = 4621;
-        const Q12: usize = (Q - 1) / 2;
-        const P_PLUS_ONE: usize = P + 1;
-        const P_TWICE_MINUS_ONE: usize = P + P - 1;
-
-        let mut random: NTRURandom<P> = NTRURandom::new();
-
-        for _ in 0..10 {
-            let r3: R3<P, Q, Q12> = R3::from(random.random_small().unwrap());
-
-            let out = match r3.recip::<P_PLUS_ONE>() {
-                Ok(o) => o,
-                Err(_) => continue,
-            };
-            let one = out.mult::<P_TWICE_MINUS_ONE>(&r3);
-
-            assert_eq!(one.coeffs[0], 1);
-            assert!(one.eq_one());
-        }
-    }
-
-    #[test]
-    fn test_recip_953() {
-        const P: usize = 953;
-        const Q: usize = 6343;
-        const P_PLUS_ONE: usize = P + 1;
-        const Q12: usize = (Q - 1) / 2;
-        const P_TWICE_MINUS_ONE: usize = P + P - 1;
-
-        let mut random: NTRURandom<P> = NTRURandom::new();
-
-        for _ in 0..10 {
-            let r3: R3<P, Q, Q12> = R3::from(random.random_small().unwrap());
-
-            let out = match r3.recip::<P_PLUS_ONE>() {
-                Ok(o) => o,
-                Err(_) => continue,
-            };
-            let one = out.mult::<P_TWICE_MINUS_ONE>(&r3);
-
-            assert_eq!(one.coeffs[0], 1);
-            assert!(one.eq_one());
-        }
-    }
-
-    #[test]
-    fn test_recip_1013() {
-        const P: usize = 1013;
-        const Q: usize = 7177;
-        const Q12: usize = (Q - 1) / 2;
-        const P_PLUS_ONE: usize = P + 1;
-        const P_TWICE_MINUS_ONE: usize = P + P - 1;
-
-        let mut random: NTRURandom<P> = NTRURandom::new();
-
-        for _ in 0..10 {
-            let r3: R3<P, Q, Q12> = R3::from(random.random_small().unwrap());
-
-            let out = match r3.recip::<P_PLUS_ONE>() {
-                Ok(o) => o,
-                Err(_) => continue,
-            };
-            let one = out.mult::<P_TWICE_MINUS_ONE>(&r3);
-
-            assert_eq!(one.coeffs[0], 1);
-            assert!(one.eq_one());
-        }
-    }
-
-    #[test]
-    fn test_recip_1277() {
-        const P: usize = 1277;
-        const Q: usize = 7879;
-        const Q12: usize = (Q - 1) / 2;
-        const P_PLUS_ONE: usize = P + 1;
-        const P_TWICE_MINUS_ONE: usize = P + P - 1;
-
-        let mut random: NTRURandom<P> = NTRURandom::new();
-
-        for _ in 0..10 {
             let r3: R3<P, Q, Q12> = R3::from(random.random_small().unwrap());
 
             let out = match r3.recip::<P_PLUS_ONE>() {

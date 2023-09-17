@@ -19,13 +19,12 @@ fn test_round() {
     use crate::random::NTRURandom;
 
     const P: usize = 761;
-    const W: usize = 286;
     const Q: usize = 4591;
     const Q12: usize = (Q - 1) / 2;
     const P_PLUS_ONE: usize = P + 1;
 
-    let mut random: NTRURandom<P> = NTRURandom::new();
-    let mut r3: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap())
+    let mut random: NTRURandom = NTRURandom::new();
+    let mut r3: Rq<P, Q, Q12> = Rq::from(random.short_random().unwrap())
         .recip3::<P_PLUS_ONE>()
         .unwrap();
 
