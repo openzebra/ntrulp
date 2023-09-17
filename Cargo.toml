@@ -9,7 +9,13 @@ readme = "README.md"
 license-file = "LICENSE"
 keywords = ["NTRU", "rust", "ideal-lattice-based", "cryptography"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[features]
+default = ["ntrulpr761"]
+ntrulpr4591761= []
+ntrulpr761 = []
+ntrulpr653 = []
+ntrulpr857 = []
+ntrulpr953 = []
 
 [dependencies]
 num_cpus = "1.16.0"
