@@ -4,10 +4,20 @@ pub struct Params {
     pub q: usize,
     pub w: usize,
     pub delta: usize,
+    pub tau: usize, // commonnly tau=16
     pub tau0: usize,
     pub tau1: usize,
     pub tau2: usize,
     pub tau3: usize,
+    pub i: usize,
+    pub top_bytes: usize,    // i/2
+    pub inputs_bytes: usize, // I / 8 or (p + 3) / 4
+    pub seeds_bytes: usize,  // random seeds
+    pub small_bytes: usize,  // (p + 3) / 4
+    pub hash_bytes: usize,   // sha_len / 2 or same confirm_bytes
+    pub secretkeys_bytes: usize,
+    pub publickeys_bytes: usize,
+    pub ciphertexts_bytes: usize,
 }
 
 #[cfg(feature = "ntrulpr4591761")]
@@ -21,6 +31,7 @@ pub const PARAMS: Params = Params {
     tau1: 114,    // tau1
     tau2: 2007,   // tau2
     tau3: 287,    // tau3
+    seeds_bytes: 32,
 };
 
 #[cfg(feature = "ntrulpr761")]
@@ -34,6 +45,7 @@ pub const PARAMS: Params = Params {
     tau1: 114,     // tau1
     tau2: 2007,    // tau2
     tau3: 287,     // tau3
+    seeds_bytes: 32,
 };
 
 #[cfg(feature = "ntrulpr653")]
@@ -47,6 +59,7 @@ pub const PARAMS: Params = Params {
     tau1: 113,     // tau1
     tau2: 2031,    // tau2
     tau3: 290,     // tau3
+    seeds_bytes: 32,
 };
 
 #[cfg(feature = "ntrulpr857")]
@@ -60,6 +73,7 @@ pub const PARAMS: Params = Params {
     tau1: 101,     // tau1
     tau2: 2265,    // tau2
     tau3: 324,     // tau3
+    seeds_bytes: 32,
 };
 
 #[cfg(feature = "ntrulpr953")]
@@ -73,6 +87,7 @@ pub const PARAMS: Params = Params {
     tau1: 82,      // tau1
     tau2: 2798,    // tau2
     tau3: 400,     // tau3
+    seeds_bytes: 32,
 };
 
 #[cfg(feature = "ntrulpr1013")]
@@ -87,6 +102,7 @@ pub const PARAMS: Params = Params {
     tau1: 73,      // tau1
     tau2: 3143,    // tau2
     tau3: 449,     // tau3
+    seeds_bytes: 32,
 };
 
 #[cfg(feature = "ntrulpr1277")]
@@ -100,4 +116,5 @@ pub const PARAMS: Params = Params {
     tau1: 66,      // tau1
     tau2: 3469,    // tau2
     tau3: 496,     // tau3
+    seeds_bytes: 32,
 };
