@@ -215,5 +215,6 @@ mod rq_decode_encode {
 
         assert_eq!(rq.len(), P);
         assert_eq!(dec.len(), ROUNDED_BYTES);
+        assert_eq!(&dec, &bytes);
     }
 }
