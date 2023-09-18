@@ -18,7 +18,7 @@ pub mod params653 {
     pub const INPUTS_BYTES: usize = (P + 3) / 4;
     pub const SMALL_BYTES: usize = INPUTS_BYTES;
     pub const HASH_BYTES: usize = 32;
-    pub const SECRETKEYS_BYTES: usize = SMALL_BYTES;
+    pub const SECRETKEYS_BYTES: usize = SMALL_BYTES * 2;
     pub const PUBLICKEYS_BYTES: usize = SEEDS_BYTES + ROUNDED_BYTES;
     pub const CIPHERTEXTS_BYTES: usize = ROUNDED_BYTES + TOP_BYTES;
 }
@@ -43,7 +43,7 @@ pub mod params761 {
     pub const INPUTS_BYTES: usize = (P + 3) / 4;
     pub const SMALL_BYTES: usize = INPUTS_BYTES;
     pub const HASH_BYTES: usize = 32;
-    pub const SECRETKEYS_BYTES: usize = SMALL_BYTES;
+    pub const SECRETKEYS_BYTES: usize = SMALL_BYTES * 2;
     pub const PUBLICKEYS_BYTES: usize = SEEDS_BYTES + ROUNDED_BYTES;
     pub const CIPHERTEXTS_BYTES: usize = ROUNDED_BYTES + TOP_BYTES;
 }
@@ -68,7 +68,7 @@ pub mod params857 {
     pub const INPUTS_BYTES: usize = (P + 3) / 4;
     pub const SMALL_BYTES: usize = INPUTS_BYTES;
     pub const HASH_BYTES: usize = 32;
-    pub const SECRETKEYS_BYTES: usize = SMALL_BYTES;
+    pub const SECRETKEYS_BYTES: usize = SMALL_BYTES * 2;
     pub const PUBLICKEYS_BYTES: usize = SEEDS_BYTES + ROUNDED_BYTES;
     pub const CIPHERTEXTS_BYTES: usize = ROUNDED_BYTES + TOP_BYTES;
 }
@@ -93,7 +93,7 @@ pub mod params953 {
     pub const INPUTS_BYTES: usize = (P + 3) / 4;
     pub const SMALL_BYTES: usize = INPUTS_BYTES;
     pub const HASH_BYTES: usize = 32;
-    pub const SECRETKEYS_BYTES: usize = SMALL_BYTES;
+    pub const SECRETKEYS_BYTES: usize = SMALL_BYTES * 2;
     pub const PUBLICKEYS_BYTES: usize = SEEDS_BYTES + ROUNDED_BYTES;
     pub const CIPHERTEXTS_BYTES: usize = ROUNDED_BYTES + TOP_BYTES;
 }
@@ -118,7 +118,7 @@ pub mod params1013 {
     pub const INPUTS_BYTES: usize = (P + 3) / 4;
     pub const SMALL_BYTES: usize = INPUTS_BYTES;
     pub const HASH_BYTES: usize = 32;
-    pub const SECRETKEYS_BYTES: usize = SMALL_BYTES;
+    pub const SECRETKEYS_BYTES: usize = SMALL_BYTES * 2;
     pub const PUBLICKEYS_BYTES: usize = SEEDS_BYTES + ROUNDED_BYTES;
     pub const CIPHERTEXTS_BYTES: usize = ROUNDED_BYTES + TOP_BYTES;
 }
@@ -143,7 +143,7 @@ pub mod params1277 {
     pub const INPUTS_BYTES: usize = (P + 3) / 4;
     pub const SMALL_BYTES: usize = INPUTS_BYTES;
     pub const HASH_BYTES: usize = 32;
-    pub const SECRETKEYS_BYTES: usize = SMALL_BYTES;
+    pub const SECRETKEYS_BYTES: usize = SMALL_BYTES * 2;
     pub const PUBLICKEYS_BYTES: usize = SEEDS_BYTES + ROUNDED_BYTES;
     pub const CIPHERTEXTS_BYTES: usize = ROUNDED_BYTES + TOP_BYTES;
 }
