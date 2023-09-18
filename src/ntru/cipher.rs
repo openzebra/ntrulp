@@ -12,8 +12,8 @@ use crate::params::params857::{P, W};
 use crate::params::params953::{P, W};
 
 use crate::{
-    kem::{f3::round, r3::R3, rq::Rq},
     math::nums::weightw_mask,
+    poly::{f3::round, r3::R3, rq::Rq},
 };
 
 pub fn rq_decrypt(c: &Rq, f: &Rq, ginv: &R3) -> R3 {

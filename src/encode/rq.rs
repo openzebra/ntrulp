@@ -189,7 +189,7 @@ pub fn rq_rounded_encode(rq: &[i16; P]) -> [u8; ROUNDED_BYTES] {
 #[cfg(test)]
 mod rq_decode_encode {
     use super::*;
-    use crate::kem::rq::Rq;
+    use crate::poly::rq::Rq;
     use crate::random::CommonRandom;
     use crate::random::NTRURandom;
     use rand::Rng;

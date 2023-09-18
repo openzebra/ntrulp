@@ -13,8 +13,8 @@ use crate::params::params953::P;
 
 use super::{errors::KemErrors, f3, r3::R3};
 use crate::{
-    kem::fq,
     math::nums::{i16_negative_mask, i16_nonzero_mask},
+    poly::fq,
 };
 
 #[derive(Debug)]
