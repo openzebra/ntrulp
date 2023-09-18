@@ -228,4 +228,15 @@ mod tests {
             assert!(r.contains(&-1) && r.contains(&0) && r.contains(&1));
         }
     }
+
+    #[test]
+    fn test_random_bytes() {
+        let mut random: NTRURandom = NTRURandom::new();
+
+        for _ in 0..10 {
+            let r = random.randombytes::<P>();
+
+            assert!(r.len() == P);
+        }
+    }
 }
