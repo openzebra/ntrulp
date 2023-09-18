@@ -28,7 +28,7 @@ pub fn round(a: &mut [i16; P]) {
 #[cfg(feature = "ntrulpr761")]
 #[test]
 fn test_round() {
-    use crate::kem::rq::Rq;
+    use crate::poly::rq::Rq;
     use crate::random::CommonRandom;
     use crate::random::NTRURandom;
 

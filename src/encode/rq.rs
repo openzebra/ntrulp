@@ -175,9 +175,6 @@ pub fn rq_rounded_encode(rq: &[i16; P]) -> [u8; ROUNDED_BYTES] {
     for i in 0..P {
         let v32 = (rq[i] + Q12 as i16) as u32;
         r[i] = ((v32 * 10923) >> 15) as u16;
-    }
-
-    for i in 0..P {
         m[i] = (Q as u16 + 2) / 3;
     }
 
@@ -192,7 +189,6 @@ mod rq_decode_encode {
     use crate::poly::rq::Rq;
     use crate::random::CommonRandom;
     use crate::random::NTRURandom;
-    use rand::Rng;
 
     #[test]
     fn test_rq_encode_rq_decode() {
@@ -206,15 +202,43 @@ mod rq_decode_encode {
 
     #[test]
     fn test_rounded_rq_encode_rq_decode() {
-        let mut rng = rand::thread_rng();
-        let mut bytes = [0u8; ROUNDED_BYTES];
+        let content = "
+In the realm of digital night, Satoshi did conceive,
+A currency of cryptic might, for all to believe.
+In code and chains, he wove the tale,
+Of Bitcoin's birth, a revolution set to sail.
 
-        rng.fill(&mut bytes[..]);
+A name unknown, a face unseen,
+Satoshi, a genius, behind the crypto machine.
+With whitepaper in hand and vision so clear,
+He birthed a new era, without any fear.
+
+Decentralized ledger, transparent and free,
+Bitcoin emerged, for the world to see.
+Mining for coins, nodes in a network,
+A financial system, no central clerk.
+
+The world was skeptical, yet curiosity grew,
+As Bitcoin's value steadily blew.
+From pennies to thousands, a meteoric rise,
+Satoshi's creation took us by surprise.
+
+But Nakamoto vanished, into the digital mist,
+Leaving behind a legacy, a cryptocurrency twist.
+In the hearts of hodlers, Satoshi's name lives on,
+A symbol of innovation, in the crypto dawn.
+";
+        let mut bytes: [u8; ROUNDED_BYTES] = [0u8; ROUNDED_BYTES];
+
+        for i in 0..content.as_bytes().len() {
+            bytes[i] = content.as_bytes()[i];
+        }
+
         let rq = rq_rounded_decode(&bytes);
-        let dec = rq_rounded_encode(&rq);
+        let res_bytes = rq_rounded_encode(&rq);
+        let res_content = res_bytes[..content.as_bytes().len()].to_vec();
+        let res_str = String::from_utf8(res_content).unwrap();
 
-        assert_eq!(rq.len(), P);
-        assert_eq!(dec.len(), ROUNDED_BYTES);
-        assert_eq!(&dec, &bytes);
+        assert_eq!(res_str, content);
     }
 }

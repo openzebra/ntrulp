@@ -27,6 +27,7 @@ pub trait CommonRandom {
     fn short_random(&mut self) -> Result<[i16; P], RandomErrors>;
     fn urandom32(&mut self) -> u32;
     fn random_range_3(&mut self) -> i8;
+    fn randombytes<const SIZE: usize>(&mut self) -> [u8; SIZE];
 }
 
 enum RngOptions {
@@ -39,6 +40,17 @@ impl RngOptions {
         match self {
             RngOptions::Thread(thread_rng) => thread_rng.gen(),
             RngOptions::Seed(std_rng) => std_rng.gen(),
+        }
+    }
+
+    pub fn randombytes(&mut self, bytes: &mut [u8]) {
+        match self {
+            RngOptions::Seed(rng) => {
+                rng.fill(bytes);
+            }
+            RngOptions::Thread(rng) => {
+                rng.fill(bytes);
+            }
         }
     }
 }
@@ -87,6 +99,14 @@ impl CommonRandom for NTRURandom {
         let r: u32 = self.urandom32();
 
         (((r & 0x3fffffff) * 3) >> 30) as i8 - 1
+    }
+
+    fn randombytes<const SIZE: usize>(&mut self) -> [u8; SIZE] {
+        let mut bytes = [0u8; SIZE];
+
+        self.rng.randombytes(&mut bytes);
+
+        bytes
     }
 
     fn random_small(&mut self) -> Result<[i8; P], RandomErrors> {

@@ -1,19 +1,17 @@
 #[cfg(feature = "ntrulpr1013")]
-use crate::params::params1013::{PUBLICKEYS_BYTES, SEEDS_BYTES};
+use crate::params::params1013::{PUBLICKEYS_BYTES, ROUNDED_BYTES, SEEDS_BYTES};
 #[cfg(feature = "ntrulpr1277")]
-use crate::params::params1277::{PUBLICKEYS_BYTES, RQ_BYTES, SEEDS_BYTES};
+use crate::params::params1277::{PUBLICKEYS_BYTES, ROUNDED_BYTES, SEEDS_BYTES};
 #[cfg(feature = "ntrulpr653")]
-use crate::params::params653::{PUBLICKEYS_BYTES, SEEDS_BYTES};
+use crate::params::params653::{PUBLICKEYS_BYTES, ROUNDED_BYTES, SEEDS_BYTES};
 #[cfg(feature = "ntrulpr761")]
-use crate::params::params761::{PUBLICKEYS_BYTES, SEEDS_BYTES};
+use crate::params::params761::{PUBLICKEYS_BYTES, ROUNDED_BYTES, SEEDS_BYTES};
 #[cfg(feature = "ntrulpr857")]
-use crate::params::params857::{PUBLICKEYS_BYTES, SEEDS_BYTES};
+use crate::params::params857::{PUBLICKEYS_BYTES, ROUNDED_BYTES, SEEDS_BYTES};
 #[cfg(feature = "ntrulpr953")]
-use crate::params::params953::{PUBLICKEYS_BYTES, SEEDS_BYTES};
+use crate::params::params953::{PUBLICKEYS_BYTES, ROUNDED_BYTES, SEEDS_BYTES};
 
-use crate::{
-    encode::rq, ntru::errors::NTRUErrors, params::params1277::ROUNDED_BYTES, poly::rq::Rq,
-};
+use crate::{encode::rq, ntru::errors::NTRUErrors, poly::rq::Rq};
 
 #[derive(Debug)]
 pub struct PubKey {
@@ -87,8 +85,7 @@ mod test_pub_key {
                 Err(_) => continue,
             };
 
-            // assert_eq!(new_pub_key.seed, pub_key.seed);
-            // assert_eq!(new_pub_key.h.coeffs, pub_key.h.coeffs);
+            assert_eq!(new_pub_key.seed, pub_key.seed);
         }
     }
 }
