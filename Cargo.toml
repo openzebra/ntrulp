@@ -22,6 +22,7 @@ ntrulpr1277 = []
 num_cpus = "1.16.0"
 openssl = "0.10.57"
 rand = "0.8.5"
+sha2 = "0.10.7"
 
 [dev-dependencies]
 criterion = "0.3"

@@ -1,18 +1,36 @@
 #[cfg(feature = "ntrulpr1013")]
-use crate::params::params1013::{P, Q, Q12, SEEDS_BYTES};
+use crate::params::params1013::{
+    CIPHERTEXTS_BYTES, HASH_BYTES, INPUTS_BYTES, P, Q, Q12, ROUNDED_BYTES, SEEDS_BYTES, SMALL_BYTES,
+};
 #[cfg(feature = "ntrulpr1277")]
-use crate::params::params1277::{P, Q, Q12, SEEDS_BYTES};
+use crate::params::params1277::{
+    CIPHERTEXTS_BYTES, HASH_BYTES, INPUTS_BYTES, P, Q, Q12, ROUNDED_BYTES, SEEDS_BYTES, SMALL_BYTES,
+};
 #[cfg(feature = "ntrulpr653")]
-use crate::params::params653::{P, Q, Q12, SEEDS_BYTES};
+use crate::params::params653::{
+    CIPHERTEXTS_BYTES, HASH_BYTES, INPUTS_BYTES, P, Q, Q12, ROUNDED_BYTES, SEEDS_BYTES, SMALL_BYTES,
+};
 #[cfg(feature = "ntrulpr761")]
-use crate::params::params761::{P, Q, Q12, SEEDS_BYTES};
+use crate::params::params761::{
+    CIPHERTEXTS_BYTES, HASH_BYTES, INPUTS_BYTES, P, Q, Q12, ROUNDED_BYTES, SEEDS_BYTES, SMALL_BYTES,
+};
 #[cfg(feature = "ntrulpr857")]
-use crate::params::params857::{P, Q, Q12, SEEDS_BYTES};
+use crate::params::params857::{
+    CIPHERTEXTS_BYTES, HASH_BYTES, INPUTS_BYTES, P, Q, Q12, ROUNDED_BYTES, SEEDS_BYTES, SMALL_BYTES,
+};
 #[cfg(feature = "ntrulpr953")]
-use crate::params::params953::{P, Q, Q12, SEEDS_BYTES};
+use crate::params::params953::{
+    CIPHERTEXTS_BYTES, HASH_BYTES, INPUTS_BYTES, P, Q, Q12, ROUNDED_BYTES, SEEDS_BYTES, SMALL_BYTES,
+};
 
-use super::errors::NTRUErrors;
-use crate::{math::nums::u32_mod_u14, ntru::aes::aes256_ctr_crypto_stream};
+use super::{cipher::r3_encrypt, errors::NTRUErrors};
+use crate::{
+    encode::{r3, rq},
+    math::nums::u32_mod_u14,
+    ntru::aes::aes256_ctr_crypto_stream,
+    poly::{r3::R3, rq::Rq},
+};
+use sha2::{Digest, Sha512};
 
 pub fn expand(k: &[u8; SEEDS_BYTES]) -> Result<[u32; P], NTRUErrors<'static>> {
     let out = match aes256_ctr_crypto_stream(k) {
@@ -36,32 +54,81 @@ pub fn generator(k: &[u8; SEEDS_BYTES]) -> Result<[i16; P], NTRUErrors<'static>>
     Ok(g)
 }
 
-// static void ZKeyGen(unsigned char *pk, unsigned char *sk) {
-//   Fq A[p];
-//   small a[p];
-//
-//   XKeyGen(pk, A, a);
-//   pk += Seeds_bytes;
-//   Rounded_encode(pk, A);
-//   Small_encode(sk, a);
-// }
-//
-// static void XKeyGen(unsigned char *S, Fq *A, small *a) {
-//   Fq G[p];
-//
-//   Seeds_random(S);
-//   Generator(G, S);
-//   KeyGen(A, a, G);
-// }
-//
-// static void Generator(Fq *G, const unsigned char *k) {
-//   uint32 L[p];
-//   int i;
-//
-//   Expand(L, k);
-//   for (i = 0; i < p; ++i)
-//     G[i] = uint32_mod_uint14(L[i], q) - q12;
-// }
+pub fn hash_prefix<const LENGTH: usize, const INPUT_SIZE: usize>(
+    b: u8,
+    input: &[u8; INPUT_SIZE],
+) -> [u8; HASH_BYTES] {
+    let mut out = [0u8; HASH_BYTES];
+    let mut x = [0u8; LENGTH];
+
+    x[0] = b;
+
+    for i in 0..LENGTH - 1 {
+        x[i + 1] = match input.get(i) {
+            Some(&v) => v,
+            None => continue,
+        };
+    }
+
+    let mut hasher = Sha512::new();
+    hasher.update(&x[..LENGTH]);
+    let hash_result = hasher.finalize();
+
+    out.copy_from_slice(&hash_result[..HASH_BYTES]);
+
+    out
+}
+
+fn hash_confirm(r_enc: &[u8; INPUTS_BYTES], cache: &[u8; HASH_BYTES]) -> [u8; HASH_BYTES] {
+    const SHA512_SIZE: usize = HASH_BYTES * 2;
+    const LENGTH: usize = INPUTS_BYTES + 2;
+    let mut x = [0u8; SHA512_SIZE];
+
+    x[HASH_BYTES..].copy_from_slice(cache);
+    x[..HASH_BYTES].copy_from_slice(&hash_prefix::<LENGTH, INPUTS_BYTES>(3, &r_enc));
+
+    // for i in 0..HASH_BYTES {
+    //     x[HASH_BYTES + i] = cache[i];
+    // }
+
+    hash_prefix::<SHA512_SIZE, SHA512_SIZE>(2, &x)
+}
+
+fn hide(
+    r: &R3,
+    cache: &[u8; HASH_BYTES],
+    pk: &Rq,
+) -> ([u8; ROUNDED_BYTES + HASH_BYTES], [u8; SMALL_BYTES]) {
+    let r_enc = r3::r3_encode(&r.coeffs);
+    let rq = r3_encrypt(&r, pk); // TODO: z_encrypt
+    let mut c = [0u8; ROUNDED_BYTES + HASH_BYTES];
+
+    c[SEEDS_BYTES..].copy_from_slice(rq::rq_rounded_encode(&rq.coeffs).as_slice());
+
+    let gamma = hash_confirm(&r_enc, cache);
+
+    c[..HASH_BYTES].copy_from_slice(&gamma);
+
+    (c, r_enc)
+}
+
+fn hash_session(b: u8, y: &[u8; HASH_BYTES], z: &[u8; CIPHERTEXTS_BYTES + HASH_BYTES]) -> [u8; 32] {
+    const LENGTH_X: usize = CIPHERTEXTS_BYTES + HASH_BYTES * 2;
+
+    let mut x = [0u8; LENGTH_X];
+
+    x[..HASH_BYTES].copy_from_slice(y);
+    // for i in 0..HASH_BYTES {
+    //     x[i] = y[i];
+    // }
+
+    x[HASH_BYTES..].copy_from_slice(z);
+    // for i in 0..CIPHERTEXTS_BYTES + HASH_BYTES {
+    //     x[HASH_BYTES + i] = z[i];
+    // }
+
+    hash_prefix::<LENGTH_X, LENGTH_X>(b, &x)
+}
 
 #[cfg(feature = "ntrulpr761")]
 #[test]
