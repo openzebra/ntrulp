@@ -1,17 +1,18 @@
 #[cfg(feature = "ntrulpr1013")]
-use crate::params::params1013::{P, W};
+use crate::params::params1013::{P, PUBLICKEYS_BYTES, ROUNDED_BYTES, W};
 #[cfg(feature = "ntrulpr1277")]
-use crate::params::params1277::{P, W};
+use crate::params::params1277::{P, PUBLICKEYS_BYTES, ROUNDED_BYTES, W};
 #[cfg(feature = "ntrulpr653")]
-use crate::params::params653::{P, W};
+use crate::params::params653::{P, PUBLICKEYS_BYTES, ROUNDED_BYTES, W};
 #[cfg(feature = "ntrulpr761")]
-use crate::params::params761::{P, W};
+use crate::params::params761::{P, PUBLICKEYS_BYTES, ROUNDED_BYTES, W};
 #[cfg(feature = "ntrulpr857")]
-use crate::params::params857::{P, W};
+use crate::params::params857::{P, PUBLICKEYS_BYTES, ROUNDED_BYTES, W};
 #[cfg(feature = "ntrulpr953")]
-use crate::params::params953::{P, W};
+use crate::params::params953::{P, PUBLICKEYS_BYTES, ROUNDED_BYTES, W};
 
 use crate::{
+    encode::rq,
     math::nums::weightw_mask,
     poly::{f3::round, r3::R3, rq::Rq},
 };
@@ -44,4 +45,11 @@ pub fn r3_encrypt(r: &R3, h: &Rq) -> Rq {
     round(&mut hr.coeffs);
 
     Rq::from(hr.coeffs)
+}
+
+pub fn z_encrypt(r: &R3, pk: &[u8; PUBLICKEYS_BYTES]) -> [u8; ROUNDED_BYTES] {
+    let out = [0u8; ROUNDED_BYTES];
+    // let h = rq::rq_decode(k)
+
+    out
 }

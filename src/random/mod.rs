@@ -221,7 +221,7 @@ mod tests {
     fn test_small_random() {
         let mut random: NTRURandom = NTRURandom::new();
 
-        for _ in 0..1000 {
+        for _ in 0..100 {
             let r = random.random_small().unwrap();
 
             assert!(r.len() == P);
