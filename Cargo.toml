@@ -19,8 +19,8 @@ ntrulpr1013 = []
 ntrulpr1277 = []
 
 [dependencies]
-aes = "0.8.3"
 num_cpus = "1.16.0"
+openssl = "0.10.57"
 rand = "0.8.5"
 
 [dev-dependencies]
