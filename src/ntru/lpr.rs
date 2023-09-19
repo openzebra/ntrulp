@@ -1,18 +1,18 @@
 #[cfg(feature = "ntrulpr1013")]
-use crate::params::params1013::{P, SEEDS_BYTES};
+use crate::params::params1013::{P, Q, Q12, SEEDS_BYTES};
 #[cfg(feature = "ntrulpr1277")]
-use crate::params::params1277::{P, SEEDS_BYTES};
+use crate::params::params1277::{P, Q, Q12, SEEDS_BYTES};
 #[cfg(feature = "ntrulpr653")]
-use crate::params::params653::{P, SEEDS_BYTES};
+use crate::params::params653::{P, Q, Q12, SEEDS_BYTES};
 #[cfg(feature = "ntrulpr761")]
-use crate::params::params761::{P, SEEDS_BYTES};
+use crate::params::params761::{P, Q, Q12, SEEDS_BYTES};
 #[cfg(feature = "ntrulpr857")]
-use crate::params::params857::{P, SEEDS_BYTES};
+use crate::params::params857::{P, Q, Q12, SEEDS_BYTES};
 #[cfg(feature = "ntrulpr953")]
-use crate::params::params953::{P, SEEDS_BYTES};
+use crate::params::params953::{P, Q, Q12, SEEDS_BYTES};
 
 use super::errors::NTRUErrors;
-use crate::ntru::aes::aes256_ctr_crypto_stream;
+use crate::{math::nums::u32_mod_u14, ntru::aes::aes256_ctr_crypto_stream};
 
 pub fn expand(k: &[u8; SEEDS_BYTES]) -> Result<[u32; P], NTRUErrors<'static>> {
     let out = match aes256_ctr_crypto_stream(k) {
@@ -23,6 +23,47 @@ pub fn expand(k: &[u8; SEEDS_BYTES]) -> Result<[u32; P], NTRUErrors<'static>> {
     Ok(out)
 }
 
+pub fn generator(k: &[u8; SEEDS_BYTES]) -> Result<[i16; P], NTRUErrors<'static>> {
+    let l = expand(k)?;
+    let mut g = [0i16; P];
+
+    for i in 0..P {
+        let value = u32_mod_u14(l[i], Q as u16);
+
+        g[i] = value as i16 - Q12 as i16;
+    }
+
+    Ok(g)
+}
+
+// static void ZKeyGen(unsigned char *pk, unsigned char *sk) {
+//   Fq A[p];
+//   small a[p];
+//
+//   XKeyGen(pk, A, a);
+//   pk += Seeds_bytes;
+//   Rounded_encode(pk, A);
+//   Small_encode(sk, a);
+// }
+//
+// static void XKeyGen(unsigned char *S, Fq *A, small *a) {
+//   Fq G[p];
+//
+//   Seeds_random(S);
+//   Generator(G, S);
+//   KeyGen(A, a, G);
+// }
+//
+// static void Generator(Fq *G, const unsigned char *k) {
+//   uint32 L[p];
+//   int i;
+//
+//   Expand(L, k);
+//   for (i = 0; i < p; ++i)
+//     G[i] = uint32_mod_uint14(L[i], q) - q12;
+// }
+
+#[cfg(feature = "ntrulpr761")]
 #[test]
 fn test_expand() {
     let key: [u8; SEEDS_BYTES] = [
