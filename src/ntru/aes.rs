@@ -23,7 +23,6 @@ fn crypto_stream_xor(
     let cipher = Cipher::aes_256_ctr();
     let mut crypter = Crypter::new(cipher, Mode::Encrypt, key, Some(nonce))?;
 
-    // Выполняем шифрование
     crypter.pad(false);
     crypter.update(input, out)?;
     crypter.finalize(out)?;
