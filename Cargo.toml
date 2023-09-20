@@ -28,13 +28,6 @@ sha2 = "0.10.7"
 criterion = "0.3"
 
 [[bench]]
-name = "key_gen"
+name = "encode"
 harness = false
 
-[[bench]]
-name = "chipher"
-harness = false
-
-[[bench]]
-name = "rq"
-harness = false
