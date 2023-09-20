@@ -58,8 +58,9 @@ pub fn generator(k: &[u8; SEEDS_BYTES]) -> Result<[i16; P], NTRUErrors<'static>>
 }
 pub fn hash_short(r: [i8; P]) {
     let out = [0i8; P];
-    // let s = [];
-    // let h = [];
+    let s = [0u8; INPUTS_BYTES];
+    let h = [0u8; HASH_BYTES];
+    let l = [0u32; P];
 }
 
 // static void HashShort(small *out, const Inputs r) {
