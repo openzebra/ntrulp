@@ -34,7 +34,7 @@ use super::{
     errors::NTRUErrors,
 };
 use crate::{
-    encode::{r3, rq},
+    encode::r3,
     math::nums::u32_mod_u14,
     ntru::aes::aes256_ctr_crypto_stream,
     poly::{r3::R3, rq::Rq},
@@ -109,7 +109,7 @@ fn hide(
     pk: &[u8; PUBLICKEYS_BYTES],
 ) -> ([u8; CIPHERTEXTS_BYTES + HASH_BYTES], [u8; SMALL_BYTES]) {
     let r_enc = r3::r3_encode(&r.coeffs);
-    let bytes = z_encrypt(&r, &pk); // TODO: z_encrypt
+    let bytes = z_encrypt(&r, &pk);
     let mut c = [0u8; CIPHERTEXTS_BYTES + HASH_BYTES];
     let gamma = hash_confirm(&r_enc, cache);
 
