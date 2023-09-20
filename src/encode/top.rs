@@ -1,25 +1,30 @@
 #[cfg(feature = "ntrulpr1013")]
-use crate::params::params1013::{P, PUBLICKEYS_BYTES, ROUNDED_BYTES, W};
+use crate::params::params1013::{I, TAU0, TAU1, TOP_BYTES};
 #[cfg(feature = "ntrulpr1277")]
-use crate::params::params1277::{P, PUBLICKEYS_BYTES, ROUNDED_BYTES, W};
+use crate::params::params1277::{I, TAU0, TAU1, TOP_BYTES};
 #[cfg(feature = "ntrulpr653")]
-use crate::params::params653::{P, PUBLICKEYS_BYTES, ROUNDED_BYTES, W};
+use crate::params::params653::{I, TAU0, TAU1, TOP_BYTES};
 #[cfg(feature = "ntrulpr761")]
-use crate::params::params761::{P, TAU0, TAU1};
+use crate::params::params761::{I, TAU0, TAU1, TOP_BYTES};
 #[cfg(feature = "ntrulpr857")]
-use crate::params::params857::{P, PUBLICKEYS_BYTES, ROUNDED_BYTES, W};
+use crate::params::params857::{I, TAU0, TAU1, TOP_BYTES};
 #[cfg(feature = "ntrulpr953")]
-use crate::params::params953::{P, PUBLICKEYS_BYTES, ROUNDED_BYTES, W};
+use crate::params::params953::{I, TAU0, TAU1, TOP_BYTES};
 
-// pub fn top_encode(s: &[u8], t: &[i8]) {
-//     for i in 0..TOP_BYTES {
-//         let v = t[2 * i] + (t[2 * i + 1] << 4);
-//
-//         s[i] = v as u8;
-//     }
-// }
+pub fn top_encode<const SIZE: usize>(s: &mut [u8; SIZE], t: &[i8; I]) {
+    for i in 0..TOP_BYTES {
+        let v = t[2 * i] + (t[2 * i + 1] << 4);
 
-// static int8 Top(Fq C) { return (TAU1 * (int32)(C + TAU0) + 16384) >> 15; }
+        s[i] = v as u8;
+    }
+}
+
+pub fn top_decode<const SIZE: usize>(t: &mut [i8; I], s: [u8; SIZE]) {
+    for i in 0..TOP_BYTES {
+        t[2 * i] = (s[i] & 15) as i8;
+        t[2 * i + 1] = (s[i] >> 4) as i8;
+    }
+}
 
 pub fn top(c: i16) -> i8 {
     let tau0 = TAU0 as i32;
