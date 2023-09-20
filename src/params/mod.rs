@@ -15,8 +15,8 @@ pub mod params653 {
     pub const RQ_BYTES: usize = 994;
     pub const TOP_BYTES: usize = I / 2;
     pub const Q12: usize = (Q - 1) / 2;
-    pub const INPUTS_BYTES: usize = (P + 3) / 4;
-    pub const SMALL_BYTES: usize = INPUTS_BYTES;
+    pub const INPUTS_BYTES: usize = I / 8;
+    pub const SMALL_BYTES: usize = (P + 3) / 4;
     pub const HASH_BYTES: usize = 32;
     pub const SECRETKEYS_BYTES: usize = SMALL_BYTES * 2;
     pub const PUBLICKEYS_BYTES: usize = SEEDS_BYTES + ROUNDED_BYTES;
@@ -40,8 +40,8 @@ pub mod params761 {
     pub const RQ_BYTES: usize = 1158;
     pub const TOP_BYTES: usize = I / 2;
     pub const Q12: usize = (Q - 1) / 2;
-    pub const INPUTS_BYTES: usize = (P + 3) / 4;
-    pub const SMALL_BYTES: usize = INPUTS_BYTES;
+    pub const INPUTS_BYTES: usize = I / 8;
+    pub const SMALL_BYTES: usize = (P + 3) / 4;
     pub const HASH_BYTES: usize = 32;
     pub const SECRETKEYS_BYTES: usize = SMALL_BYTES * 2;
     pub const PUBLICKEYS_BYTES: usize = SEEDS_BYTES + ROUNDED_BYTES;
@@ -65,8 +65,8 @@ pub mod params857 {
     pub const RQ_BYTES: usize = 1322;
     pub const TOP_BYTES: usize = I / 2;
     pub const Q12: usize = (Q - 1) / 2;
-    pub const INPUTS_BYTES: usize = (P + 3) / 4;
-    pub const SMALL_BYTES: usize = INPUTS_BYTES;
+    pub const INPUTS_BYTES: usize = I / 8;
+    pub const SMALL_BYTES: usize = (P + 3) / 4;
     pub const HASH_BYTES: usize = 32;
     pub const SECRETKEYS_BYTES: usize = SMALL_BYTES * 2;
     pub const PUBLICKEYS_BYTES: usize = SEEDS_BYTES + ROUNDED_BYTES;
@@ -90,8 +90,8 @@ pub mod params953 {
     pub const RQ_BYTES: usize = 1505;
     pub const TOP_BYTES: usize = I / 2;
     pub const Q12: usize = (Q - 1) / 2;
-    pub const INPUTS_BYTES: usize = (P + 3) / 4;
-    pub const SMALL_BYTES: usize = INPUTS_BYTES;
+    pub const INPUTS_BYTES: usize = I / 8;
+    pub const SMALL_BYTES: usize = (P + 3) / 4;
     pub const HASH_BYTES: usize = 32;
     pub const SECRETKEYS_BYTES: usize = SMALL_BYTES * 2;
     pub const PUBLICKEYS_BYTES: usize = SEEDS_BYTES + ROUNDED_BYTES;
@@ -115,8 +115,8 @@ pub mod params1013 {
     pub const RQ_BYTES: usize = 1623;
     pub const TOP_BYTES: usize = I / 2;
     pub const Q12: usize = (Q - 1) / 2;
-    pub const INPUTS_BYTES: usize = (P + 3) / 4;
-    pub const SMALL_BYTES: usize = INPUTS_BYTES;
+    pub const INPUTS_BYTES: usize = I / 8;
+    pub const SMALL_BYTES: usize = (P + 3) / 4;
     pub const HASH_BYTES: usize = 32;
     pub const SECRETKEYS_BYTES: usize = SMALL_BYTES * 2;
     pub const PUBLICKEYS_BYTES: usize = SEEDS_BYTES + ROUNDED_BYTES;
@@ -140,8 +140,8 @@ pub mod params1277 {
     pub const RQ_BYTES: usize = 2067;
     pub const TOP_BYTES: usize = I / 2;
     pub const Q12: usize = (Q - 1) / 2;
-    pub const INPUTS_BYTES: usize = (P + 3) / 4;
-    pub const SMALL_BYTES: usize = INPUTS_BYTES;
+    pub const INPUTS_BYTES: usize = I / 8;
+    pub const SMALL_BYTES: usize = (P + 3) / 4;
     pub const HASH_BYTES: usize = 32;
     pub const SECRETKEYS_BYTES: usize = SMALL_BYTES * 2;
     pub const PUBLICKEYS_BYTES: usize = SEEDS_BYTES + ROUNDED_BYTES;

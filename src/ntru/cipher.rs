@@ -21,6 +21,8 @@ use crate::{
 
 use super::{errors::NTRUErrors, lpr::generator};
 
+const CIPHERTEXTS_BYTES_HASH_BYTES: usize = CIPHERTEXTS_BYTES + HASH_BYTES;
+
 pub fn rq_decrypt(c: &Rq, f: &Rq, ginv: &R3) -> R3 {
     let mut r = [0i8; P];
     let cf: Rq = c.mult_r3(&f.r3_from_rq());
@@ -65,7 +67,7 @@ pub fn x_encrypt(
 pub fn z_encrypt(
     r: &R3,
     pk: &[u8; PUBLICKEYS_BYTES],
-) -> Result<[u8; CIPHERTEXTS_BYTES + HASH_BYTES], NTRUErrors<'static>> {
+) -> Result<[u8; CIPHERTEXTS_BYTES_HASH_BYTES], NTRUErrors<'static>> {
     let pk_seed_slice: [u8; SEEDS_BYTES] = match &pk[..SEEDS_BYTES].try_into() {
         Ok(s) => *s,
         Err(_) => return Err(NTRUErrors::PubKey("Incorrect PubKey Seed")),
@@ -77,7 +79,7 @@ pub fn z_encrypt(
     let a = rq::rq_rounded_decode(&pk_slice);
     let mut b = [0i16; P];
     let mut t = [0i8; I];
-    let mut out = [0u8; CIPHERTEXTS_BYTES + HASH_BYTES];
+    let mut out = [0u8; CIPHERTEXTS_BYTES_HASH_BYTES];
 
     x_encrypt(&mut b, &mut t, &r, &pk_seed_slice, &a);
     out[ROUNDED_BYTES..].copy_from_slice(&rq::rq_rounded_encode(&b)[..]);

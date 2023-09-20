@@ -15,8 +15,8 @@ use crate::params::params653::{
 };
 #[cfg(feature = "ntrulpr761")]
 use crate::params::params761::{
-    CIPHERTEXTS_BYTES, HASH_BYTES, INPUTS_BYTES, P, PUBLICKEYS_BYTES, Q, Q12, ROUNDED_BYTES,
-    SEEDS_BYTES, SMALL_BYTES,
+    CIPHERTEXTS_BYTES, HASH_BYTES, INPUTS_BYTES, P, PUBLICKEYS_BYTES, Q, Q12, SEEDS_BYTES,
+    SMALL_BYTES,
 };
 #[cfg(feature = "ntrulpr857")]
 use crate::params::params857::{
@@ -29,15 +29,9 @@ use crate::params::params953::{
     SEEDS_BYTES, SMALL_BYTES,
 };
 
-use super::{
-    cipher::{r3_encrypt, z_encrypt},
-    errors::NTRUErrors,
-};
+use super::{cipher::z_encrypt, errors::NTRUErrors};
 use crate::{
-    encode::r3,
-    math::nums::u32_mod_u14,
-    ntru::aes::aes256_ctr_crypto_stream,
-    poly::{r3::R3, rq::Rq},
+    encode::r3, math::nums::u32_mod_u14, ntru::aes::aes256_ctr_crypto_stream, poly::r3::R3,
 };
 use sha2::{Digest, Sha512};
 
@@ -62,6 +56,22 @@ pub fn generator(k: &[u8; SEEDS_BYTES]) -> Result<[i16; P], NTRUErrors<'static>>
 
     Ok(g)
 }
+pub fn hash_short(r: [i8; P]) {
+    let out = [0i8; P];
+    // let s = [];
+    // let h = [];
+}
+
+// static void HashShort(small *out, const Inputs r) {
+//   unsigned char s[INPUTS_BYTES];
+//   unsigned char h[HASH_BYTES];
+//   uint32 L[P];
+//
+//   Inputs_encode(s, r);
+//   Hash_prefix(h, 5, s, sizeof s);
+//   Expand(L, h);
+//   Short_fromlist(out, L);
+// }
 
 pub fn hash_prefix<const LENGTH: usize, const OUT_SIZE: usize>(
     b: u8,
@@ -88,13 +98,13 @@ pub fn hash_prefix<const LENGTH: usize, const OUT_SIZE: usize>(
     out
 }
 
-fn hash_confirm(r_enc: &[u8; INPUTS_BYTES], cache: &[u8; HASH_BYTES]) -> [u8; HASH_BYTES] {
+fn hash_confirm(r_enc: &[u8; SMALL_BYTES], cache: &[u8; HASH_BYTES]) -> [u8; HASH_BYTES] {
     const SHA512_SIZE: usize = HASH_BYTES * 2;
-    const LENGTH: usize = INPUTS_BYTES + 2;
+    const LENGTH: usize = SMALL_BYTES + 2;
     let mut x = [0u8; SHA512_SIZE];
 
     x[HASH_BYTES..].copy_from_slice(cache);
-    x[..HASH_BYTES].copy_from_slice(&hash_prefix::<LENGTH, INPUTS_BYTES>(3, &r_enc));
+    x[..HASH_BYTES].copy_from_slice(&hash_prefix::<LENGTH, SMALL_BYTES>(3, &r_enc));
 
     // for i in 0..HASH_BYTES {
     //     x[HASH_BYTES + i] = cache[i];
@@ -109,7 +119,7 @@ fn hide(
     pk: &[u8; PUBLICKEYS_BYTES],
 ) -> ([u8; CIPHERTEXTS_BYTES + HASH_BYTES], [u8; SMALL_BYTES]) {
     let r_enc = r3::r3_encode(&r.coeffs);
-    let bytes = z_encrypt(&r, &pk);
+    let bytes: [u8; CIPHERTEXTS_BYTES + HASH_BYTES] = z_encrypt(&r, &pk).unwrap(); // TODO: Remove unwrap.
     let mut c = [0u8; CIPHERTEXTS_BYTES + HASH_BYTES];
     let gamma = hash_confirm(&r_enc, cache);
 
@@ -124,13 +134,13 @@ fn hash_session(
     y: &[u8; HASH_BYTES],
     z: &[u8; CIPHERTEXTS_BYTES + HASH_BYTES],
 ) -> [u8; HASH_BYTES] {
-    const LENGTH_X: usize = CIPHERTEXTS_BYTES + HASH_BYTES * 2;
+    const LENGTH_X: usize = CIPHERTEXTS_BYTES + INPUTS_BYTES * 2;
     const LENGTH_X_EX: usize = LENGTH_X + 1;
 
     let mut x = [0u8; LENGTH_X];
 
-    x[..HASH_BYTES].copy_from_slice(y);
-    x[HASH_BYTES..].copy_from_slice(z);
+    x[..INPUTS_BYTES].copy_from_slice(y);
+    x[INPUTS_BYTES..].copy_from_slice(z);
 
     hash_prefix::<LENGTH_X_EX, LENGTH_X>(b, &x)
 }
