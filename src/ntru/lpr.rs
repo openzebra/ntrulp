@@ -133,16 +133,16 @@ fn hide(
     r: &R3,
     cache: &[u8; HASH_BYTES],
     pk: &[u8; PUBLICKEYS_BYTES],
-) -> ([u8; CIPHERTEXTS_BYTES + HASH_BYTES], [u8; SMALL_BYTES]) {
+) -> Result<([u8; CIPHERTEXTS_BYTES + HASH_BYTES], [u8; SMALL_BYTES]), NTRUErrors<'static>> {
     let r_enc = r3::r3_encode(&r.coeffs);
-    let bytes: [u8; CIPHERTEXTS_BYTES + HASH_BYTES] = z_encrypt(r, &pk).unwrap(); // TODO: Remove unwrap.
+    let bytes: [u8; CIPHERTEXTS_BYTES + HASH_BYTES] = z_encrypt(r, &pk)?;
     let mut c = [0u8; CIPHERTEXTS_BYTES + HASH_BYTES];
     let gamma = hash_confirm(&r_enc, cache);
 
     c[..HASH_BYTES].copy_from_slice(&gamma);
     c[SEEDS_BYTES..].copy_from_slice(&bytes[..]);
 
-    (c, r_enc)
+    Ok((c, r_enc))
 }
 
 fn hash_session(
@@ -324,9 +324,9 @@ fn test_hide() {
         151, 153, 142, 125, 236, 255, 169, 87, 52, 34, 151, 78, 0, 78, 108, 210, 125, 3, 77, 69,
         58, 198, 92, 127, 159, 29, 250, 66, 226, 127, 151, 93,
     ];
-    // let out = hide(&r, &cache, &pk);
+    let out = hide(&r, &cache, &pk);
 
-    // println!("{:?}", out);
+    println!("{:?}", out);
 }
 
 #[cfg(feature = "ntrulpr761")]

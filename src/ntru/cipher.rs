@@ -94,7 +94,7 @@ pub fn z_encrypt(
         Ok(s) => *s,
         Err(_) => return Err(NTRUErrors::PubKey("Incorrect PubKey Seed")),
     };
-    let pk_slice: [u8; ROUNDED_BYTES] = match &pk[SEEDS_BYTES..].try_into() {
+    let pk_slice: [u8; ROUNDED_BYTES] = match &pk[..ROUNDED_BYTES].try_into() {
         Ok(s) => *s,
         Err(_) => return Err(NTRUErrors::PubKey("Incorrect PubKey")),
     };
