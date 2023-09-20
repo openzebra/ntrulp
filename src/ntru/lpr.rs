@@ -78,10 +78,10 @@ pub fn short_fromlist(input: &[u32; P]) -> [i8; P] {
     out
 }
 
-pub fn hash_short(r: &R3) -> Result<[i8; P], NTRUErrors> {
+pub fn hash_short(r: &[i8; P]) -> Result<[i8; P], NTRUErrors<'static>> {
     const LEN: usize = HASH_BYTES + 1;
 
-    let s = inputs_encode(&r.coeffs);
+    let s = inputs_encode(r);
     let h = hash_prefix::<LEN, HASH_BYTES>(5, &s);
     let l = expand(&h)?;
     let out = short_fromlist(&l);
@@ -135,7 +135,7 @@ fn hide(
     pk: &[u8; PUBLICKEYS_BYTES],
 ) -> ([u8; CIPHERTEXTS_BYTES + HASH_BYTES], [u8; SMALL_BYTES]) {
     let r_enc = r3::r3_encode(&r.coeffs);
-    let bytes: [u8; CIPHERTEXTS_BYTES + HASH_BYTES] = z_encrypt(&r, &pk).unwrap(); // TODO: Remove unwrap.
+    let bytes: [u8; CIPHERTEXTS_BYTES + HASH_BYTES] = z_encrypt(r, &pk).unwrap(); // TODO: Remove unwrap.
     let mut c = [0u8; CIPHERTEXTS_BYTES + HASH_BYTES];
     let gamma = hash_confirm(&r_enc, cache);
 
@@ -194,7 +194,7 @@ fn test_hash_short() {
         -1, -1, -1, 0, 0, 1, -1, 1, -1, 0, -1, 1, -1, 0, 0, 1, 1, 0, -1, -1, -1, 1, 1, -1, -1, 1,
         -1,
     ]);
-    let out = hash_short(&r).unwrap();
+    let out = hash_short(&r.coeffs).unwrap();
 
     assert_eq!(
         out,
