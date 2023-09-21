@@ -117,12 +117,13 @@ pub fn hash_prefix<const LENGTH: usize, const OUT_SIZE: usize>(
 fn hash_confirm(r_enc: &[u8; SMALL_BYTES], cache: &[u8; HASH_BYTES]) -> [u8; HASH_BYTES] {
     const SHA512_SIZE: usize = HASH_BYTES * 2;
     const LENGTH: usize = SMALL_BYTES + 1;
+    const SHA_LENGTH: usize = SHA512_SIZE + 1;
     let mut x = [0u8; SHA512_SIZE];
 
     x[..HASH_BYTES].copy_from_slice(&hash_prefix::<LENGTH, SMALL_BYTES>(3, &r_enc));
     x[HASH_BYTES..].copy_from_slice(cache);
 
-    hash_prefix::<SHA512_SIZE, SHA512_SIZE>(2, &x)
+    hash_prefix::<SHA_LENGTH, SHA512_SIZE>(2, &x)
 }
 
 fn hide(
@@ -131,14 +132,13 @@ fn hide(
     pk: &[u8; PUBLICKEYS_BYTES],
 ) -> Result<([u8; CIPHERTEXTS_BYTES + HASH_BYTES], [u8; SMALL_BYTES]), NTRUErrors<'static>> {
     let r_enc = r3::r3_encode(&r.coeffs);
-    let bytes: [u8; CIPHERTEXTS_BYTES + HASH_BYTES] = z_encrypt(r, &pk)?;
-    let mut c = [0u8; CIPHERTEXTS_BYTES + HASH_BYTES];
+    let mut bytes: [u8; CIPHERTEXTS_BYTES + HASH_BYTES] = z_encrypt(r, &pk)?;
+    dbg!(&cache);
     let gamma = hash_confirm(&r_enc, cache);
 
-    c[..HASH_BYTES].copy_from_slice(&gamma);
-    c[SEEDS_BYTES..].copy_from_slice(&bytes[..]);
+    bytes[CIPHERTEXTS_BYTES..].copy_from_slice(&gamma);
 
-    Ok((c, r_enc))
+    Ok((bytes, r_enc))
 }
 
 fn hash_session(
@@ -223,6 +223,37 @@ fn test_hash_short() {
             0, 0, 0, 0, 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
             -1, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, -1, 0, -1, 1, -1, 0, 0, 0, -1, 1, 0, 0, 0, 0, -1,
             0, -1, 0, 0, -1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0,
+        ]
+    );
+}
+
+#[cfg(feature = "ntrulpr761")]
+#[test]
+fn test_hash_confirm() {
+    let r_enc: [u8; SMALL_BYTES] = [
+        86, 150, 64, 145, 8, 42, 64, 42, 104, 129, 4, 88, 22, 146, 20, 38, 90, 98, 145, 88, 84,
+        129, 150, 68, 165, 70, 4, 161, 74, 5, 85, 129, 84, 144, 170, 149, 5, 32, 33, 36, 9, 150,
+        42, 90, 102, 73, 80, 106, 169, 102, 33, 34, 166, 33, 70, 41, 36, 36, 17, 132, 98, 170, 133,
+        168, 144, 146, 32, 40, 66, 16, 0, 25, 68, 105, 88, 164, 145, 22, 154, 148, 5, 6, 104, 6, 8,
+        129, 82, 85, 150, 33, 164, 36, 160, 160, 81, 128, 33, 10, 17, 106, 72, 169, 0, 74, 105,
+        133, 128, 6, 105, 137, 42, 150, 6, 146, 96, 20, 129, 89, 129, 98, 162, 82, 5, 153, 82, 34,
+        97, 169, 4, 81, 136, 20, 70, 22, 81, 10, 170, 168, 90, 168, 134, 18, 98, 162, 164, 4, 26,
+        100, 168, 42, 37, 134, 153, 149, 24, 22, 68, 86, 164, 106, 34, 128, 82, 20, 98, 85, 6, 16,
+        64, 81, 128, 96, 64, 70, 80, 4, 133, 70, 64, 1, 149, 36, 10, 6, 148, 72, 72, 105, 128, 130,
+        0,
+    ];
+    let cache: [u8; HASH_BYTES] = [
+        151, 153, 142, 125, 236, 255, 169, 87, 52, 34, 151, 78, 0, 78, 108, 210, 125, 3, 77, 69,
+        58, 198, 92, 127, 159, 29, 250, 66, 226, 127, 151, 93,
+    ];
+
+    let hash = hash_confirm(&r_enc, &cache);
+
+    assert_eq!(
+        hash,
+        [
+            81, 13, 231, 108, 247, 190, 161, 217, 137, 237, 249, 138, 107, 121, 117, 8, 102, 167,
+            72, 38, 200, 105, 115, 126, 139, 217, 187, 133, 91, 11, 162, 63,
         ]
     );
 }
@@ -320,9 +351,11 @@ fn test_hide() {
         151, 153, 142, 125, 236, 255, 169, 87, 52, 34, 151, 78, 0, 78, 108, 210, 125, 3, 77, 69,
         58, 198, 92, 127, 159, 29, 250, 66, 226, 127, 151, 93,
     ];
-    let out = hide(&r, &cache, &pk);
+    let out = hide(&r, &cache, &pk).unwrap();
 
-    // println!("{:?}", out);
+    // println!("r={:?}", out.1);
+    // println!("--------------------------");
+    // println!("b={:?}", out.0);
 }
 
 #[cfg(feature = "ntrulpr761")]
