@@ -6,7 +6,8 @@ use crate::params::params1277::{P, PUBLICKEYS_BYTES, Q12, ROUNDED_BYTES, W};
 use crate::params::params653::{P, PUBLICKEYS_BYTES, Q12, ROUNDED_BYTES, W};
 #[cfg(feature = "ntrulpr761")]
 use crate::params::params761::{
-    CIPHERTEXTS_BYTES, HASH_BYTES, I, P, PUBLICKEYS_BYTES, Q12, ROUNDED_BYTES, SEEDS_BYTES, W,
+    CIPHERTEXTS_BYTES, HASH_BYTES, I, P, PUBLICKEYS_BYTES, Q12, ROUNDED_BYTES, SEEDS_BYTES,
+    TOP_BYTES, W,
 };
 #[cfg(feature = "ntrulpr857")]
 use crate::params::params857::{P, PUBLICKEYS_BYTES, Q12, ROUNDED_BYTES, W};
@@ -94,7 +95,7 @@ pub fn z_encrypt(
         Ok(s) => *s,
         Err(_) => return Err(NTRUErrors::PubKey("Incorrect PubKey Seed")),
     };
-    let pk_slice: [u8; ROUNDED_BYTES] = match &pk[..ROUNDED_BYTES].try_into() {
+    let pk_slice: [u8; ROUNDED_BYTES] = match &pk[SEEDS_BYTES..].try_into() {
         Ok(s) => *s,
         Err(_) => return Err(NTRUErrors::PubKey("Incorrect PubKey")),
     };
@@ -103,8 +104,8 @@ pub fn z_encrypt(
     let mut out = [0u8; CIPHERTEXTS_BYTES_HASH_BYTES];
     let b = x_encrypt(&mut t, &r, &pk_seed_slice, &a)?;
 
-    out[ROUNDED_BYTES..].copy_from_slice(&rq::rq_rounded_encode(&b.coeffs)[..]);
-    top_encode(&mut out, &t);
+    out[..ROUNDED_BYTES].copy_from_slice(&rq::rq_rounded_encode(&b.coeffs)[..]);
+    top_encode::<CIPHERTEXTS_BYTES_HASH_BYTES, ROUNDED_BYTES>(&mut out, &t);
 
     Ok(out)
 }

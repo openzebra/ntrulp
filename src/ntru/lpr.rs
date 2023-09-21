@@ -116,15 +116,11 @@ pub fn hash_prefix<const LENGTH: usize, const OUT_SIZE: usize>(
 
 fn hash_confirm(r_enc: &[u8; SMALL_BYTES], cache: &[u8; HASH_BYTES]) -> [u8; HASH_BYTES] {
     const SHA512_SIZE: usize = HASH_BYTES * 2;
-    const LENGTH: usize = SMALL_BYTES + 2;
+    const LENGTH: usize = SMALL_BYTES + 1;
     let mut x = [0u8; SHA512_SIZE];
 
-    x[HASH_BYTES..].copy_from_slice(cache);
     x[..HASH_BYTES].copy_from_slice(&hash_prefix::<LENGTH, SMALL_BYTES>(3, &r_enc));
-
-    // for i in 0..HASH_BYTES {
-    //     x[HASH_BYTES + i] = cache[i];
-    // }
+    x[HASH_BYTES..].copy_from_slice(cache);
 
     hash_prefix::<SHA512_SIZE, SHA512_SIZE>(2, &x)
 }
@@ -326,7 +322,7 @@ fn test_hide() {
     ];
     let out = hide(&r, &cache, &pk);
 
-    println!("{:?}", out);
+    // println!("{:?}", out);
 }
 
 #[cfg(feature = "ntrulpr761")]

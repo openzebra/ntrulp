@@ -11,11 +11,11 @@ use crate::params::params857::{I, INPUTS_BYTES, P, TAU0, TAU1, TOP_BYTES};
 #[cfg(feature = "ntrulpr953")]
 use crate::params::params953::{I, INPUTS_BYTES, P, TAU0, TAU1, TOP_BYTES};
 
-pub fn top_encode<const SIZE: usize>(s: &mut [u8; SIZE], t: &[i8; I]) {
+pub fn top_encode<const SIZE: usize, const START: usize>(s: &mut [u8; SIZE], t: &[i8; I]) {
     for i in 0..TOP_BYTES {
         let v = t[2 * i] + (t[2 * i + 1] << 4);
 
-        s[i] = v as u8;
+        s[i + START] = v as u8;
     }
 }
 
@@ -175,7 +175,7 @@ mod tests_top {
             0, -1, 1, 0, 0, 0, 1, -1, -1, -1, 0, 0, 0, 1,
         ];
 
-        top_encode::<1039>(&mut s, &t);
+        top_encode::<1039, 0>(&mut s, &t);
         top_decode::<1039>(&mut t, &s);
 
         assert_eq!(
