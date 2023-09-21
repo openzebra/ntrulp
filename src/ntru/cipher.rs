@@ -71,7 +71,7 @@ pub fn r3_encrypt(r: &R3, h: &Rq) -> Rq {
 
     round(&mut hr.coeffs);
 
-    Rq::from(hr.coeffs)
+    hr
 }
 
 pub fn x_encrypt(

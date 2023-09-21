@@ -156,6 +156,7 @@ fn hash_session(
     hash_prefix::<LENGTH_X_EX, LENGTH_X>(b, &x)
 }
 
+#[cfg(feature = "ntrulpr761")]
 #[test]
 fn test_hash_short() {
     let r = R3::from([
