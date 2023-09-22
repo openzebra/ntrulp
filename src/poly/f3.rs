@@ -1,3 +1,16 @@
+#[cfg(feature = "ntrulpr1013")]
+use crate::params::params1013::P;
+#[cfg(feature = "ntrulpr1277")]
+use crate::params::params1277::P;
+#[cfg(feature = "ntrulpr653")]
+use crate::params::params653::P;
+#[cfg(feature = "ntrulpr761")]
+use crate::params::params761::P;
+#[cfg(feature = "ntrulpr857")]
+use crate::params::params857::P;
+#[cfg(feature = "ntrulpr953")]
+use crate::params::params953::P;
+
 use crate::math::nums::i32_mod_u14;
 
 pub fn freeze(x: i16) -> i8 {
@@ -6,28 +19,21 @@ pub fn freeze(x: i16) -> i8 {
     r - 1
 }
 
-pub fn round<const P: usize>(a: &mut [i16; P]) {
+pub fn round(a: &mut [i16; P]) {
     for i in 0..P {
         a[i] = a[i] - freeze(a[i]) as i16;
     }
 }
 
+#[cfg(feature = "ntrulpr761")]
 #[test]
 fn test_round() {
-    use crate::kem::rq::Rq;
+    use crate::poly::rq::Rq;
     use crate::random::CommonRandom;
     use crate::random::NTRURandom;
 
-    const P: usize = 761;
-    const W: usize = 286;
-    const Q: usize = 4591;
-    const Q12: usize = (Q - 1) / 2;
-    const P_PLUS_ONE: usize = P + 1;
-
-    let mut random: NTRURandom<P> = NTRURandom::new();
-    let mut r3: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap())
-        .recip3::<P_PLUS_ONE>()
-        .unwrap();
+    let mut random: NTRURandom = NTRURandom::new();
+    let mut r3: Rq = Rq::from(random.short_random().unwrap()).recip3().unwrap();
 
     fn round3(h: &mut [i16; 761]) {
         let f: [i16; 761] = *h;
@@ -45,6 +51,7 @@ fn test_round() {
     assert_eq!(new_round, r3.coeffs);
 }
 
+#[cfg(feature = "ntrulpr761")]
 #[test]
 fn test_freeze() {
     use rand::prelude::*;
@@ -67,3 +74,4 @@ fn test_freeze() {
         assert_eq!(t2, t1);
     }
 }
+

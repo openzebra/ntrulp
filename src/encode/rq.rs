@@ -1,3 +1,16 @@
+#[cfg(feature = "ntrulpr1013")]
+use crate::params::params1013::{P, Q, Q12, ROUNDED_BYTES, RQ_BYTES};
+#[cfg(feature = "ntrulpr1277")]
+use crate::params::params1277::{P, Q, Q12, ROUNDED_BYTES, RQ_BYTES};
+#[cfg(feature = "ntrulpr653")]
+use crate::params::params653::{P, Q, Q12, ROUNDED_BYTES, RQ_BYTES};
+#[cfg(feature = "ntrulpr761")]
+use crate::params::params761::{P, Q, Q12, ROUNDED_BYTES, RQ_BYTES};
+#[cfg(feature = "ntrulpr857")]
+use crate::params::params857::{P, Q, Q12, ROUNDED_BYTES, RQ_BYTES};
+#[cfg(feature = "ntrulpr953")]
+use crate::params::params953::{P, Q, Q12, ROUNDED_BYTES, RQ_BYTES};
+
 use crate::math::nums::{u32_divmod_u14, u32_mod_u14};
 
 // TODO: target for improve!, add guard to avoid endless
@@ -112,9 +125,7 @@ fn decode(out: &mut [u16], slice: &[u8], m: &[u16], len: usize) {
     }
 }
 
-pub fn rq_encode<const P: usize, const Q: usize, const Q12: usize, const RQ_BYTES: usize>(
-    rq: &[i16; P],
-) -> [u8; RQ_BYTES] {
+pub fn rq_encode(rq: &[i16; P]) -> [u8; RQ_BYTES] {
     let mut out = [0u8; RQ_BYTES];
     let mut r = [0u16; P];
     let m = [Q as u16; P];
@@ -128,9 +139,7 @@ pub fn rq_encode<const P: usize, const Q: usize, const Q12: usize, const RQ_BYTE
     out
 }
 
-pub fn rq_decode<const P: usize, const Q: usize, const Q12: usize, const RQ_BYTES: usize>(
-    s: &[u8; RQ_BYTES],
-) -> [i16; P] {
+pub fn rq_decode(s: &[u8; RQ_BYTES]) -> [i16; P] {
     let mut rq = [0i16; P];
     let mut r = [0u16; P];
     let m = [Q as u16; P];
@@ -144,14 +153,7 @@ pub fn rq_decode<const P: usize, const Q: usize, const Q12: usize, const RQ_BYTE
     rq
 }
 
-pub fn rq_rounded_decode<
-    const P: usize,
-    const Q: usize,
-    const Q12: usize,
-    const ROUNDED_BYTES: usize,
->(
-    s: &[u8; ROUNDED_BYTES],
-) -> [i16; P] {
+pub fn rq_rounded_decode(s: &[u8; ROUNDED_BYTES]) -> [i16; P] {
     let mut rq = [0i16; P];
     let mut r = [0u16; P];
     let m = [(Q as u16 + 2) / 3; P];
@@ -165,14 +167,7 @@ pub fn rq_rounded_decode<
     rq
 }
 
-pub fn rq_rounded_encode<
-    const P: usize,
-    const Q: usize,
-    const Q12: usize,
-    const ROUNDED_BYTES: usize,
->(
-    rq: &[i16; P],
-) -> [u8; ROUNDED_BYTES] {
+pub fn rq_rounded_encode(rq: &[i16; P]) -> [u8; ROUNDED_BYTES] {
     let mut s = [0u8; ROUNDED_BYTES];
     let mut r = [0u16; P];
     let mut m = [0u16; P];
@@ -180,9 +175,6 @@ pub fn rq_rounded_encode<
     for i in 0..P {
         let v32 = (rq[i] + Q12 as i16) as u32;
         r[i] = ((v32 * 10923) >> 15) as u16;
-    }
-
-    for i in 0..P {
         m[i] = (Q as u16 + 2) / 3;
     }
 
@@ -192,234 +184,62 @@ pub fn rq_rounded_encode<
 }
 
 #[cfg(test)]
-mod rq_encoder_tests {
+mod rq_decode_encode {
     use super::*;
-    use crate::kem::rq::Rq;
+    use crate::poly::rq::Rq;
     use crate::random::CommonRandom;
     use crate::random::NTRURandom;
-    use rand::Rng;
 
     #[test]
-    fn test_rq_encode_rq_decode_761() {
-        const P: usize = 761;
-        const W: usize = 286;
-        const Q: usize = 4591;
-        const P_PLUS_ONE: usize = P + 1;
-        const Q12: usize = (Q - 1) / 2;
-        const RQ_BYTES: usize = 1158;
-
-        let mut random: NTRURandom<P> = NTRURandom::new();
-        let rq: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap())
-            .recip3::<P_PLUS_ONE>()
-            .unwrap();
-        let out = rq_encode::<P, Q, Q12, RQ_BYTES>(&rq.coeffs);
-        let dec = rq_decode::<P, Q, Q12, RQ_BYTES>(&out);
+    fn test_rq_encode_rq_decode() {
+        let mut random: NTRURandom = NTRURandom::new();
+        let rq: Rq = Rq::from(random.short_random().unwrap()).recip3().unwrap();
+        let out = rq_encode(&rq.coeffs);
+        let dec = rq_decode(&out);
 
         assert_eq!(dec, rq.coeffs);
     }
 
     #[test]
-    fn test_rq_encode_rq_decode_858() {
-        const P: usize = 857;
-        const Q: usize = 5167;
-        const W: usize = 322;
-        const Q12: usize = (Q - 1) / 2;
-        const P_PLUS_ONE: usize = P + 1;
-        const RQ_BYTES: usize = 1322;
+    fn test_rounded_rq_encode_rq_decode() {
+        let content = "
+In the realm of digital night, Satoshi did conceive,
+A currency of cryptic might, for all to believe.
+In code and chains, he wove the tale,
+Of Bitcoin's birth, a revolution set to sail.
 
-        let mut random: NTRURandom<P> = NTRURandom::new();
-        let rq: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap())
-            .recip3::<P_PLUS_ONE>()
-            .unwrap();
-        let out = rq_encode::<P, Q, Q12, RQ_BYTES>(&rq.coeffs);
-        let dec = rq_decode::<P, Q, Q12, RQ_BYTES>(&out);
+A name unknown, a face unseen,
+Satoshi, a genius, behind the crypto machine.
+With whitepaper in hand and vision so clear,
+He birthed a new era, without any fear.
 
-        assert_eq!(dec, rq.coeffs);
-    }
+Decentralized ledger, transparent and free,
+Bitcoin emerged, for the world to see.
+Mining for coins, nodes in a network,
+A financial system, no central clerk.
 
-    #[test]
-    fn test_rq_encode_rq_decode_653() {
-        const P: usize = 653;
-        const Q: usize = 4621;
-        const W: usize = 288;
-        const Q12: usize = (Q - 1) / 2;
-        const P_PLUS_ONE: usize = P + 1;
-        const RQ_BYTES: usize = 994;
+The world was skeptical, yet curiosity grew,
+As Bitcoin's value steadily blew.
+From pennies to thousands, a meteoric rise,
+Satoshi's creation took us by surprise.
 
-        let mut random: NTRURandom<P> = NTRURandom::new();
-        let rq: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap())
-            .recip3::<P_PLUS_ONE>()
-            .unwrap();
-        let out = rq_encode::<P, Q, Q12, RQ_BYTES>(&rq.coeffs);
-        let dec = rq_decode::<P, Q, Q12, RQ_BYTES>(&out);
-
-        assert_eq!(dec, rq.coeffs);
-    }
-
-    #[test]
-    fn test_rq_encode_rq_decode_953() {
-        const P: usize = 953;
-        const Q: usize = 6343;
-        const W: usize = 396;
-        const Q12: usize = (Q - 1) / 2;
-        const P_PLUS_ONE: usize = P + 1;
-        const RQ_BYTES: usize = 1505;
-
-        let mut random: NTRURandom<P> = NTRURandom::new();
-        let rq: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap())
-            .recip3::<P_PLUS_ONE>()
-            .unwrap();
-        let out = rq_encode::<P, Q, Q12, RQ_BYTES>(&rq.coeffs);
-        let dec = rq_decode::<P, Q, Q12, RQ_BYTES>(&out);
-
-        assert_eq!(dec, rq.coeffs);
-    }
-
-    #[test]
-    fn test_rq_encode_rq_decode_1013() {
-        const P: usize = 1013;
-        const Q: usize = 7177;
-        const W: usize = 448;
-        const Q12: usize = (Q - 1) / 2;
-        const P_PLUS_ONE: usize = P + 1;
-        const RQ_BYTES: usize = 1623;
-
-        let mut random: NTRURandom<P> = NTRURandom::new();
-        let rq: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap())
-            .recip3::<P_PLUS_ONE>()
-            .unwrap();
-        let out = rq_encode::<P, Q, Q12, RQ_BYTES>(&rq.coeffs);
-        let dec = rq_decode::<P, Q, Q12, RQ_BYTES>(&out);
-
-        assert_eq!(dec, rq.coeffs);
-    }
-
-    #[test]
-    fn test_rq_encode_rq_decode_1277() {
-        const P: usize = 1277;
-        const Q: usize = 7879;
-        const W: usize = 492;
-        const Q12: usize = (Q - 1) / 2;
-        const P_PLUS_ONE: usize = P + 1;
-        const RQ_BYTES: usize = 2067;
-
-        let mut random: NTRURandom<P> = NTRURandom::new();
-        let rq: Rq<P, Q, Q12> = Rq::from(random.short_random(W).unwrap())
-            .recip3::<P_PLUS_ONE>()
-            .unwrap();
-        let out = rq_encode::<P, Q, Q12, RQ_BYTES>(&rq.coeffs);
-        let dec = rq_decode::<P, Q, Q12, RQ_BYTES>(&out);
-
-        assert_eq!(dec, rq.coeffs);
-    }
-
-    #[test]
-    fn test_rounded_rq_encode_rq_decode_761() {
-        const P: usize = 761;
-        const Q: usize = 4591;
-        const Q12: usize = (Q - 1) / 2;
-        const ROUNDED_BYTES: usize = 1007;
-
-        let mut rng = rand::thread_rng();
+But Nakamoto vanished, into the digital mist,
+Leaving behind a legacy, a cryptocurrency twist.
+In the hearts of hodlers, Satoshi's name lives on,
+A symbol of innovation, in the crypto dawn.
+";
         let mut bytes: [u8; ROUNDED_BYTES] = [0u8; ROUNDED_BYTES];
 
-        rng.fill(&mut bytes[..]);
-        let rq = rq_rounded_decode::<P, Q, Q12, ROUNDED_BYTES>(&bytes);
-        let dec = rq_rounded_encode::<P, Q, Q12, ROUNDED_BYTES>(&rq);
+        for i in 0..content.as_bytes().len() {
+            bytes[i] = content.as_bytes()[i];
+        }
 
-        assert_eq!(rq.len(), P);
-        assert_eq!(dec.len(), ROUNDED_BYTES);
-    }
+        let rq = rq_rounded_decode(&bytes);
+        let res_bytes = rq_rounded_encode(&rq);
+        let res_content = res_bytes[..content.as_bytes().len()].to_vec();
+        let res_str = String::from_utf8(res_content).unwrap();
 
-    #[test]
-    fn test_rounded_rq_encode_rq_decode_858() {
-        const P: usize = 857;
-        const Q: usize = 5167;
-        const Q12: usize = (Q - 1) / 2;
-        const ROUNDED_BYTES: usize = 1152;
-
-        let mut rng = rand::thread_rng();
-        let mut bytes: [u8; ROUNDED_BYTES] = [0u8; ROUNDED_BYTES];
-
-        rng.fill(&mut bytes[..]);
-
-        let rq = rq_rounded_decode::<P, Q, Q12, ROUNDED_BYTES>(&bytes);
-        let dec = rq_rounded_encode::<P, Q, Q12, ROUNDED_BYTES>(&rq);
-
-        assert_eq!(rq.len(), P);
-        assert_eq!(dec.len(), ROUNDED_BYTES);
-    }
-
-    #[test]
-    fn test_rounded_rq_encode_rq_decode_653() {
-        const P: usize = 653;
-        const Q: usize = 4621;
-        const Q12: usize = (Q - 1) / 2;
-        const ROUNDED_BYTES: usize = 865;
-
-        let mut rng = rand::thread_rng();
-        let mut bytes: [u8; ROUNDED_BYTES] = [0u8; ROUNDED_BYTES];
-
-        rng.fill(&mut bytes[..]);
-
-        let rq = rq_rounded_decode::<P, Q, Q12, ROUNDED_BYTES>(&bytes);
-        let dec = rq_rounded_encode::<P, Q, Q12, ROUNDED_BYTES>(&rq);
-
-        assert_eq!(rq.len(), P);
-        assert_eq!(dec.len(), ROUNDED_BYTES);
-    }
-
-    #[test]
-    fn test_rounded_rq_encode_rq_decode_953() {
-        const P: usize = 953;
-        const Q: usize = 6343;
-        const Q12: usize = (Q - 1) / 2;
-        const ROUNDED_BYTES: usize = 1317;
-
-        let mut rng = rand::thread_rng();
-        let mut bytes: [u8; ROUNDED_BYTES] = [0u8; ROUNDED_BYTES];
-        rng.fill(&mut bytes[..]);
-
-        let rq = rq_rounded_decode::<P, Q, Q12, ROUNDED_BYTES>(&bytes);
-        let dec = rq_rounded_encode::<P, Q, Q12, ROUNDED_BYTES>(&rq);
-
-        assert_eq!(rq.len(), P);
-        assert_eq!(dec.len(), ROUNDED_BYTES);
-    }
-
-    #[test]
-    fn test_rounded_rq_encode_rq_decode_1013() {
-        const P: usize = 1013;
-        const Q: usize = 7177;
-        const Q12: usize = (Q - 1) / 2;
-        const ROUNDED_BYTES: usize = 1423;
-
-        let mut rng = rand::thread_rng();
-        let mut bytes: [u8; ROUNDED_BYTES] = [0u8; ROUNDED_BYTES];
-        rng.fill(&mut bytes[..]);
-
-        let rq = rq_rounded_decode::<P, Q, Q12, ROUNDED_BYTES>(&bytes);
-        let dec = rq_rounded_encode::<P, Q, Q12, ROUNDED_BYTES>(&rq);
-
-        assert_eq!(rq.len(), P);
-        assert_eq!(dec.len(), ROUNDED_BYTES);
-    }
-
-    #[test]
-    fn test_rounded_rq_encode_rq_decode_1277() {
-        const P: usize = 1277;
-        const Q: usize = 7879;
-        const Q12: usize = (Q - 1) / 2;
-        const ROUNDED_BYTES: usize = 1815;
-
-        let mut rng = rand::thread_rng();
-        let mut bytes: [u8; ROUNDED_BYTES] = [0u8; ROUNDED_BYTES];
-        rng.fill(&mut bytes[..]);
-
-        let rq = rq_rounded_decode::<P, Q, Q12, ROUNDED_BYTES>(&bytes.into());
-        let dec = rq_rounded_encode::<P, Q, Q12, ROUNDED_BYTES>(&rq);
-
-        assert_eq!(rq.len(), P);
-        assert_eq!(dec.len(), ROUNDED_BYTES);
+        assert_eq!(res_str, content);
     }
 }
+

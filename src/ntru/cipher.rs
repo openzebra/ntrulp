@@ -1,28 +1,31 @@
+#[cfg(feature = "ntrulpr1013")]
+use crate::params::params1013::{P, W};
+#[cfg(feature = "ntrulpr1277")]
+use crate::params::params1277::{P, W};
+#[cfg(feature = "ntrulpr653")]
+use crate::params::params653::{P, W};
+#[cfg(feature = "ntrulpr761")]
+use crate::params::params761::{P, W};
+#[cfg(feature = "ntrulpr857")]
+use crate::params::params857::{P, W};
+#[cfg(feature = "ntrulpr953")]
+use crate::params::params953::{P, W};
+
 use crate::{
-    kem::{f3::round, r3::R3, rq::Rq},
     math::nums::weightw_mask,
+    poly::{f3::round, r3::R3, rq::Rq},
 };
 
-pub fn rq_decrypt<
-    const P: usize,
-    const Q: usize,
-    const W: usize,
-    const Q12: usize,
-    const P_TWICE_MINUS_ONE: usize,
->(
-    c: &Rq<P, Q, Q12>,
-    f: &Rq<P, Q, Q12>,
-    ginv: &R3<P, Q, Q12>,
-) -> R3<P, Q, Q12> {
+pub fn rq_decrypt(c: &Rq, f: &Rq, ginv: &R3) -> R3 {
     let mut r = [0i8; P];
-    let cf: Rq<P, Q, Q12> = c.mult_r3::<P_TWICE_MINUS_ONE>(&f.r3_from_rq());
-    let cf3: Rq<P, Q, Q12> = cf.mult3();
-    let e: R3<P, Q, Q12> = cf3.r3_from_rq();
-    let ev: R3<P, Q, Q12> = e.mult::<P_TWICE_MINUS_ONE>(&ginv);
+    let cf: Rq = c.mult_r3(&f.r3_from_rq());
+    let cf3: Rq = cf.mult3();
+    let e: R3 = cf3.r3_from_rq();
+    let ev: R3 = e.mult(&ginv);
     #[allow(unused_assignments)]
     let mut mask: i16 = 0;
 
-    mask = weightw_mask::<P, W>(&ev.coeffs); // 0 if weight w, else -1
+    mask = weightw_mask(&ev.coeffs); // 0 if weight w, else -1
 
     for i in 0..W {
         r[i] = (((ev.coeffs[i] ^ 1) as i16 & !mask) ^ 1) as i8;
@@ -35,18 +38,10 @@ pub fn rq_decrypt<
     R3::from(r)
 }
 
-pub fn r3_encrypt<
-    const P: usize,
-    const Q: usize,
-    const Q12: usize,
-    const P_TWICE_MINUS_ONE: usize,
->(
-    r: &R3<P, Q, Q12>,
-    h: &Rq<P, Q, Q12>,
-) -> Rq<P, Q, Q12> {
-    let mut hr = h.mult_r3::<P_TWICE_MINUS_ONE>(&r);
+pub fn r3_encrypt(r: &R3, h: &Rq) -> Rq {
+    let mut hr = h.mult_r3(&r);
 
     round(&mut hr.coeffs);
 
-    Rq::from(hr.coeffs)
+    hr
 }

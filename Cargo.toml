@@ -9,7 +9,14 @@ readme = "README.md"
 license-file = "LICENSE"
 keywords = ["NTRU", "rust", "ideal-lattice-based", "cryptography"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[features]
+default = ["ntrulpr761"]
+ntrulpr653 = []
+ntrulpr761 = []
+ntrulpr857 = []
+ntrulpr953 = []
+ntrulpr1013 = []
+ntrulpr1277 = []
 
 [dependencies]
 num_cpus = "1.16.0"
@@ -18,14 +25,14 @@ rand = "0.8.5"
 [dev-dependencies]
 criterion = "0.3"
 
-[[bench]]
-name = "key_gen"
-harness = false
-
-[[bench]]
-name = "chipher"
-harness = false
-
-[[bench]]
-name = "rq"
-harness = false
+# [[bench]]
+# name = "key_gen"
+# harness = false
+#
+# [[bench]]
+# name = "chipher"
+# harness = false
+#
+# [[bench]]
+# name = "rq"
+# harness = false

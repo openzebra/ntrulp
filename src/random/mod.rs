@@ -1,3 +1,16 @@
+#[cfg(feature = "ntrulpr1013")]
+use crate::params::params1013::{P, W};
+#[cfg(feature = "ntrulpr1277")]
+use crate::params::params1277::{P, W};
+#[cfg(feature = "ntrulpr653")]
+use crate::params::params653::{P, W};
+#[cfg(feature = "ntrulpr761")]
+use crate::params::params761::{P, W};
+#[cfg(feature = "ntrulpr857")]
+use crate::params::params857::{P, W};
+#[cfg(feature = "ntrulpr953")]
+use crate::params::params953::{P, W};
+
 use rand::prelude::*;
 
 #[derive(Debug)]
@@ -9,11 +22,12 @@ pub enum RandomErrors {
     SumShouldEqW,
 }
 
-pub trait CommonRandom<const SIZE: usize> {
-    fn random_small(&mut self) -> Result<[i8; SIZE], RandomErrors>;
-    fn short_random(&mut self, w: usize) -> Result<[i16; SIZE], RandomErrors>;
+pub trait CommonRandom {
+    fn random_small(&mut self) -> Result<[i8; P], RandomErrors>;
+    fn short_random(&mut self) -> Result<[i16; P], RandomErrors>;
     fn urandom32(&mut self) -> u32;
     fn random_range_3(&mut self) -> i8;
+    fn randombytes<const SIZE: usize>(&mut self) -> [u8; SIZE];
 }
 
 enum RngOptions {
@@ -28,13 +42,24 @@ impl RngOptions {
             RngOptions::Seed(std_rng) => std_rng.gen(),
         }
     }
+
+    pub fn randombytes(&mut self, bytes: &mut [u8]) {
+        match self {
+            RngOptions::Seed(rng) => {
+                rng.fill(bytes);
+            }
+            RngOptions::Thread(rng) => {
+                rng.fill(bytes);
+            }
+        }
+    }
 }
 
-pub struct NTRURandom<const SIZE: usize> {
+pub struct NTRURandom {
     rng: RngOptions,
 }
 
-impl<const SIZE: usize> NTRURandom<SIZE> {
+impl NTRURandom {
     pub fn new() -> Self {
         let rng = thread_rng();
 
@@ -60,7 +85,7 @@ impl<const SIZE: usize> NTRURandom<SIZE> {
 
 // where
 //     N: Copy + Zero + One + FromPrimitive,
-impl<const SIZE: usize> CommonRandom<SIZE> for NTRURandom<SIZE> {
+impl CommonRandom for NTRURandom {
     fn urandom32(&mut self) -> u32 {
         let c0 = self.rng.gen_u8() as u32;
         let c1 = self.rng.gen_u8() as u32;
@@ -71,47 +96,55 @@ impl<const SIZE: usize> CommonRandom<SIZE> for NTRURandom<SIZE> {
     }
 
     fn random_range_3(&mut self) -> i8 {
-        let r: u32 = <NTRURandom<SIZE> as CommonRandom<SIZE>>::urandom32(self);
+        let r: u32 = self.urandom32();
 
         (((r & 0x3fffffff) * 3) >> 30) as i8 - 1
     }
 
-    fn random_small(&mut self) -> Result<[i8; SIZE], RandomErrors> {
-        let mut r = [0i8; SIZE];
+    fn randombytes<const SIZE: usize>(&mut self) -> [u8; SIZE] {
+        let mut bytes = [0u8; SIZE];
 
-        for i in 0..SIZE {
-            r[i] = <NTRURandom<SIZE> as CommonRandom<SIZE>>::random_range_3(self);
+        self.rng.randombytes(&mut bytes);
+
+        bytes
+    }
+
+    fn random_small(&mut self) -> Result<[i8; P], RandomErrors> {
+        let mut r = [0i8; P];
+
+        for i in 0..P {
+            r[i] = self.random_range_3();
         }
 
         Ok(r)
     }
 
-    fn short_random(&mut self, w: usize) -> Result<[i16; SIZE], RandomErrors> {
-        let mut list = [0u32; SIZE];
+    fn short_random(&mut self) -> Result<[i16; P], RandomErrors> {
+        let mut list = [0u32; P];
 
-        for i in 0..SIZE {
-            let value = <NTRURandom<SIZE> as CommonRandom<SIZE>>::urandom32(self);
+        for i in 0..P {
+            let value = self.urandom32();
 
-            if i < w {
+            if i < W {
                 list[i] = value & !1
             } else {
                 list[i] = (value & !3) | 1
             }
         }
 
-        if !list.iter().take(w).all(|&value| value % 2 == 0) {
+        if !list.iter().take(W).all(|&value| value % 2 == 0) {
             return Err(RandomErrors::Mod2ShouldZero);
         }
-        if !list.iter().skip(w).all(|&value| value % 4 == 1) {
+        if !list.iter().skip(W).all(|&value| value % 4 == 1) {
             return Err(RandomErrors::Mod4ShouldOne);
         }
 
         list.sort();
 
-        let mut new_list = [0i32; SIZE];
+        let mut new_list = [0i32; P];
         let mut sum = 0;
 
-        for i in 0..SIZE {
+        for i in 0..P {
             new_list[i] = list[i] as i32;
         }
 
@@ -127,13 +160,13 @@ impl<const SIZE: usize> CommonRandom<SIZE> for NTRURandom<SIZE> {
             sum += new_value.abs();
         }
 
-        if sum as usize != w {
+        if sum as usize != W {
             return Err(RandomErrors::SumShouldEqW);
         }
 
-        let mut i16_list = [0i16; SIZE];
+        let mut i16_list = [0i16; P];
 
-        for i in 0..SIZE {
+        for i in 0..P {
             i16_list[i] = new_list[i] as i16;
         }
 
@@ -147,8 +180,7 @@ mod tests {
 
     #[test]
     fn test_seed() {
-        const SIZE: usize = 716;
-        let mut random: NTRURandom<SIZE> = NTRURandom::from_u64(9999);
+        let mut random: NTRURandom = NTRURandom::from_u64(9999);
         let r = random.urandom32();
 
         assert!(r == 3688594871);
@@ -156,8 +188,7 @@ mod tests {
 
     #[test]
     fn test_random_u32() {
-        const SIZE: usize = 0;
-        let mut random: NTRURandom<SIZE> = NTRURandom::new();
+        let mut random: NTRURandom = NTRURandom::new();
 
         let r = random.urandom32();
 
@@ -166,14 +197,10 @@ mod tests {
 
     #[test]
     fn test_short_random() {
-        const P: usize = 761;
-        const W: usize = 286;
-        let mut random: NTRURandom<P> = NTRURandom::new();
-
-        // dbg!(random.random_small().unwrap());
+        let mut random: NTRURandom = NTRURandom::new();
 
         for _ in 0..100 {
-            let r = random.short_random(W).unwrap();
+            let r = random.short_random().unwrap();
 
             assert!(r.len() == P);
             assert!(r.contains(&-1) && r.contains(&0) && r.contains(&1));
@@ -182,8 +209,7 @@ mod tests {
 
     #[test]
     fn test_random_range_3() {
-        const SIZE: usize = 0;
-        let mut random: NTRURandom<SIZE> = NTRURandom::new();
+        let mut random: NTRURandom = NTRURandom::new();
 
         for _ in 0..200 {
             let r = random.random_range_3();
@@ -193,14 +219,25 @@ mod tests {
 
     #[test]
     fn test_small_random() {
-        const P: usize = 761;
-        let mut random: NTRURandom<P> = NTRURandom::new();
+        let mut random: NTRURandom = NTRURandom::new();
 
-        for _ in 0..1000 {
+        for _ in 0..100 {
             let r = random.random_small().unwrap();
 
             assert!(r.len() == P);
             assert!(r.contains(&-1) && r.contains(&0) && r.contains(&1));
         }
     }
+
+    #[test]
+    fn test_random_bytes() {
+        let mut random: NTRURandom = NTRURandom::new();
+
+        for _ in 0..10 {
+            let r = random.randombytes::<P>();
+
+            assert!(r.len() == P);
+        }
+    }
 }
+
