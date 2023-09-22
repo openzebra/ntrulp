@@ -1,14 +1,24 @@
 use criterion::{criterion_group, criterion_main, Criterion};
+use ntrulp::poly::rq::Rq;
 use ntrulp::random::{CommonRandom, NTRURandom};
 
 use ntrulp::encode::rq;
 
 fn encoder_benchmark(cb: &mut Criterion) {
     let mut rng = NTRURandom::new();
-    let fq = rng.short_random().unwrap();
+    let coeffs = rng.short_random().unwrap();
+    let rq = Rq::from(coeffs).recip3().unwrap();
+    let bytes = rq::encode(&rq.coeffs);
 
-    cb.bench_function("new_fq", |b| {
-        b.iter(|| {});
+    cb.bench_function("encode", |b| {
+        b.iter(|| {
+            rq::encode(&rq.coeffs);
+        });
+    });
+    cb.bench_function("decode", |b| {
+        b.iter(|| {
+            rq::decode(&bytes);
+        });
     });
 }
 

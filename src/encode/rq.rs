@@ -14,7 +14,6 @@ use crate::poly::fq;
 
 const Q_SHIFT: i32 = Q as i32 / 2;
 const END_BYTES: usize = RQ_BYTES / 8;
-const MOD: usize = RQ_BYTES % 8;
 
 pub fn encode(input: &[i16; P]) -> [u8; RQ_BYTES] {
     let mut out = [0u8; RQ_BYTES];
@@ -28,13 +27,28 @@ pub fn encode(input: &[i16; P]) -> [u8; RQ_BYTES] {
     let mut k = 0;
 
     for _ in 0..END_BYTES {
-        f0 = input[j] as i32 + Q_SHIFT;
-        f1 = (input[j + 1] as i32 + Q_SHIFT) * 3;
-        f2 = (input[j + 2] as i32 + Q_SHIFT) * 9;
-        f3 = (input[j + 3] as i32 + Q_SHIFT) * 27;
-        f4 = (input[j + 4] as i32 + Q_SHIFT) * 81;
+        f0 = *input.get(j).unwrap_or(&0i16) as i32 + Q_SHIFT;
 
-        j += 5;
+        f1 = if let Some(el) = input.get(j + 1) {
+            (*el as i32 + Q_SHIFT) * 3
+        } else {
+            0
+        };
+        f2 = if let Some(el) = input.get(j + 2) {
+            (*el as i32 + Q_SHIFT) * 9
+        } else {
+            0
+        };
+        f3 = if let Some(el) = input.get(j + 3) {
+            (*el as i32 + Q_SHIFT) * 27
+        } else {
+            0
+        };
+        f4 = if let Some(el) = input.get(j + 4) {
+            (*el as i32 + Q_SHIFT) * 81
+        } else {
+            0
+        };
 
         f0 += f1 << 11;
         out[k] = f0 as u8;
@@ -46,6 +60,7 @@ pub fn encode(input: &[i16; P]) -> [u8; RQ_BYTES] {
         f0 >>= 8;
         out[k + 3] = f0 as u8;
         f0 >>= 8;
+
         f0 += f3 << 1;
         out[k + 4] = f0 as u8;
         f0 >>= 8;
@@ -55,29 +70,9 @@ pub fn encode(input: &[i16; P]) -> [u8; RQ_BYTES] {
         out[k + 6] = f0 as u8;
         f0 >>= 8;
         out[k + 7] = f0 as u8;
+
         k += 8;
-    }
-
-    if MOD == 0 {
-        return out;
-    } else if MOD == 2 {
-        f0 = input[j] as i32 + Q_SHIFT;
-
-        out[k] = f0 as u8;
-        out[k + 1] = (f0 >> 8) as u8;
-    } else if MOD == 3 {
-        f0 = input[j] as i32 + Q_SHIFT;
-        f1 = (input[j + 1] as i32 + Q_SHIFT) * 3;
-        f2 = (input[j + 2] as i32 + Q_SHIFT) * 9;
-
-        f0 += f1 << 11;
-
-        out[k] = f0 as u8;
-        f0 >>= 8;
-        out[k + 1] = f0 as u8;
-        f0 >>= 8;
-        f0 += f2 << 6;
-        out[k + 2] = f0 as u8;
+        j += 5;
     }
 
     out
@@ -132,35 +127,32 @@ pub fn decode(input: &[u8; RQ_BYTES]) -> [i16; P] {
         f0 = c0;
 
         out[k] = fq::freeze((f0 + Q as u32 - Q_SHIFT as u32) as i32);
-        out[k + 1] = fq::freeze((f1 + Q as u32 - Q_SHIFT as u32) as i32);
-        out[k + 2] = fq::freeze((f2 + Q as u32 - Q_SHIFT as u32) as i32);
-        out[k + 3] = fq::freeze((f3 + Q as u32 - Q_SHIFT as u32) as i32);
-        out[k + 4] = fq::freeze((f4 + Q as u32 - Q_SHIFT as u32) as i32);
+
+        if let Some(el) = out.get_mut(k + 1) {
+            *el = fq::freeze((f1 + Q as u32 - Q_SHIFT as u32) as i32);
+        } else {
+            break;
+        }
+
+        if let Some(el) = out.get_mut(k + 2) {
+            *el = fq::freeze((f2 + Q as u32 - Q_SHIFT as u32) as i32);
+        } else {
+            break;
+        }
+
+        if let Some(el) = out.get_mut(k + 3) {
+            *el = fq::freeze((f3 + Q as u32 - Q_SHIFT as u32) as i32);
+        } else {
+            break;
+        }
+
+        if let Some(el) = out.get_mut(k + 4) {
+            *el = fq::freeze((f4 + Q as u32 - Q_SHIFT as u32) as i32);
+        } else {
+            break;
+        }
 
         k += 5;
-    }
-
-    if MOD == 0 {
-        return out;
-    } else if MOD == 2 {
-        c0 = input[j] as u32;
-        c1 = input[j + 1] as u32;
-        c0 += c1 << 8;
-
-        out[k] = fq::freeze((c0 + Q as u32 - Q_SHIFT as u32) as i32);
-    } else if MOD == 3 {
-        c0 = input[j] as u32;
-        c1 = input[j + 1] as u32;
-        c2 = input[j + 2] as u32;
-
-        c1 += c2 << 8;
-        f1 = (21_845 * (c1 + 2) + 85 * c0) >> 19;
-        c1 -= (f1 * 3) << 3;
-        c0 += c1 << 8;
-        f0 = c0;
-
-        out[k] = fq::freeze((f0 + Q as u32 - Q_SHIFT as u32) as i32);
-        out[k + 1] = fq::freeze((f1 + Q as u32 - Q_SHIFT as u32) as i32);
     }
 
     out
@@ -178,14 +170,12 @@ mod tests_fq {
     fn test_encode_decode() {
         let mut rng = NTRURandom::new();
 
-        for _ in 0..1 {
+        for _ in 0..100 {
             let coeffs = rng.short_random().unwrap();
             let rq = Rq::from(coeffs);
 
             let bytes = encode(&rq.coeffs);
             let res = decode(&bytes);
-
-            // println!("{:?}",bytes);
 
             assert_eq!(rq.coeffs, res);
         }
