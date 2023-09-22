@@ -5,7 +5,7 @@ pub mod params653 {
     pub const W: usize = 288;
     pub const Q12: usize = (Q - 1) / 2;
     pub const R3_BYTES: usize = (P + 3) / 4;
-    pub const RQ_BYTES: usize = (P / 5 * 8) + ((P % 5) * 5);
+    pub const RQ_BYTES: usize = P * 2;
 }
 
 #[cfg(feature = "ntrulpr761")]
@@ -15,7 +15,7 @@ pub mod params761 {
     pub const Q: usize = 4591;
     pub const Q12: usize = (Q - 1) / 2;
     pub const R3_BYTES: usize = (P + 3) / 4;
-    pub const RQ_BYTES: usize = (P / 5 * 8) + ((P % 5 + 1) * 5);
+    pub const RQ_BYTES: usize = P * 2;
 }
 
 #[cfg(feature = "ntrulpr857")]
@@ -25,7 +25,7 @@ pub mod params857 {
     pub const Q: usize = 5167;
     pub const Q12: usize = (Q - 1) / 2;
     pub const R3_BYTES: usize = (P + 3) / 4;
-    pub const RQ_BYTES: usize = (P / 5 * 8) + ((P % 5 + 1) * 5);
+    pub const RQ_BYTES: usize = P * 2;
 }
 
 #[cfg(feature = "ntrulpr953")]
@@ -35,7 +35,7 @@ pub mod params953 {
     pub const W: usize = 396;
     pub const Q12: usize = (Q - 1) / 2;
     pub const R3_BYTES: usize = (P + 3) / 4;
-    pub const RQ_BYTES: usize = (P / 5 * 8) + ((P % 5 + 1) * 5);
+    pub const RQ_BYTES: usize = P * 2;
 }
 
 #[cfg(feature = "ntrulpr1013")]
@@ -45,7 +45,7 @@ pub mod params1013 {
     pub const W: usize = 448;
     pub const Q12: usize = (Q - 1) / 2;
     pub const R3_BYTES: usize = (P + 3) / 4;
-    pub const RQ_BYTES: usize = (P / 5 * 8) + ((P % 5 + 1) * 5);
+    pub const RQ_BYTES: usize = P * 2;
 }
 
 #[cfg(feature = "ntrulpr1277")]
@@ -55,5 +55,5 @@ pub mod params1277 {
     pub const W: usize = 492;
     pub const Q12: usize = (Q - 1) / 2;
     pub const R3_BYTES: usize = (P + 3) / 4;
-    pub const RQ_BYTES: usize = (P / 5 * 8) + ((P % 5 + 1) * 5);
+    pub const RQ_BYTES: usize = P * 2;
 }
