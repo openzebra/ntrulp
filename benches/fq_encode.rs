@@ -8,16 +8,16 @@ fn encoder_benchmark(cb: &mut Criterion) {
     let mut rng = NTRURandom::new();
     let coeffs = rng.short_random().unwrap();
     let rq = Rq::from(coeffs).recip3().unwrap();
-    let bytes0 = rq::fast_encode(&rq.coeffs);
+    let bytes0 = rq::encode(&rq.coeffs);
 
     cb.bench_function("fast_encode", |b| {
         b.iter(|| {
-            rq::fast_encode(&rq.coeffs);
+            rq::encode(&rq.coeffs);
         });
     });
     cb.bench_function("fast_decode", |b| {
         b.iter(|| {
-            rq::fast_decode(&bytes0);
+            rq::decode(&bytes0);
         });
     });
 }
