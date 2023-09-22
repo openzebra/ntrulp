@@ -1,18 +1,18 @@
 #[cfg(feature = "ntrulpr1013")]
-use crate::params::params1013::{P, SMALL_BYTES};
+use crate::params::params1013::{P, R3_BYTES};
 #[cfg(feature = "ntrulpr1277")]
-use crate::params::params1277::{P, SMALL_BYTES};
+use crate::params::params1277::{P, R3_BYTES};
 #[cfg(feature = "ntrulpr653")]
-use crate::params::params653::{P, SMALL_BYTES};
+use crate::params::params653::{P, R3_BYTES};
 #[cfg(feature = "ntrulpr761")]
-use crate::params::params761::{P, SMALL_BYTES};
+use crate::params::params761::{P, R3_BYTES};
 #[cfg(feature = "ntrulpr857")]
-use crate::params::params857::{P, SMALL_BYTES};
+use crate::params::params857::{P, R3_BYTES};
 #[cfg(feature = "ntrulpr953")]
-use crate::params::params953::{P, SMALL_BYTES};
+use crate::params::params953::{P, R3_BYTES};
 
-pub fn r3_encode(f: &[i8; P]) -> [u8; SMALL_BYTES] {
-    let mut s = [0u8; SMALL_BYTES];
+pub fn r3_encode(f: &[i8; P]) -> [u8; R3_BYTES] {
+    let mut s = [0u8; R3_BYTES];
     let mut fi = 0;
 
     for i in 0..P / 4 {
@@ -33,7 +33,7 @@ pub fn r3_encode(f: &[i8; P]) -> [u8; SMALL_BYTES] {
     s
 }
 
-pub fn r3_decode(s: &[u8; SMALL_BYTES]) -> [i8; P] {
+pub fn r3_decode(s: &[u8; R3_BYTES]) -> [i8; P] {
     let mut f = [0i8; P];
     let mut x: u8;
     let mut i = 0;

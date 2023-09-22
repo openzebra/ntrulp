@@ -1,245 +1,193 @@
 #[cfg(feature = "ntrulpr1013")]
-use crate::params::params1013::{P, Q, Q12, ROUNDED_BYTES, RQ_BYTES};
+use crate::params::params1013::{P, Q, RQ_BYTES};
 #[cfg(feature = "ntrulpr1277")]
-use crate::params::params1277::{P, Q, Q12, ROUNDED_BYTES, RQ_BYTES};
+use crate::params::params1277::{P, Q, RQ_BYTES};
 #[cfg(feature = "ntrulpr653")]
-use crate::params::params653::{P, Q, Q12, ROUNDED_BYTES, RQ_BYTES};
+use crate::params::params653::{P, Q, RQ_BYTES};
 #[cfg(feature = "ntrulpr761")]
-use crate::params::params761::{P, Q, Q12, ROUNDED_BYTES, RQ_BYTES};
+use crate::params::params761::{P, Q, RQ_BYTES};
 #[cfg(feature = "ntrulpr857")]
-use crate::params::params857::{P, Q, Q12, ROUNDED_BYTES, RQ_BYTES};
+use crate::params::params857::{P, Q, RQ_BYTES};
 #[cfg(feature = "ntrulpr953")]
-use crate::params::params953::{P, Q, Q12, ROUNDED_BYTES, RQ_BYTES};
+use crate::params::params953::{P, Q, RQ_BYTES};
+use crate::poly::fq;
 
-use crate::math::nums::{u32_divmod_u14, u32_mod_u14};
+const Q_SHIFT: i32 = Q as i32 / 2;
+const END_BYTES: usize = RQ_BYTES / 8;
+const MOD: usize = RQ_BYTES % 8;
 
-// TODO: target for improve!, add guard to avoid endless
-fn encode(out: &mut [u8], index: &mut usize, r: &[u16], m: &[u16], len: usize) {
-    if len == 1 {
-        let mut r_val = r[0] as u32;
-        let mut m_val = m[0] as u32;
-
-        while m_val > 1 {
-            match out.get_mut(*index) {
-                Some(v) => {
-                    *v = r_val as u8;
-                    *index += 1;
-                }
-                None => continue,
-            };
-            r_val >>= 8;
-            m_val = (m_val + 255) >> 8;
-        }
-    }
-
-    if len > 1 {
-        let mut r2 = vec![0; (len + 1) / 2];
-        let mut m2 = vec![0; (len + 1) / 2];
-        let mut i = 0;
-        while i < len - 1 {
-            let m0 = m[i] as u32;
-            let mut r_val = r[i] as u32 + (r[i + 1] as u32) * m0;
-            let mut m_val = (m[i + 1] as u32) * m0;
-
-            // while_inser(r_val, m_val, &mut out);
-            while m_val >= 16384 {
-                match out.get_mut(*index) {
-                    Some(v) => {
-                        *v = r_val as u8;
-                        *index += 1;
-                    }
-                    None => continue,
-                };
-                r_val >>= 8;
-                m_val = (m_val + 255) >> 8;
-            }
-            r2[i / 2] = r_val as u16;
-            m2[i / 2] = m_val as u16;
-            i += 2;
-        }
-        if i < len {
-            r2[i / 2] = r[i];
-            m2[i / 2] = m[i];
-        }
-
-        encode(out, index, &r2, &m2, (len + 1) / 2);
-    }
-}
-
-// TODO: target for improve!, add guard to avoid endless
-fn decode(out: &mut [u16], slice: &[u8], m: &[u16], len: usize) {
-    let mut s = slice;
-
-    if len == 1 {
-        if m[0] == 1 {
-            out[0] = 0;
-        } else if m[0] <= 256 {
-            out[0] = u32_mod_u14(s[0] as u32, m[0]);
-        } else {
-            out[0] = u32_mod_u14((s[0] as u32) + (((s[1] as u16) << 8) as u32), m[0]);
-        }
-    }
-    if len > 1 {
-        let mut r2 = vec![0u16; (len + 1) / 2];
-        let mut m2 = vec![0u16; (len + 1) / 2];
-        let mut bottomr = vec![0u16; len / 2];
-        let mut bottomt = vec![0u32; len / 2];
-        let mut i = 0;
-        while i < len - 1 {
-            let m_val = (m[i] as u32) * (m[i + 1] as u32);
-            if m_val > 256 * 16383 {
-                bottomt[i / 2] = 256 * 256;
-                bottomr[i / 2] = (s[0] as u16) + 256 * (s[1] as u16);
-                s = &s[2..];
-                m2[i / 2] = ((((m_val + 255) >> 8) + 255) >> 8) as u16;
-            } else if m_val >= 16384 {
-                bottomt[i / 2] = 256;
-                bottomr[i / 2] = s[0] as u16;
-                s = &s[1..];
-                m2[i / 2] = ((m_val + 255) >> 8) as u16;
-            } else {
-                bottomt[i / 2] = 1;
-                bottomr[i / 2] = 0;
-                m2[i / 2] = m_val as u16;
-            }
-
-            i += 2;
-        }
-        if i < len {
-            m2[i / 2] = m[i];
-        }
-        decode(&mut r2, &s, &m2, (len + 1) / 2);
-        i = 0;
-        while i < len - 1 {
-            let r = bottomr[i / 2] as u32 + bottomt[i / 2] * r2[i / 2] as u32;
-            let (mut r1, r0) = u32_divmod_u14(r, m[i]);
-
-            r1 = u32_mod_u14(r1, m[i + 1]) as u32;
-            out[i] = r0;
-            out[i + 1] = r1 as u16;
-            i += 2;
-        }
-        if i < len {
-            out[i] = r2[i / 2];
-        }
-    }
-}
-
-pub fn rq_encode(rq: &[i16; P]) -> [u8; RQ_BYTES] {
+pub fn encode(input: &[i16; P]) -> [u8; RQ_BYTES] {
     let mut out = [0u8; RQ_BYTES];
-    let mut r = [0u16; P];
-    let m = [Q as u16; P];
+    let mut f0: i32;
+    let mut f1: i32;
+    let mut f2: i32;
+    let mut f3: i32;
+    let mut f4: i32;
 
-    for i in 0..P {
-        r[i] = (rq[i] + Q12 as i16) as u16;
+    let mut j = 0;
+    let mut k = 0;
+
+    for _ in 0..END_BYTES {
+        f0 = input[j] as i32 + Q_SHIFT;
+        f1 = (input[j + 1] as i32 + Q_SHIFT) * 3;
+        f2 = (input[j + 2] as i32 + Q_SHIFT) * 9;
+        f3 = (input[j + 3] as i32 + Q_SHIFT) * 27;
+        f4 = (input[j + 4] as i32 + Q_SHIFT) * 81;
+
+        j += 5;
+
+        f0 += f1 << 11;
+        out[k] = f0 as u8;
+        f0 >>= 8;
+        out[k + 1] = f0 as u8;
+        f0 >>= 8;
+        f0 += f2 << 6;
+        out[k + 2] = f0 as u8;
+        f0 >>= 8;
+        out[k + 3] = f0 as u8;
+        f0 >>= 8;
+        f0 += f3 << 1;
+        out[k + 4] = f0 as u8;
+        f0 >>= 8;
+        f0 += f4 << 4;
+        out[k + 5] = f0 as u8;
+        f0 >>= 8;
+        out[k + 6] = f0 as u8;
+        f0 >>= 8;
+        out[k + 7] = f0 as u8;
+        k += 8;
     }
 
-    encode(&mut out, &mut 0, &r, &m, P);
+    if MOD == 0 {
+        return out;
+    } else if MOD == 2 {
+        f0 = input[j] as i32 + Q_SHIFT;
+
+        out[k] = f0 as u8;
+        out[k + 1] = (f0 >> 8) as u8;
+    } else if MOD == 3 {
+        f0 = input[j] as i32 + Q_SHIFT;
+        f1 = (input[j + 1] as i32 + Q_SHIFT) * 3;
+        f2 = (input[j + 2] as i32 + Q_SHIFT) * 9;
+
+        f0 += f1 << 11;
+
+        out[k] = f0 as u8;
+        f0 >>= 8;
+        out[k + 1] = f0 as u8;
+        f0 >>= 8;
+        f0 += f2 << 6;
+        out[k + 2] = f0 as u8;
+    }
 
     out
 }
 
-pub fn rq_decode(s: &[u8; RQ_BYTES]) -> [i16; P] {
-    let mut rq = [0i16; P];
-    let mut r = [0u16; P];
-    let m = [Q as u16; P];
+pub fn decode(input: &[u8; RQ_BYTES]) -> [i16; P] {
+    let mut out = [0i16; P];
+    let mut f0: u32;
+    let mut f1: u32;
+    let mut f2: u32;
+    let mut f3: u32;
+    let mut f4: u32;
 
-    decode(&mut r, s, &m, P);
+    let mut c0: u32;
+    let mut c1: u32;
+    let mut c2: u32;
+    let mut c3: u32;
+    let mut c4: u32;
+    let mut c5: u32;
+    let mut c6: u32;
+    let mut c7: u32;
 
-    for i in 0..P {
-        rq[i] = (r[i] as i16) - Q12 as i16;
+    let mut j = 0;
+    let mut k = 0;
+
+    for _ in 0..END_BYTES {
+        c0 = input[j] as u32;
+        c1 = input[j + 1] as u32;
+        c2 = input[j + 2] as u32;
+        c3 = input[j + 3] as u32;
+        c4 = input[j + 4] as u32;
+        c5 = input[j + 5] as u32;
+        c6 = input[j + 6] as u32;
+        c7 = input[j + 7] as u32;
+
+        j += 8;
+        c6 += c7 << 8;
+        f4 = (103_564 * c6 + 405 * (c5 + 1)) >> 19;
+        c5 += c6 << 8;
+        c5 -= (f4 * 81) << 4;
+        c4 += c5 << 8;
+        f3 = (9_709 * (c4 + 2)) >> 19;
+        c4 -= (f3 * 27) << 1;
+        c3 += c4 << 8;
+        f2 = (233_017 * c3 + 910 * (c2 + 2)) >> 19;
+        c2 += c3 << 8;
+        c2 -= (f2 * 9) << 6;
+        c1 += c2 << 8;
+        f1 = (21_845 * (c1 + 2) + 85 * c0) >> 19;
+        c1 -= (f1 * 3) << 3;
+        c0 += c1 << 8;
+        f0 = c0;
+
+        out[k] = fq::freeze((f0 + Q as u32 - Q_SHIFT as u32) as i32);
+        out[k + 1] = fq::freeze((f1 + Q as u32 - Q_SHIFT as u32) as i32);
+        out[k + 2] = fq::freeze((f2 + Q as u32 - Q_SHIFT as u32) as i32);
+        out[k + 3] = fq::freeze((f3 + Q as u32 - Q_SHIFT as u32) as i32);
+        out[k + 4] = fq::freeze((f4 + Q as u32 - Q_SHIFT as u32) as i32);
+
+        k += 5;
     }
 
-    rq
-}
+    if MOD == 0 {
+        return out;
+    } else if MOD == 2 {
+        c0 = input[j] as u32;
+        c1 = input[j + 1] as u32;
+        c0 += c1 << 8;
 
-pub fn rq_rounded_decode(s: &[u8; ROUNDED_BYTES]) -> [i16; P] {
-    let mut rq = [0i16; P];
-    let mut r = [0u16; P];
-    let m = [(Q as u16 + 2) / 3; P];
+        out[k] = fq::freeze((c0 + Q as u32 - Q_SHIFT as u32) as i32);
+    } else if MOD == 3 {
+        c0 = input[j] as u32;
+        c1 = input[j + 1] as u32;
+        c2 = input[j + 2] as u32;
 
-    decode(&mut r, s, &m, P);
+        c1 += c2 << 8;
+        f1 = (21_845 * (c1 + 2) + 85 * c0) >> 19;
+        c1 -= (f1 * 3) << 3;
+        c0 += c1 << 8;
+        f0 = c0;
 
-    for i in 0..P {
-        rq[i] = (r[i] as i16 * 3) - Q12 as i16;
+        out[k] = fq::freeze((f0 + Q as u32 - Q_SHIFT as u32) as i32);
+        out[k + 1] = fq::freeze((f1 + Q as u32 - Q_SHIFT as u32) as i32);
     }
 
-    rq
-}
-
-pub fn rq_rounded_encode(rq: &[i16; P]) -> [u8; ROUNDED_BYTES] {
-    let mut s = [0u8; ROUNDED_BYTES];
-    let mut r = [0u16; P];
-    let mut m = [0u16; P];
-
-    for i in 0..P {
-        let v32 = (rq[i] + Q12 as i16) as u32;
-        r[i] = ((v32 * 10923) >> 15) as u16;
-        m[i] = (Q as u16 + 2) / 3;
-    }
-
-    encode(&mut s, &mut 0, &r, &m, P);
-
-    s
+    out
 }
 
 #[cfg(test)]
-mod rq_decode_encode {
+mod tests_fq {
     use super::*;
-    use crate::poly::rq::Rq;
-    use crate::random::CommonRandom;
-    use crate::random::NTRURandom;
+    use crate::{
+        poly::rq::Rq,
+        random::{CommonRandom, NTRURandom},
+    };
 
     #[test]
-    fn test_rq_encode_rq_decode() {
-        let mut random: NTRURandom = NTRURandom::new();
-        let rq: Rq = Rq::from(random.short_random().unwrap()).recip3().unwrap();
-        let out = rq_encode(&rq.coeffs);
-        let dec = rq_decode(&out);
+    fn test_encode_decode() {
+        let mut rng = NTRURandom::new();
 
-        assert_eq!(dec, rq.coeffs);
-    }
+        for _ in 0..1 {
+            let coeffs = rng.short_random().unwrap();
+            let rq = Rq::from(coeffs);
 
-    #[test]
-    fn test_rounded_rq_encode_rq_decode() {
-        let content = "
-In the realm of digital night, Satoshi did conceive,
-A currency of cryptic might, for all to believe.
-In code and chains, he wove the tale,
-Of Bitcoin's birth, a revolution set to sail.
+            let bytes = encode(&rq.coeffs);
+            let res = decode(&bytes);
 
-A name unknown, a face unseen,
-Satoshi, a genius, behind the crypto machine.
-With whitepaper in hand and vision so clear,
-He birthed a new era, without any fear.
+            // println!("{:?}",bytes);
 
-Decentralized ledger, transparent and free,
-Bitcoin emerged, for the world to see.
-Mining for coins, nodes in a network,
-A financial system, no central clerk.
-
-The world was skeptical, yet curiosity grew,
-As Bitcoin's value steadily blew.
-From pennies to thousands, a meteoric rise,
-Satoshi's creation took us by surprise.
-
-But Nakamoto vanished, into the digital mist,
-Leaving behind a legacy, a cryptocurrency twist.
-In the hearts of hodlers, Satoshi's name lives on,
-A symbol of innovation, in the crypto dawn.
-";
-        let mut bytes: [u8; ROUNDED_BYTES] = [0u8; ROUNDED_BYTES];
-
-        for i in 0..content.as_bytes().len() {
-            bytes[i] = content.as_bytes()[i];
+            assert_eq!(rq.coeffs, res);
         }
-
-        let rq = rq_rounded_decode(&bytes);
-        let res_bytes = rq_rounded_encode(&rq);
-        let res_content = res_bytes[..content.as_bytes().len()].to_vec();
-        let res_str = String::from_utf8(res_content).unwrap();
-
-        assert_eq!(res_str, content);
     }
 }
-

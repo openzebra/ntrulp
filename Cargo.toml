@@ -36,3 +36,7 @@ criterion = "0.3"
 # [[bench]]
 # name = "rq"
 # harness = false
+
+[[bench]]
+name = "fq_encode"
+harness = false

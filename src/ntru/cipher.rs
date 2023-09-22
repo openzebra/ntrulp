@@ -22,8 +22,7 @@ pub fn rq_decrypt(c: &Rq, f: &Rq, ginv: &R3) -> R3 {
     let cf3: Rq = cf.mult3();
     let e: R3 = cf3.r3_from_rq();
     let ev: R3 = e.mult(&ginv);
-    #[allow(unused_assignments)]
-    let mut mask: i16 = 0;
+    let mask: i16;
 
     mask = weightw_mask(&ev.coeffs); // 0 if weight w, else -1
 
