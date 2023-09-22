@@ -28,6 +28,7 @@ pub trait CommonRandom {
     fn urandom32(&mut self) -> u32;
     fn random_range_3(&mut self) -> i8;
     fn randombytes<const SIZE: usize>(&mut self) -> [u8; SIZE];
+    fn random_sign(&mut self) -> i8;
 }
 
 enum RngOptions {
@@ -51,6 +52,13 @@ impl RngOptions {
             RngOptions::Thread(rng) => {
                 rng.fill(bytes);
             }
+        }
+    }
+
+    pub fn random_bool(&mut self) -> bool {
+        match self {
+            RngOptions::Seed(rng) => rng.gen::<bool>(),
+            RngOptions::Thread(rng) => rng.gen::<bool>(),
         }
     }
 }
@@ -93,6 +101,14 @@ impl CommonRandom for NTRURandom {
         let c3 = self.rng.gen_u8() as u32;
 
         c0 + 256 * c1 + 65536 * c2 + 16777216 * c3
+    }
+
+    fn random_sign(&mut self) -> i8 {
+        if self.rng.random_bool() {
+            1
+        } else {
+            -1
+        }
     }
 
     fn random_range_3(&mut self) -> i8 {
@@ -240,4 +256,3 @@ mod tests {
         }
     }
 }
-

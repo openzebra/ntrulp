@@ -20,6 +20,15 @@ fn encoder_benchmark(cb: &mut Criterion) {
             rq::decode(&bytes);
         });
     });
+    cb.bench_function("native_decode", |b| {
+        b.iter(|| {
+            let mut list = Vec::new();
+
+            for v in rq.coeffs {
+                list.extend_from_slice(&v.to_be_bytes());
+            }
+        });
+    });
 }
 
 criterion_group!(benches, encoder_benchmark);
