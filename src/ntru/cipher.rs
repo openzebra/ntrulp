@@ -18,6 +18,59 @@ use crate::{
     poly::{f3::round, r3::R3, rq::Rq},
 };
 
+/// Decrypts a polynomial in the Fq field using a private key.
+///
+/// The `rq_decrypt` function takes two parameters:
+/// - `c`: The ciphertext polynomial that needs to be decrypted.
+/// - `priv_key`: The private key used for decryption.
+///
+/// # Arguments
+///
+/// - `c`: The ciphertext polynomial to be decrypted.
+/// - `priv_key`: The private key used for decryption.
+///
+/// # Returns
+///
+/// Returns the decrypted polynomial as a result of applying the private key to the ciphertext.
+///
+/// # Example
+///
+/// ```rust
+/// #[cfg(feature = "ntrulpr1013")]
+/// use ntrulp::params::params1013::P;
+/// #[cfg(feature = "ntrulpr1277")]
+/// use ntrulp::params::params1277::P;
+/// #[cfg(feature = "ntrulpr653")]
+/// use ntrulp::params::params653::P;
+/// #[cfg(feature = "ntrulpr761")]
+/// use ntrulp::params::params761::P;
+/// #[cfg(feature = "ntrulpr857")]
+/// use ntrulp::params::params857::P;
+/// #[cfg(feature = "ntrulpr953")]
+/// use ntrulp::params::params953::P;
+/// use ntrulp::key::priv_key::PrivKey;
+/// use ntrulp::poly::rq::Rq;
+/// use ntrulp::poly::r3::R3;
+/// use ntrulp::ntru::cipher::rq_decrypt;
+/// use ntrulp::random::{CommonRandom, NTRURandom};
+///
+/// let mut random: NTRURandom = NTRURandom::new();
+/// let f = Rq::from(random.short_random().unwrap());
+/// let g = R3::from(random.random_small().unwrap());
+///
+/// // Generate the ciphertext polynomial c and the private key priv_key
+/// let c = Rq::from(random.short_random().unwrap());
+/// let priv_key = PrivKey::compute(&f, &g).unwrap();
+///
+/// // Decrypt the ciphertext polynomial
+/// let decrypted_poly = rq_decrypt(&c, &priv_key);
+/// ```
+///
+/// # Notes
+///
+/// This function decrypts a ciphertext polynomial `c` using a private key `priv_key`
+/// and returns the decrypted polynomial.
+///
 pub fn rq_decrypt(c: &Rq, priv_key: &PrivKey) -> R3 {
     let f = &priv_key.0;
     let ginv = &priv_key.1;
