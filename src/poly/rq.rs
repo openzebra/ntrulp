@@ -249,9 +249,9 @@ impl Rq {
         let mut out = [0i16; P];
 
         for i in 0..P {
-            let x = num * self.coeffs[i];
+            let x = (num * self.coeffs[i]) as i32;
 
-            out[i] = x;
+            out[i] = fq::freeze(x);
         }
 
         Rq::from(out)
