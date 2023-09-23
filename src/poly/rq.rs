@@ -109,10 +109,10 @@ impl Rq {
     /// use ntrulp::random::{CommonRandom, NTRURandom};
     /// use ntrulp::poly::rq::Rq;
     ///
-    /// const RATIO: usize = 1;
+    /// const RATIO: i16 = 1;
     /// let mut random: NTRURandom = NTRURandom::new();
     /// let rq: Rq = Rq::from(random.short_random().unwrap());
-    /// let out = rq.recip::<1>().unwrap();
+    /// let out = rq.recip::<RATIO>().unwrap();
     /// let h = out.mult_r3(&rq.r3_from_rq());
     ///
     /// assert!(h.eq_one());
@@ -238,9 +238,9 @@ impl Rq {
         let mut out = [0i16; P];
 
         for i in 0..P {
-            let x = (num * self.coeffs[i]) as i32;
+            let x = num * self.coeffs[i];
 
-            out[i] = fq::freeze(x);
+            out[i] = x;
         }
 
         Rq::from(out)
@@ -264,23 +264,23 @@ mod test_rq {
 
     #[test]
     fn test_mult_int() {
+        let mut random: NTRURandom = NTRURandom::new();
+        let num = random.randombytes::<5>()[2] as i16;
         let rq: Rq = Rq::from([1_i16; P]);
-        let out = rq.mult_int(3);
+        let out = rq.mult_int(num);
 
         for i in 0..P {
-            assert_eq!(out.coeffs[i], 3);
+            assert_eq!(out.coeffs[i], num);
         }
     }
 
     #[test]
     fn test_recip() {
-        const RATIO: usize = 1;
+        const RATIO: i16 = 1;
         let mut random: NTRURandom = NTRURandom::new();
         let rq: Rq = Rq::from(random.short_random().unwrap());
-        let out = rq.recip::<1>().unwrap();
+        let out = rq.recip::<RATIO>().unwrap();
         let h = out.mult_r3(&rq.r3_from_rq());
-
-        println!("{:?}", h);
 
         assert!(h.eq_one());
     }

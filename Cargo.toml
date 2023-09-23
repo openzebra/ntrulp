@@ -10,7 +10,7 @@ license-file = "LICENSE"
 keywords = ["NTRU", "rust", "ideal-lattice-based", "cryptography"]
 
 [features]
-default = ["ntrulpr761"]
+default = ["ntrulpr653"]
 ntrulpr653 = []
 ntrulpr761 = []
 ntrulpr857 = []
@@ -32,10 +32,10 @@ criterion = "0.3"
 # [[bench]]
 # name = "chipher"
 # harness = false
-#
-# [[bench]]
-# name = "rq"
-# harness = false
+
+[[bench]]
+name = "rq"
+harness = false
 
 [[bench]]
 name = "fq_encode"
