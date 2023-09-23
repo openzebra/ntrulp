@@ -20,10 +20,6 @@ use crate::{
 
 /// Decrypts a polynomial in the Fq field using a private key.
 ///
-/// The `rq_decrypt` function takes two parameters:
-/// - `c`: The ciphertext polynomial that needs to be decrypted.
-/// - `priv_key`: The private key used for decryption.
-///
 /// # Arguments
 ///
 /// - `c`: The ciphertext polynomial to be decrypted.
@@ -58,7 +54,7 @@ use crate::{
 /// let f = Rq::from(random.short_random().unwrap());
 /// let g = R3::from(random.random_small().unwrap());
 ///
-/// // Generate the ciphertext polynomial c and the private key priv_key
+/// // Generate the ciphertext polynomial c and the private key
 /// let c = Rq::from(random.short_random().unwrap());
 /// let priv_key = PrivKey::compute(&f, &g).unwrap();
 ///
@@ -94,6 +90,60 @@ pub fn rq_decrypt(c: &Rq, priv_key: &PrivKey) -> R3 {
     R3::from(r)
 }
 
+/// Encrypts a polynomial in the F3 field using a public key in the Fq field.
+///
+/// # Arguments
+///
+/// - `r`: The polynomial to be encrypted in the F3 field.
+/// - `pub_key`: The public key used for encryption in the Fq field.
+///
+/// # Returns
+///
+/// Returns the ciphertext polynomial as a result of applying the public key to `r`.
+///
+/// # Example
+///
+/// ```rust
+/// #[cfg(feature = "ntrulpr1013")]
+/// use ntrulp::params::params1013::P;
+/// #[cfg(feature = "ntrulpr1277")]
+/// use ntrulp::params::params1277::P;
+/// #[cfg(feature = "ntrulpr653")]
+/// use ntrulp::params::params653::P;
+/// #[cfg(feature = "ntrulpr761")]
+/// use ntrulp::params::params761::P;
+/// #[cfg(feature = "ntrulpr857")]
+/// use ntrulp::params::params857::P;
+/// #[cfg(feature = "ntrulpr953")]
+/// use ntrulp::params::params953::P;
+/// use ntrulp::key::priv_key::PrivKey;
+/// use ntrulp::poly::rq::Rq;
+/// use ntrulp::poly::r3::R3;
+/// use ntrulp::ntru::cipher::rq_decrypt;
+/// use ntrulp::ntru::cipher::r3_encrypt;
+/// use ntrulp::key::pub_key::PubKey;
+/// use ntrulp::random::{CommonRandom, NTRURandom};
+///
+/// let mut random: NTRURandom = NTRURandom::new();
+/// let f = Rq::from(random.short_random().unwrap());
+/// let g = R3::from(random.random_small().unwrap());
+///
+/// // Generate an content for encrypt
+/// let r: R3 = Rq::from(random.short_random().unwrap()).r3_from_rq();
+///
+/// // Generate the private key priv_key
+/// let priv_key = PrivKey::compute(&f, &g).unwrap();
+/// let pub_key = PubKey::from_sk(&priv_key).unwrap();
+///
+/// let encrypted = r3_encrypt(&r, &pub_key);
+/// let decrypted = rq_decrypt(&encrypted, &priv_key);
+/// ```
+///
+/// # Notes
+///
+/// This function encrypts a polynomial `r` in the F3 field using a public key `pub_key`
+/// in the Fq field and returns the ciphertext polynomial.
+///
 pub fn r3_encrypt(r: &R3, pub_key: &PubKey) -> Rq {
     let mut hr = pub_key.mult_r3(&r);
 
