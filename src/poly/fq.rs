@@ -50,25 +50,20 @@ mod tests_fq {
 
     #[test]
     fn test_freeze() {
-        use rand::prelude::*;
-
-        let mut rng = thread_rng();
-
         fn test_freeze(a: i32) -> i16 {
             let mut b = a;
             let q = Q as i32;
+            let rq = RQ_FREEZE;
 
             b -= q * ((228 * b) >> 20);
-            b -= q * ((RQ_FREEZE * b + 134_217_728) >> 28);
+            b -= q * ((rq * b + 134_217_728) >> 28);
 
             b as i16
         }
 
-        for _ in i16::MIN..i16::MAX {
-            let r = rng.gen::<i16>() as i32;
-
-            let t1 = test_freeze(r);
-            let t2 = freeze(r);
+        for n in 0..i16::MAX {
+            let t1 = test_freeze(n as i32);
+            let t2 = freeze(n as i32);
 
             assert_eq!(t2, t1);
         }
