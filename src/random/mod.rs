@@ -217,9 +217,16 @@ mod tests {
 
         for _ in 0..100 {
             let r = random.short_random().unwrap();
+            let mut sum = 0;
 
             assert!(r.len() == P);
             assert!(r.contains(&-1) && r.contains(&0) && r.contains(&1));
+
+            for el in r {
+                sum += el.abs();
+            }
+
+            assert_eq!(sum as usize, W);
         }
     }
 
