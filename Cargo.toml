@@ -44,3 +44,7 @@ harness = false
 [[bench]]
 name = "fq_encode"
 harness = false
+
+[[bench]]
+name = "kem"
+harness = false
