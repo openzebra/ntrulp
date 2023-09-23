@@ -10,7 +10,7 @@ license-file = "LICENSE"
 keywords = ["NTRU", "rust", "ideal-lattice-based", "cryptography"]
 
 [features]
-default = ["ntrulpr653"]
+default = ["ntrulpr761"]
 ntrulpr653 = []
 ntrulpr761 = []
 ntrulpr857 = []

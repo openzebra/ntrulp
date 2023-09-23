@@ -218,7 +218,18 @@ impl Rq {
     /// # Example
     ///
     /// ```
+    /// #[cfg(feature = "ntrulpr1013")]
+    /// use ntrulp::params::params1013::P;
+    /// #[cfg(feature = "ntrulpr1277")]
+    /// use ntrulp::params::params1277::P;
+    /// #[cfg(feature = "ntrulpr653")]
+    /// use ntrulp::params::params653::P;
+    /// #[cfg(feature = "ntrulpr761")]
     /// use ntrulp::params::params761::P;
+    /// #[cfg(feature = "ntrulpr857")]
+    /// use ntrulp::params::params857::P;
+    /// #[cfg(feature = "ntrulpr953")]
+    /// use ntrulp::params::params953::P;
     /// use ntrulp::random::{CommonRandom, NTRURandom};
     /// use ntrulp::poly::rq::Rq;
     ///
