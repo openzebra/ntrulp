@@ -17,18 +17,18 @@ use crate::{
     poly::{errors::KemErrors, r3::R3, rq::Rq},
 };
 
-pub struct PrivKey(Rq, R3);
+pub struct PrivKey(R3, R3);
 
 impl PrivKey {
-    pub fn compute(f: Rq, g: &R3) -> Result<Self, KemErrors> {
+    pub fn compute(f: &Rq, g: &R3) -> Result<Self, KemErrors> {
         let ginv = g.recip()?;
 
-        Ok(PrivKey(f, ginv))
+        Ok(PrivKey(f.r3_from_rq(), ginv))
     }
 
     pub fn as_bytes(&self) -> [u8; SECRETKEYS_BYTES] {
         let mut sk = [0u8; SECRETKEYS_BYTES];
-        let f = &self.0.r3_from_rq();
+        let f = &self.0;
         let ginv = &self.1.coeffs;
         let f_bytes = r3::r3_encode(&f.coeffs);
         let ginv_bytes = r3::r3_encode(ginv);
@@ -51,7 +51,7 @@ impl PrivKey {
         };
 
         let ginv = R3::from(r3::r3_decode(&ginv_bytes));
-        let f = R3::from(r3::r3_decode(&f_bytes)).rq_from_r3();
+        let f = R3::from(r3::r3_decode(&f_bytes));
 
         Ok(PrivKey(f, ginv))
     }
@@ -70,7 +70,7 @@ mod test_private_key {
         for _ in 0..2 {
             let f: Rq = Rq::from(random.short_random().unwrap());
             let g: R3 = R3::from(random.random_small().unwrap());
-            let secret_key = PrivKey::compute(f, &g).unwrap();
+            let secret_key = PrivKey::compute(&f, &g).unwrap();
             let bytes = secret_key.as_bytes();
             let new_secret_key = match PrivKey::import(&bytes) {
                 Ok(v) => v,
