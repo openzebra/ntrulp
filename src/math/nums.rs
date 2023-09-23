@@ -100,18 +100,6 @@ pub fn weightw_mask(r: &[i8; P]) -> i16 {
 }
 
 #[test]
-fn test_weightw_mask() {
-    // TODO: make test
-    // let r1: [i8; P] = [1, 1, 0, 0, 1, 0, 1, 1];
-    //
-    // assert_eq!(weightw_mask(&r1), -1);
-    //
-    // let r2: [i8; P] = [1, 0, 0, 0, 1, 0, 1, 1];
-    //
-    // assert_eq!(weightw_mask(&r2), 0);
-}
-
-#[test]
 fn test_i32_divmod_u14() {
     assert_eq!(i32_divmod_u14(100, 30), (3, 10));
     assert_eq!(i32_divmod_u14(-100, 30), (4294967292, 20)); // Assuming V = 0
@@ -138,4 +126,3 @@ fn test_nonzero_mask() {
     assert_eq!(i16_nonzero_mask(12345), -1);
     assert_eq!(i16_nonzero_mask(-12345), -1);
 }
-
