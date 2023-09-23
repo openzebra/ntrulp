@@ -10,7 +10,7 @@ license-file = "LICENSE"
 keywords = ["NTRU", "rust", "ideal-lattice-based", "cryptography"]
 
 [features]
-default = ["ntrulpr1277"]
+default = ["ntrulpr761"]
 ntrulpr653 = []
 ntrulpr761 = []
 ntrulpr857 = []
@@ -47,4 +47,8 @@ harness = false
 
 [[bench]]
 name = "kem"
+harness = false
+
+[[bench]]
+name = "cipher"
 harness = false
