@@ -38,5 +38,9 @@ name = "rq"
 harness = false
 
 [[bench]]
+name = "r3"
+harness = false
+
+[[bench]]
 name = "fq_encode"
 harness = false
