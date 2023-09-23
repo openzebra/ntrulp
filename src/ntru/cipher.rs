@@ -19,7 +19,7 @@ use crate::{
 pub fn rq_decrypt(c: &Rq, f: &Rq, ginv: &R3) -> R3 {
     let mut r = [0i8; P];
     let cf: Rq = c.mult_r3(&f.r3_from_rq());
-    let cf3: Rq = cf.mult3();
+    let cf3: Rq = cf.mult_int(3);
     let e: R3 = cf3.r3_from_rq();
     let ev: R3 = e.mult(&ginv);
     let mask: i16;

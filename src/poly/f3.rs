@@ -33,7 +33,9 @@ fn test_round() {
     use crate::random::NTRURandom;
 
     let mut random: NTRURandom = NTRURandom::new();
-    let mut r3: Rq = Rq::from(random.short_random().unwrap()).recip3().unwrap();
+    let mut r3: Rq = Rq::from(random.short_random().unwrap())
+        .recip::<3>()
+        .unwrap();
 
     fn round3(h: &mut [i16; 761]) {
         let f: [i16; 761] = *h;
@@ -74,4 +76,3 @@ fn test_freeze() {
         assert_eq!(t2, t1);
     }
 }
-

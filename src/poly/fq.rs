@@ -67,4 +67,3 @@ mod tests_fq {
         assert_eq!(recip(-42), recip(42) * -1);
     }
 }
-

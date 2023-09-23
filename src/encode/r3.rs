@@ -14,7 +14,7 @@ use crate::random::CommonRandom;
 use crate::random::NTRURandom;
 
 pub const BITS_SIZE: usize = 6;
-pub const ENTROPY_NUMS: usize = 6;
+const EMPTY: [i8; BITS_SIZE] = [0i8; BITS_SIZE];
 
 fn convert_to_ternary(num: u8) -> [i8; BITS_SIZE] {
     let mut result = [0i8; BITS_SIZE];
@@ -114,7 +114,6 @@ pub fn r3_decode_chunks(bytes: &[u8]) -> Vec<i8> {
 }
 
 pub fn r3_encode_chunks(r3: &[i8]) -> Vec<u8> {
-    const EMPTY: [i8; BITS_SIZE] = [0i8; BITS_SIZE];
     let mut output: Vec<u8> = Vec::new();
 
     for chunk in r3.chunks(BITS_SIZE) {
@@ -141,8 +140,6 @@ pub fn r3_merge_w_chunks<const P: usize>(chunks: &[[i8; P]], size: &[usize]) -> 
 
 // size is array with last index
 pub fn r3_split_w_chunks(input: &[i8], rng: &mut NTRURandom) -> (Vec<[i8; P]>, Vec<usize>) {
-    // TODO: add entropy bytes for more hard statistical analysis
-    // const LIMIT: usize = W - ENTROPY_NUMS;
     let mut chunks: Vec<[i8; P]> = Vec::new();
     let mut size = Vec::new();
     let mut part = [0i8; P];
