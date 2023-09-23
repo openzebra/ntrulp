@@ -6,7 +6,6 @@ pub mod params653 {
     pub const Q12: usize = (Q - 1) / 2;
     pub const R3_BYTES: usize = (P + 3) / 4;
     pub const RQ_BYTES: usize = P * 2;
-    pub const RQ_FREEZE: i32 = 58_078;
 }
 
 #[cfg(feature = "ntrulpr761")]
@@ -17,7 +16,6 @@ pub mod params761 {
     pub const Q12: usize = (Q - 1) / 2;
     pub const R3_BYTES: usize = (P + 3) / 4;
     pub const RQ_BYTES: usize = P * 2;
-    pub const RQ_FREEZE: i32 = 58_470;
 }
 
 #[cfg(feature = "ntrulpr857")]
@@ -28,7 +26,6 @@ pub mod params857 {
     pub const Q12: usize = (Q - 1) / 2;
     pub const R3_BYTES: usize = (P + 3) / 4;
     pub const RQ_BYTES: usize = P * 2;
-    pub const RQ_FREEZE: i32 = 51_949;
 }
 
 #[cfg(feature = "ntrulpr953")]
@@ -39,7 +36,6 @@ pub mod params953 {
     pub const Q12: usize = (Q - 1) / 2;
     pub const R3_BYTES: usize = (P + 3) / 4;
     pub const RQ_BYTES: usize = P * 2;
-    pub const RQ_FREEZE: i32 = 42_319;
 }
 
 #[cfg(feature = "ntrulpr1013")]
@@ -50,7 +46,6 @@ pub mod params1013 {
     pub const Q12: usize = (Q - 1) / 2;
     pub const R3_BYTES: usize = (P + 3) / 4;
     pub const RQ_BYTES: usize = P * 2;
-    pub const RQ_FREEZE: i32 = 37_402;
 }
 
 #[cfg(feature = "ntrulpr1277")]
@@ -61,5 +56,4 @@ pub mod params1277 {
     pub const Q12: usize = (Q - 1) / 2;
     pub const R3_BYTES: usize = (P + 3) / 4;
     pub const RQ_BYTES: usize = P * 2;
-    pub const RQ_FREEZE: i32 = 34_069;
 }

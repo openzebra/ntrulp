@@ -35,7 +35,19 @@ pub fn recip(a1: i16) -> i16 {
 mod tests_fq {
     use super::*;
 
+    #[cfg(feature = "ntrulpr653")]
+    const RQ_FREEZE: i32 = 58_078;
     #[cfg(feature = "ntrulpr761")]
+    const RQ_FREEZE: i32 = 58_470;
+    #[cfg(feature = "ntrulpr857")]
+    const RQ_FREEZE: i32 = 51_949;
+    #[cfg(feature = "ntrulpr953")]
+    const RQ_FREEZE: i32 = 42_319;
+    #[cfg(feature = "ntrulpr1013")]
+    const RQ_FREEZE: i32 = 37_402;
+    #[cfg(feature = "ntrulpr1277")]
+    const RQ_FREEZE: i32 = 34_069;
+
     #[test]
     fn test_freeze() {
         use rand::prelude::*;
@@ -44,14 +56,15 @@ mod tests_fq {
 
         fn test_freeze(a: i32) -> i16 {
             let mut b = a;
+            let q = Q as i32;
 
-            b -= 4_591 * ((228 * b) >> 20);
-            b -= 4_591 * ((58_470 * b + 134_217_728) >> 28);
+            b -= q * ((228 * b) >> 20);
+            b -= q * ((RQ_FREEZE * b + 134_217_728) >> 28);
 
             b as i16
         }
 
-        for _ in 0..1000 {
+        for _ in i16::MIN..i16::MAX {
             let r = rng.gen::<i16>() as i32;
 
             let t1 = test_freeze(r);
