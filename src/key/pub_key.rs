@@ -46,7 +46,7 @@ use crate::{
 /// use ntrulp::key::pub_key::PubKey;
 ///
 /// let mut random: NTRURandom = NTRURandom::new();
-/// // Create an Fq polynomial fq and a 3 polynomial g3
+/// // Create an Fq polynomial fq and a g3 polynomial g3
 /// let fq = Rq::from(random.short_random().unwrap());
 /// let g3 = R3::from(random.random_small().unwrap());
 /// // Compute the public key

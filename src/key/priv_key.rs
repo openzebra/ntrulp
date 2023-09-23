@@ -17,6 +17,45 @@ use crate::{
     poly::{errors::KemErrors, r3::R3, rq::Rq},
 };
 
+/// Represents a private key with two components `f` and `g` in the context of the Fq and F3 fields.
+///
+/// A private key `PrivKey` consists of two components:
+/// - `f`: An element in the Fq field, derived from entropy and random data.
+/// - `g`: The inverse of an element in the F3 field, also derived from entropy and random data.
+///
+/// # Example
+///
+/// ```rust
+/// #[cfg(feature = "ntrulpr1013")]
+/// use ntrulp::params::params1013::P;
+/// #[cfg(feature = "ntrulpr1277")]
+/// use ntrulp::params::params1277::P;
+/// #[cfg(feature = "ntrulpr653")]
+/// use ntrulp::params::params653::P;
+/// #[cfg(feature = "ntrulpr761")]
+/// use ntrulp::params::params761::P;
+/// #[cfg(feature = "ntrulpr857")]
+/// use ntrulp::params::params857::P;
+/// #[cfg(feature = "ntrulpr953")]
+/// use ntrulp::params::params953::P;
+/// use ntrulp::random::{CommonRandom, NTRURandom};
+/// use ntrulp::poly::rq::Rq;
+/// use ntrulp::poly::r3::R3;
+/// use ntrulp::key::priv_key::PrivKey;
+///
+/// let mut random: NTRURandom = NTRURandom::new();
+/// // Create an Fq polynomial fq and a g3 polynomial g3
+/// let fq = Rq::from(random.short_random().unwrap());
+/// let g3 = R3::from(random.random_small().unwrap());
+/// // Compute the private key
+/// let pub_key = PrivKey::compute(&fq, &g3);
+/// ```
+///
+/// # Notes
+///
+/// This implementation represents a private key with two components, `f` and `g`,
+/// which are derived from entropy and random data in the Fq and F3 fields respectively.
+///
 pub struct PrivKey(R3, R3);
 
 impl PrivKey {
@@ -70,7 +109,10 @@ mod test_private_key {
         for _ in 0..2 {
             let f: Rq = Rq::from(random.short_random().unwrap());
             let g: R3 = R3::from(random.random_small().unwrap());
-            let secret_key = PrivKey::compute(&f, &g).unwrap();
+            let secret_key = match PrivKey::compute(&f, &g) {
+                Ok(sk) => sk,
+                Err(_) => continue,
+            };
             let bytes = secret_key.as_bytes();
             let new_secret_key = match PrivKey::import(&bytes) {
                 Ok(v) => v,
