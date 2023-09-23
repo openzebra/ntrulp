@@ -17,6 +17,8 @@ use crate::{
     poly::{errors::KemErrors, r3::R3, rq::Rq},
 };
 
+use super::priv_key::PrivKey;
+
 /// Represents a public key in the context of a polynomial in the Fq field.
 ///
 /// A public key `PubKey` is formed as the result of a polynomial operation in the Fq field.
@@ -44,6 +46,7 @@ use crate::{
 /// use ntrulp::poly::rq::Rq;
 /// use ntrulp::poly::r3::R3;
 /// use ntrulp::key::pub_key::PubKey;
+/// use ntrulp::key::priv_key::PrivKey;
 ///
 /// let mut random: NTRURandom = NTRURandom::new();
 /// // Create an Fq polynomial fq and a g3 polynomial g3
@@ -51,6 +54,9 @@ use crate::{
 /// let g3 = R3::from(random.random_small().unwrap());
 /// // Compute the public key
 /// let pub_key = PubKey::compute(&fq, &g3).unwrap();
+/// // Compute the private key
+/// let priv_key = PrivKey::compute(&fq, &g3).unwrap();
+/// let load_from_sk = PubKey::from_sk(&priv_key);
 /// ```
 ///
 /// # Notes
@@ -65,6 +71,16 @@ impl PubKey {
         let finv = f.recip::<3>()?;
 
         Ok(finv.mult_r3(&g))
+    }
+
+    pub fn from_sk(priv_key: &PrivKey) -> Result<Self, KemErrors> {
+        let f = priv_key.0.rq_from_r3();
+        let ginv = &priv_key.1;
+        let g = ginv.recip()?;
+        let finv = f.recip::<3>()?;
+        let h = finv.mult_r3(&g);
+
+        Ok(h)
     }
 
     pub fn import(bytes: &[u8; PUBLICKEYS_BYTES]) -> Result<Self, NTRUErrors> {
@@ -103,5 +119,25 @@ mod test_pub_key {
 
             assert_eq!(new_pub_key.coeffs, pub_key.coeffs);
         }
+    }
+
+    #[test]
+    fn test_from_sk() {
+        let mut random: NTRURandom = NTRURandom::new();
+        let f: Rq = Rq::from(random.short_random().unwrap());
+        let mut g: R3;
+
+        let sk = loop {
+            g = R3::from(random.random_small().unwrap());
+
+            match PrivKey::compute(&f, &g) {
+                Ok(s) => break s,
+                Err(_) => continue,
+            };
+        };
+        let pub_key_from_entropy = PubKey::compute(&f, &g).unwrap();
+        let pub_key_from_sk = PubKey::from_sk(&sk).unwrap();
+
+        assert_eq!(pub_key_from_sk.coeffs, pub_key_from_entropy.coeffs);
     }
 }

@@ -48,7 +48,7 @@ use crate::{
 /// let fq = Rq::from(random.short_random().unwrap());
 /// let g3 = R3::from(random.random_small().unwrap());
 /// // Compute the private key
-/// let pub_key = PrivKey::compute(&fq, &g3);
+/// let priv_key = PrivKey::compute(&fq, &g3);
 /// ```
 ///
 /// # Notes
@@ -56,7 +56,7 @@ use crate::{
 /// This implementation represents a private key with two components, `f` and `g`,
 /// which are derived from entropy and random data in the Fq and F3 fields respectively.
 ///
-pub struct PrivKey(R3, R3);
+pub struct PrivKey(pub R3, pub R3);
 
 impl PrivKey {
     pub fn compute(f: &Rq, g: &R3) -> Result<Self, KemErrors> {
