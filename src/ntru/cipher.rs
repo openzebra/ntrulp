@@ -50,3 +50,36 @@ pub fn r3_encrypt<
 
     Rq::from(hr.coeffs)
 }
+
+#[test]
+fn test_decrypt_encrypt() {
+    use crate::{
+        kem::{r3::R3, rq::Rq},
+        random::{CommonRandom, NTRURandom},
+    };
+
+    const P: usize = 1013;
+    const Q: usize = 7177;
+    const W: usize = 448;
+    const Q12: usize = (Q - 1) / 2;
+    const P_PLUS_ONE: usize = P + 1;
+    const RQ_BYTES: usize = 1623;
+    const P_TWICE_MINUS_ONE: usize = P + P - 1;
+    const ROUNDED_BYTES: usize = 1423;
+
+    let mut rng: NTRURandom<P> = NTRURandom::new();
+
+    let r = Rq::from(rng.short_random(W).unwrap()).r3_from_rq();
+    let short_entropy = rng.short_random(W).unwrap();
+    let small_entropy = rng.random_small().unwrap();
+    let f: Rq<P, Q, Q12> = Rq::from(short_entropy);
+    let g: R3<P, Q, Q12> = R3::from(small_entropy);
+    let finv = f.recip3::<P_PLUS_ONE>().unwrap();
+    let ginv = g.recip::<P_PLUS_ONE>().unwrap();
+    let h = finv.mult_r3::<P_TWICE_MINUS_ONE>(&g);
+
+    let enc = r3_encrypt::<P, Q, Q12, P_TWICE_MINUS_ONE>(&r, &h);
+    let dec = rq_decrypt::<P, Q, W, Q12, P_TWICE_MINUS_ONE>(&enc, &f, &ginv);
+
+    assert_eq!(dec.coeffs, r.coeffs);
+}
