@@ -91,11 +91,17 @@ fn unpack_bytes<'a>(bytes: &[u8]) -> Result<(Vec<u8>, Vec<usize>, usize), NTRUEr
 ///
 /// let mut random: NTRURandom = NTRURandom::new();
 /// let f = Rq::from(random.short_random().unwrap());
-/// let g = R3::from(random.random_small().unwrap());
+/// let mut g: R3;
 ///
 /// // Generate the ciphertext polynomial c and the private key
 /// let c = Rq::from(random.short_random().unwrap());
-/// let priv_key = PrivKey::compute(&f, &g).unwrap();
+/// let priv_key = loop {
+///     g = R3::from(random.random_small().unwrap());
+///     match PrivKey::compute(&f, &g) {
+///         Ok(s) => break s,
+///         Err(_) => continue,
+///     };
+/// };
 ///
 /// // Decrypt the ciphertext polynomial
 /// let decrypted_poly = rq_decrypt(&c, &priv_key);
@@ -165,13 +171,19 @@ pub fn rq_decrypt(c: &Rq, priv_key: &PrivKey) -> R3 {
 ///
 /// let mut random: NTRURandom = NTRURandom::new();
 /// let f = Rq::from(random.short_random().unwrap());
-/// let g = R3::from(random.random_small().unwrap());
+/// let mut g: R3;
 ///
 /// // Generate an content for encrypt
 /// let r: R3 = Rq::from(random.short_random().unwrap()).r3_from_rq();
 ///
 /// // Generate the private key priv_key
-/// let priv_key = PrivKey::compute(&f, &g).unwrap();
+/// let priv_key = loop {
+///     g = R3::from(random.random_small().unwrap());
+///     match PrivKey::compute(&f, &g) {
+///         Ok(s) => break s,
+///         Err(_) => continue,
+///     };
+/// };
 /// let pub_key = PubKey::from_sk(&priv_key).unwrap();
 ///
 /// let encrypted = r3_encrypt(&r, &pub_key);
