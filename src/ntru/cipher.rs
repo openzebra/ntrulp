@@ -1,3 +1,7 @@
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
+use std::thread;
+
 use crate::encode::{r3, rq};
 #[cfg(feature = "ntrulpr1013")]
 use crate::params::params1013::{rq_bytes, P, W};
@@ -36,6 +40,21 @@ fn byte_to_usize_vec(list: &[u8]) -> Vec<usize> {
             usize::from_ne_bytes(bytes)
         })
         .collect()
+}
+
+fn unpack_bytes<'a>(bytes: &[u8]) -> Result<(Vec<u8>, Vec<usize>, usize), NTRUErrors<'a>> {
+    let bytes_len = bytes.len();
+    let binding = bytes[bytes_len - 8..].try_into();
+    let size_bytes_len: &[u8; 8] = match &binding {
+        Ok(v) => v,
+        Err(_) => return Err(NTRUErrors::SliceError("incorrect or damaged cipher bytes")),
+    };
+    let size_len = usize::from_ne_bytes(*size_bytes_len);
+    let size_bytes = &bytes[bytes_len - size_len - 8..(bytes_len - 1)];
+    let size = byte_to_usize_vec(size_bytes);
+    let bytes_data = &bytes[..bytes_len - size_len - 8];
+
+    Ok((bytes_data.to_vec(), size, size_len))
 }
 
 /// Decrypts a polynomial in the Fq field using a private key.
@@ -195,19 +214,10 @@ pub fn bytes_encrypt(rng: &mut NTRURandom, bytes: &[u8], pub_key: &PubKey) -> Ve
 }
 
 pub fn bytes_decrypt<'a>(bytes: &[u8], priv_key: &PrivKey) -> Result<Vec<u8>, NTRUErrors<'a>> {
-    let bytes_len = bytes.len();
-    let binding = bytes[bytes_len - 8..].try_into();
-    let size_bytes_len: &[u8; 8] = match &binding {
-        Ok(v) => v,
-        Err(_) => return Err(NTRUErrors::SliceError("incorrect or damaged cipher bytes")),
-    };
-    let size_len = usize::from_ne_bytes(*size_bytes_len);
-    let size_bytes = &bytes[bytes_len - size_len - 8..(bytes_len - 1)];
-    let size = byte_to_usize_vec(size_bytes);
-    let bytes_data = &bytes[..bytes_len - size_len - 8];
+    let (bytes_data, size, size_len) = unpack_bytes(&bytes)?;
     let chunks = bytes_data.chunks(RQ_BYTES);
 
-    let mut r3_chunks = Vec::new();
+    let mut r3_chunks = Vec::with_capacity(size_len);
 
     for chunk in chunks {
         let rq_chunk: [u8; RQ_BYTES] = match chunk.try_into() {
@@ -229,11 +239,211 @@ pub fn bytes_decrypt<'a>(bytes: &[u8], priv_key: &PrivKey) -> Result<Vec<u8>, NT
     Ok(r3::r3_encode_chunks(&out_r3))
 }
 
+pub fn parallel_bytes_encrypt<'a>(
+    rng: &mut NTRURandom,
+    bytes: &Arc<Vec<u8>>,
+    pub_key: &Arc<PubKey>,
+    num_threads: usize,
+) -> Result<Vec<u8>, NTRUErrors<'a>> {
+    let unlimted_poly = r3::r3_decode_chunks(&bytes);
+    let (chunks, size) = r3::r3_split_w_chunks(&unlimted_poly, rng);
+
+    let mut bytes: Vec<u8> = Vec::with_capacity(P * size.len());
+    let mut threads = Vec::with_capacity(num_threads);
+    let enc: Arc<Mutex<HashMap<usize, [u8; RQ_BYTES]>>> = Arc::new(Mutex::new(HashMap::new()));
+
+    for (index, chunk) in chunks.into_iter().enumerate() {
+        let pub_key_ref = Arc::clone(&pub_key);
+        let enc_ref = Arc::clone(&enc);
+        let handle = thread::spawn(move || {
+            let r3 = R3::from(chunk);
+            let h = pub_key_ref;
+            let hr = r3_encrypt(&r3, &h);
+            let rq_bytes = rq::encode(&hr.coeffs);
+            let mut enc = match enc_ref.lock() {
+                Ok(v) => v,
+                Err(_) => return Err(NTRUErrors::ThreadError("cannot lock enc arc value")),
+            };
+
+            enc.insert(index, rq_bytes);
+
+            Ok(())
+        });
+
+        threads.push(handle);
+
+        // wait for last first to last
+        if threads.len() >= num_threads {
+            let handle = threads.remove(0);
+
+            match handle.join() {
+                Ok(_) => continue,
+                Err(_) => {
+                    return Err(NTRUErrors::ThreadError(
+                        "Cannot done the thread, check your init params!",
+                    ))
+                }
+            };
+        }
+    }
+
+    // Wait for done all tasks
+    for h in threads {
+        match h.join() {
+            Ok(_) => continue,
+            Err(_) => {
+                return Err(NTRUErrors::ThreadError(
+                    "Cannot done the thread, check your init params!",
+                ))
+            }
+        };
+    }
+
+    let enc_ref = match enc.lock() {
+        Ok(v) => v,
+        Err(_) => return Err(NTRUErrors::ThreadError("cannot lock enc arc value!")),
+    };
+    let size_bytes = usize_vec_to_bytes(&size);
+    let size_len = size_bytes.len().to_ne_bytes().to_vec();
+
+    for i in 0..size.len() {
+        match enc_ref.get(&i) {
+            Some(v) => bytes.extend(v),
+            None => {
+                return Err(NTRUErrors::ThreadError(
+                    "Mutex error check your init params!",
+                ))
+            }
+        }
+    }
+
+    bytes.extend(size_bytes);
+    bytes.extend(size_len);
+
+    Ok(bytes)
+}
+
+pub fn parallel_bytes_decrypt<'a>(
+    bytes: &Arc<Vec<u8>>,
+    priv_key: &Arc<PrivKey>,
+    num_threads: usize,
+) -> Result<Vec<u8>, NTRUErrors<'a>> {
+    let (bytes_data, size, size_len) = unpack_bytes(&bytes)?;
+    let chunks = bytes_data.chunks(RQ_BYTES);
+
+    let sync_hash_map: Arc<Mutex<HashMap<usize, [i8; P]>>> = Arc::new(Mutex::new(HashMap::new()));
+    let mut threads = Vec::with_capacity(num_threads);
+
+    for (index, chunk) in chunks.into_iter().enumerate() {
+        let sync_map_ref = Arc::clone(&sync_hash_map);
+        let priv_key_ref = Arc::clone(&priv_key);
+        let rq_chunk: [u8; RQ_BYTES] = match chunk.try_into() {
+            Ok(c) => c,
+            Err(_) => {
+                return Err(NTRUErrors::SliceError(
+                    "Cannot into [u8; ROUNDED_BYTES], Incorrect params!",
+                ))
+            }
+        };
+        let handle = thread::spawn(move || {
+            let sk = priv_key_ref;
+            let rq = Rq::from(rq::decode(&rq_chunk));
+            let r3 = rq_decrypt(&rq, &sk);
+            let mut sync_map = match sync_map_ref.lock() {
+                Ok(v) => v,
+                Err(_) => return Err(NTRUErrors::ThreadError("cannot lock enc arc value")),
+            };
+            sync_map.insert(index, r3.coeffs);
+
+            Ok(())
+        });
+
+        threads.push(handle);
+
+        // Wait for done frist task to last
+        if threads.len() >= num_threads {
+            let handle = threads.remove(0);
+
+            match handle.join() {
+                Ok(_) => continue,
+                Err(_) => {
+                    return Err(NTRUErrors::ThreadError(
+                        "Cannot done the thread, check your init params!",
+                    ))
+                }
+            };
+        }
+    }
+
+    // Wait for done all tasks
+    for h in threads {
+        match h.join() {
+            Ok(_) => continue,
+            Err(_) => {
+                return Err(NTRUErrors::ThreadError(
+                    "Cannot done the thread, check your init params!",
+                ))
+            }
+        };
+    }
+
+    let out = {
+        let sync_map = match sync_hash_map.lock() {
+            Ok(v) => v,
+            Err(_) => return Err(NTRUErrors::ThreadError("cannot lock enc arc value!")),
+        };
+        let mut r3_chunks = Vec::with_capacity(size_len);
+
+        for i in 0..size.len() {
+            match sync_map.get(&i) {
+                Some(v) => r3_chunks.push(*v),
+                None => {
+                    return Err(NTRUErrors::ThreadError(
+                        "Mutex error check your init params!",
+                    ))
+                }
+            }
+        }
+
+        let r3 = r3::r3_merge_w_chunks::<P>(&r3_chunks, &size);
+
+        r3::r3_encode_chunks(&r3)
+    };
+
+    Ok(out)
+}
+
 #[cfg(test)]
 mod test_cipher {
     use super::*;
     use crate::random::CommonRandom;
     use crate::random::NTRURandom;
+
+    #[test]
+    fn test_parallel_bytes_cipher() {
+        extern crate num_cpus;
+
+        let num_threads = num_cpus::get();
+        let mut random: NTRURandom = NTRURandom::new();
+
+        let mut g: R3;
+        let ciphertext = Arc::new(random.randombytes::<1024>().to_vec());
+        let f: Rq = Rq::from(random.short_random().unwrap());
+        let sk = loop {
+            g = R3::from(random.random_small().unwrap());
+
+            match PrivKey::compute(&f, &g) {
+                Ok(s) => break Arc::new(s),
+                Err(_) => continue,
+            };
+        };
+        let pk = Arc::new(PubKey::compute(&f, &g).unwrap());
+        let encrypted =
+            Arc::new(parallel_bytes_encrypt(&mut random, &ciphertext, &pk, num_threads).unwrap());
+        let decrypted = parallel_bytes_decrypt(&encrypted, &sk, num_threads).unwrap();
+
+        assert_eq!(decrypted, ciphertext.to_vec());
+    }
 
     #[test]
     fn test_bytes_cipher() {
