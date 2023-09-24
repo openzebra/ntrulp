@@ -240,7 +240,7 @@ mod test_cipher {
         let mut random: NTRURandom = NTRURandom::new();
 
         let mut g: R3;
-        let ciphertext = random.randombytes::<1024>();
+        let ciphertext = random.randombytes::<123>();
         let f: Rq = Rq::from(random.short_random().unwrap());
         let sk = loop {
             g = R3::from(random.random_small().unwrap());
