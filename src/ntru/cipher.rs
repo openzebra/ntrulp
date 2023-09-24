@@ -203,6 +203,65 @@ pub fn r3_encrypt(r: &R3, pub_key: &PubKey) -> Rq {
     hr
 }
 
+/// Encrypts a slice of bytes using the provided `NTRURandom` instance and the recipient's public key.
+///
+/// # Arguments
+///
+/// * `rng`: An instance of `NTRURandom` used for encryption.
+/// * `bytes`: A slice of bytes to be encrypted.
+/// * `pub_key`: The public key of the recipient.
+///
+/// # Returns
+///
+/// Returns the encrypted bytes.
+///
+/// # Example
+/// ```rust
+/// #[cfg(feature = "ntrulpr1013")]
+/// use ntrulp::params::params1013::P;
+/// #[cfg(feature = "ntrulpr1277")]
+/// use ntrulp::params::params1277::P;
+/// #[cfg(feature = "ntrulpr653")]
+/// use ntrulp::params::params653::P;
+/// #[cfg(feature = "ntrulpr761")]
+/// use ntrulp::params::params761::P;
+/// #[cfg(feature = "ntrulpr857")]
+/// use ntrulp::params::params857::P;
+/// #[cfg(feature = "ntrulpr953")]
+/// use ntrulp::params::params953::P;
+/// use ntrulp::key::priv_key::PrivKey;
+/// use ntrulp::poly::rq::Rq;
+/// use ntrulp::poly::r3::R3;
+/// use ntrulp::ntru::cipher::bytes_encrypt;
+/// use ntrulp::ntru::cipher::bytes_decrypt;
+/// use ntrulp::key::pub_key::PubKey;
+/// use ntrulp::random::{CommonRandom, NTRURandom};
+///
+/// let mut random: NTRURandom = NTRURandom::new();
+/// let f = Rq::from(random.short_random().unwrap());
+/// let mut g: R3;
+///
+/// // Generate the private key priv_key
+/// let sk = loop {
+///     g = R3::from(random.random_small().unwrap());
+///     match PrivKey::compute(&f, &g) {
+///         Ok(s) => break s,
+///         Err(_) => continue,
+///     };
+/// };
+///
+/// // Generate an content for encrypt
+/// let ciphertext = random.randombytes::<123>();
+///
+/// let pk = PubKey::from_sk(&sk).unwrap();
+/// let encrypted = bytes_encrypt(&mut random, &ciphertext, &pk);
+/// let decrypted = bytes_decrypt(&encrypted, &sk).unwrap();
+/// ```
+///
+/// # Panics
+///
+/// The function may panic if encryption fails or if the provided public key is invalid.
+///
 pub fn bytes_encrypt(rng: &mut NTRURandom, bytes: &[u8], pub_key: &PubKey) -> Vec<u8> {
     let unlimted_poly = r3::r3_decode_chunks(bytes);
     let (chunks, size) = r3::r3_split_w_chunks(&unlimted_poly, rng);
@@ -225,6 +284,65 @@ pub fn bytes_encrypt(rng: &mut NTRURandom, bytes: &[u8], pub_key: &PubKey) -> Ve
     bytes
 }
 
+/// Decrypts bytes and retrieves the bytes previously encrypted using the `bytes_encrypt` function.
+///
+/// # Arguments
+///
+/// * `bytes`: A slice of bytes to decrypt.
+/// * `priv_key`: The private key used for decryption.
+///
+/// # Returns
+///
+/// Returns the decrypted bytes.
+///
+/// # Example
+///
+/// ```rust
+/// #[cfg(feature = "ntrulpr1013")]
+/// use ntrulp::params::params1013::P;
+/// #[cfg(feature = "ntrulpr1277")]
+/// use ntrulp::params::params1277::P;
+/// #[cfg(feature = "ntrulpr653")]
+/// use ntrulp::params::params653::P;
+/// #[cfg(feature = "ntrulpr761")]
+/// use ntrulp::params::params761::P;
+/// #[cfg(feature = "ntrulpr857")]
+/// use ntrulp::params::params857::P;
+/// #[cfg(feature = "ntrulpr953")]
+/// use ntrulp::params::params953::P;
+/// use ntrulp::key::priv_key::PrivKey;
+/// use ntrulp::poly::rq::Rq;
+/// use ntrulp::poly::r3::R3;
+/// use ntrulp::ntru::cipher::bytes_encrypt;
+/// use ntrulp::ntru::cipher::bytes_decrypt;
+/// use ntrulp::key::pub_key::PubKey;
+/// use ntrulp::random::{CommonRandom, NTRURandom};
+///
+/// let mut random: NTRURandom = NTRURandom::new();
+/// let f = Rq::from(random.short_random().unwrap());
+/// let mut g: R3;
+///
+/// // Generate the private key priv_key
+/// let sk = loop {
+///     g = R3::from(random.random_small().unwrap());
+///     match PrivKey::compute(&f, &g) {
+///         Ok(s) => break s,
+///         Err(_) => continue,
+///     };
+/// };
+///
+/// // Generate an content for encrypt
+/// let ciphertext = random.randombytes::<123>();
+///
+/// let pk = PubKey::from_sk(&sk).unwrap();
+/// let encrypted = bytes_encrypt(&mut random, &ciphertext, &pk);
+/// let decrypted = bytes_decrypt(&encrypted, &sk).unwrap();
+/// ```
+///
+/// # Panics
+///
+/// The function may panic if decryption fails or if the private key is invalid.
+///
 pub fn bytes_decrypt<'a>(bytes: &[u8], priv_key: &PrivKey) -> Result<Vec<u8>, NTRUErrors<'a>> {
     let (bytes_data, size, size_len) = unpack_bytes(&bytes)?;
     let chunks = bytes_data.chunks(RQ_BYTES);
@@ -433,9 +551,7 @@ mod test_cipher {
 
     #[test]
     fn test_parallel_bytes_cipher() {
-        extern crate num_cpus;
-
-        let num_threads = num_cpus::get();
+        let num_threads = 2;
         let mut random: NTRURandom = NTRURandom::new();
 
         let mut g: R3;
