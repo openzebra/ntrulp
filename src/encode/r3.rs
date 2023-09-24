@@ -164,13 +164,11 @@ pub fn r3_split_w_chunks(input: &[i8], rng: &mut NTRURandom) -> (Vec<[i8; P]>, V
     }
 
     if sum != W {
-        let num = rng.random_sign();
-
         size.push(i);
         i += 1;
 
         for _ in sum..W {
-            part[i] = num;
+            part[i] = rng.random_sign();
             sum += 1;
             i += 1;
         }
