@@ -13,9 +13,16 @@ use ntrulp::random::{CommonRandom, NTRURandom};
 
 fn gen_keys<'a>() -> Result<(Arc<PrivKey>, Arc<PubKey>), NTRUErrors<'a>> {
     let mut rng = NTRURandom::new();
+    let mut g: R3;
     let f: Rq = Rq::from(rng.short_random().unwrap());
-    let g: R3 = R3::from(rng.random_small().unwrap());
-    let sk = PrivKey::compute(&f, &g).unwrap();
+    let sk = loop {
+        g = R3::from(rng.random_small().unwrap());
+
+        match PrivKey::compute(&f, &g) {
+            Ok(s) => break s,
+            Err(_) => continue,
+        };
+    };
     let pk = PubKey::compute(&f, &g).unwrap();
 
     Ok((Arc::new(sk), Arc::new(pk)))
