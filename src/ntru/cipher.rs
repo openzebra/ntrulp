@@ -1,8 +1,3 @@
-use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
-use std::thread;
-
-use crate::encode::{r3, rq};
 #[cfg(feature = "ntrulpr1013")]
 use crate::params::params1013::{P, RQ_BYTES, W};
 #[cfg(feature = "ntrulpr1277")]
@@ -16,6 +11,11 @@ use crate::params::params857::{P, RQ_BYTES, W};
 #[cfg(feature = "ntrulpr953")]
 use crate::params::params953::{P, RQ_BYTES, W};
 
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
+use std::thread;
+
+use crate::encode::{r3, rq};
 use crate::key::priv_key::PrivKey;
 use crate::key::pub_key::PubKey;
 use crate::random::NTRURandom;
@@ -71,18 +71,6 @@ fn unpack_bytes<'a>(bytes: &[u8]) -> Result<(Vec<u8>, Vec<usize>, usize), NTRUEr
 /// # Example
 ///
 /// ```rust
-/// #[cfg(feature = "ntrulpr1013")]
-/// use ntrulp::params::params1013::P;
-/// #[cfg(feature = "ntrulpr1277")]
-/// use ntrulp::params::params1277::P;
-/// #[cfg(feature = "ntrulpr653")]
-/// use ntrulp::params::params653::P;
-/// #[cfg(feature = "ntrulpr761")]
-/// use ntrulp::params::params761::P;
-/// #[cfg(feature = "ntrulpr857")]
-/// use ntrulp::params::params857::P;
-/// #[cfg(feature = "ntrulpr953")]
-/// use ntrulp::params::params953::P;
 /// use ntrulp::key::priv_key::PrivKey;
 /// use ntrulp::poly::rq::Rq;
 /// use ntrulp::poly::r3::R3;
@@ -149,18 +137,6 @@ pub fn rq_decrypt(c: &Rq, priv_key: &PrivKey) -> R3 {
 /// # Example
 ///
 /// ```rust
-/// #[cfg(feature = "ntrulpr1013")]
-/// use ntrulp::params::params1013::P;
-/// #[cfg(feature = "ntrulpr1277")]
-/// use ntrulp::params::params1277::P;
-/// #[cfg(feature = "ntrulpr653")]
-/// use ntrulp::params::params653::P;
-/// #[cfg(feature = "ntrulpr761")]
-/// use ntrulp::params::params761::P;
-/// #[cfg(feature = "ntrulpr857")]
-/// use ntrulp::params::params857::P;
-/// #[cfg(feature = "ntrulpr953")]
-/// use ntrulp::params::params953::P;
 /// use ntrulp::key::priv_key::PrivKey;
 /// use ntrulp::poly::rq::Rq;
 /// use ntrulp::poly::r3::R3;
@@ -217,18 +193,6 @@ pub fn r3_encrypt(r: &R3, pub_key: &PubKey) -> Rq {
 ///
 /// # Example
 /// ```rust
-/// #[cfg(feature = "ntrulpr1013")]
-/// use ntrulp::params::params1013::P;
-/// #[cfg(feature = "ntrulpr1277")]
-/// use ntrulp::params::params1277::P;
-/// #[cfg(feature = "ntrulpr653")]
-/// use ntrulp::params::params653::P;
-/// #[cfg(feature = "ntrulpr761")]
-/// use ntrulp::params::params761::P;
-/// #[cfg(feature = "ntrulpr857")]
-/// use ntrulp::params::params857::P;
-/// #[cfg(feature = "ntrulpr953")]
-/// use ntrulp::params::params953::P;
 /// use ntrulp::key::priv_key::PrivKey;
 /// use ntrulp::poly::rq::Rq;
 /// use ntrulp::poly::r3::R3;
@@ -298,18 +262,6 @@ pub fn bytes_encrypt(rng: &mut NTRURandom, bytes: &[u8], pub_key: &PubKey) -> Ve
 /// # Example
 ///
 /// ```rust
-/// #[cfg(feature = "ntrulpr1013")]
-/// use ntrulp::params::params1013::P;
-/// #[cfg(feature = "ntrulpr1277")]
-/// use ntrulp::params::params1277::P;
-/// #[cfg(feature = "ntrulpr653")]
-/// use ntrulp::params::params653::P;
-/// #[cfg(feature = "ntrulpr761")]
-/// use ntrulp::params::params761::P;
-/// #[cfg(feature = "ntrulpr857")]
-/// use ntrulp::params::params857::P;
-/// #[cfg(feature = "ntrulpr953")]
-/// use ntrulp::params::params953::P;
 /// use ntrulp::key::priv_key::PrivKey;
 /// use ntrulp::poly::rq::Rq;
 /// use ntrulp::poly::r3::R3;
@@ -385,18 +337,6 @@ pub fn bytes_decrypt<'a>(bytes: &[u8], priv_key: &PrivKey) -> Result<Vec<u8>, NT
 /// # Example
 ///
 /// ```rust
-/// #[cfg(feature = "ntrulpr1013")]
-/// use ntrulp::params::params1013::P;
-/// #[cfg(feature = "ntrulpr1277")]
-/// use ntrulp::params::params1277::P;
-/// #[cfg(feature = "ntrulpr653")]
-/// use ntrulp::params::params653::P;
-/// #[cfg(feature = "ntrulpr761")]
-/// use ntrulp::params::params761::P;
-/// #[cfg(feature = "ntrulpr857")]
-/// use ntrulp::params::params857::P;
-/// #[cfg(feature = "ntrulpr953")]
-/// use ntrulp::params::params953::P;
 /// use ntrulp::key::priv_key::PrivKey;
 /// use ntrulp::poly::rq::Rq;
 /// use ntrulp::poly::r3::R3;
@@ -537,18 +477,6 @@ pub fn parallel_bytes_encrypt<'a>(
 /// # Example
 ///
 /// ```rust
-/// #[cfg(feature = "ntrulpr1013")]
-/// use ntrulp::params::params1013::P;
-/// #[cfg(feature = "ntrulpr1277")]
-/// use ntrulp::params::params1277::P;
-/// #[cfg(feature = "ntrulpr653")]
-/// use ntrulp::params::params653::P;
-/// #[cfg(feature = "ntrulpr761")]
-/// use ntrulp::params::params761::P;
-/// #[cfg(feature = "ntrulpr857")]
-/// use ntrulp::params::params857::P;
-/// #[cfg(feature = "ntrulpr953")]
-/// use ntrulp::params::params953::P;
 /// use ntrulp::key::priv_key::PrivKey;
 /// use ntrulp::poly::rq::Rq;
 /// use ntrulp::poly::r3::R3;
