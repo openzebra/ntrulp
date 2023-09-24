@@ -138,45 +138,45 @@ pub fn r3_merge_w_chunks<const P: usize>(chunks: &[[i8; P]], size: &[usize]) -> 
     out
 }
 
-// size is array with last index
 pub fn r3_split_w_chunks(input: &[i8], rng: &mut NTRURandom) -> (Vec<[i8; P]>, Vec<usize>) {
+    const DIFFICULT: usize = 6;
+    const LIMIT: usize = W - DIFFICULT;
+
     let mut chunks: Vec<[i8; P]> = Vec::new();
-    let mut size = Vec::new();
+    let mut size: Vec<usize> = Vec::new();
     let mut part = [0i8; P];
-    let mut sum = 0usize;
-    let mut i = 0;
 
-    for value in input {
-        sum += value.abs() as usize;
+    let mut sum: usize = 0;
+    let mut input_ptr: usize = 0;
+    let mut part_ptr: usize = 0;
 
-        if sum <= W {
-            part[i] = *value;
-            i += 1;
-        } else {
-            size.push(i);
-            i = 0;
-            chunks.push(part);
-            part = [0i8; P];
-            part[i] = *value;
-            sum = value.abs() as usize;
-            i += 1;
+    while input_ptr != input.len() {
+        while sum != LIMIT {
+            let value = match input.get(input_ptr) {
+                Some(v) => *v,
+                None => break,
+            };
+
+            sum += value.abs() as usize;
+            input_ptr += 1;
+            part[part_ptr] = value;
+            part_ptr += 1;
         }
-    }
 
-    if sum != W {
-        size.push(i);
-        i += 1;
+        size.push(part_ptr);
 
-        for _ in sum..W {
-            part[i] = rng.random_sign();
+        while sum != W {
+            let value = rng.random_sign();
+
+            part[part_ptr] = value;
             sum += 1;
-            i += 1;
+            part_ptr += 1;
         }
 
         chunks.push(part);
-    } else {
-        chunks.push(part);
-        size.push(i);
+        part = [0i8; P];
+        part_ptr = 0;
+        sum = 0;
     }
 
     (chunks, size)
