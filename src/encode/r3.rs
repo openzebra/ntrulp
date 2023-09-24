@@ -113,6 +113,48 @@ pub fn r3_decode_chunks(bytes: &[u8]) -> Vec<i8> {
     output
 }
 
+pub fn r3_decode_bytes(input: &[u8; 126]) -> [i8; P] {
+    let mut out = [0i8; P];
+    let mut out_ptr = 0;
+
+    for i in 0..126 {
+        let bits = convert_to_ternary(input[i]);
+
+        out[out_ptr..BITS_SIZE + out_ptr].copy_from_slice(&bits);
+        out_ptr += BITS_SIZE;
+    }
+
+    out
+}
+
+pub fn r3_encode_bytes(input: &[i8; P]) -> [u8; 126] {
+    let mut output = [0u8; 126];
+    let mut out_ptr = 0;
+
+    for chunk in input.chunks(BITS_SIZE) {
+        // skip last chunk
+        if out_ptr == 126 {
+            break;
+        }
+
+        let mut bits = [0i8; BITS_SIZE];
+
+        for i in 0..BITS_SIZE {
+            match chunk.get(i) {
+                Some(v) => bits[i] = *v,
+                None => continue,
+            };
+        }
+
+        let byte = convert_to_decimal(bits);
+
+        output[out_ptr] = byte;
+        out_ptr += 1;
+    }
+
+    output
+}
+
 pub fn r3_encode_chunks(r3: &[i8]) -> Vec<u8> {
     let mut output: Vec<u8> = Vec::new();
 
@@ -192,12 +234,28 @@ mod r3_encoder_tests {
     use rand::Rng;
 
     #[test]
+    fn test_new_encode() {
+        let mut random: NTRURandom = NTRURandom::new();
+        let entropy = random.randombytes::<126>();
+
+        let r3 = r3_decode_bytes(&entropy);
+        let bytes = r3_encode_bytes(&r3);
+
+        dbg!(r3.len());
+        dbg!(bytes.len());
+
+        assert_eq!(bytes, entropy);
+    }
+
+    #[test]
     fn test_bit_convert() {
         for n in 0..u8::MAX {
             let bits = convert_to_ternary(n);
             let out = convert_to_decimal(bits);
+            let bits0 = convert_to_ternary(out);
 
             assert_eq!(n, out);
+            assert_eq!(bits0, bits);
         }
     }
 

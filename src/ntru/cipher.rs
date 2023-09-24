@@ -152,6 +152,8 @@ pub fn r3_encrypt(r: &R3, pub_key: &PubKey) -> Rq {
     hr
 }
 
+pub fn bytes_encrypt(r: &[u8], pub_key: &PubKey) {}
+
 #[cfg(test)]
 mod test_cipher {
     use super::*;
