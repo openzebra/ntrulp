@@ -4,17 +4,17 @@ use std::thread;
 
 use crate::encode::{r3, rq};
 #[cfg(feature = "ntrulpr1013")]
-use crate::params::params1013::{rq_bytes, P, W};
+use crate::params::params1013::{P, RQ_BYTES, W};
 #[cfg(feature = "ntrulpr1277")]
-use crate::params::params1277::{rq_bytes, P, W};
+use crate::params::params1277::{P, RQ_BYTES, W};
 #[cfg(feature = "ntrulpr653")]
 use crate::params::params653::{P, RQ_BYTES, W};
 #[cfg(feature = "ntrulpr761")]
 use crate::params::params761::{P, RQ_BYTES, W};
 #[cfg(feature = "ntrulpr857")]
-use crate::params::params857::{rq_bytes, P, W};
+use crate::params::params857::{P, RQ_BYTES, W};
 #[cfg(feature = "ntrulpr953")]
-use crate::params::params953::{rq_bytes, P, W};
+use crate::params::params953::{P, RQ_BYTES, W};
 
 use crate::key::priv_key::PrivKey;
 use crate::key::pub_key::PubKey;
