@@ -1,22 +1,42 @@
+use crate::encode::{r3, rq};
 #[cfg(feature = "ntrulpr1013")]
-use crate::params::params1013::{P, W};
+use crate::params::params1013::{rq_bytes, P, W};
 #[cfg(feature = "ntrulpr1277")]
-use crate::params::params1277::{P, W};
+use crate::params::params1277::{rq_bytes, P, W};
 #[cfg(feature = "ntrulpr653")]
-use crate::params::params653::{P, W};
+use crate::params::params653::{P, RQ_BYTES, W};
 #[cfg(feature = "ntrulpr761")]
-use crate::params::params761::{P, W};
+use crate::params::params761::{P, RQ_BYTES, W};
 #[cfg(feature = "ntrulpr857")]
-use crate::params::params857::{P, W};
+use crate::params::params857::{rq_bytes, P, W};
 #[cfg(feature = "ntrulpr953")]
-use crate::params::params953::{P, W};
+use crate::params::params953::{rq_bytes, P, W};
 
 use crate::key::priv_key::PrivKey;
 use crate::key::pub_key::PubKey;
+use crate::random::NTRURandom;
 use crate::{
     math::nums::weightw_mask,
     poly::{f3::round, r3::R3, rq::Rq},
 };
+
+use super::errors::NTRUErrors;
+
+fn usize_vec_to_bytes(list: &[usize]) -> Vec<u8> {
+    list.iter()
+        .flat_map(|&x| x.to_ne_bytes().to_vec())
+        .collect()
+}
+
+fn byte_to_usize_vec(list: &[u8]) -> Vec<usize> {
+    list.chunks_exact(std::mem::size_of::<usize>())
+        .map(|chunk| {
+            let mut bytes = [0; std::mem::size_of::<usize>()];
+            bytes.copy_from_slice(chunk);
+            usize::from_ne_bytes(bytes)
+        })
+        .collect()
+}
 
 /// Decrypts a polynomial in the Fq field using a private key.
 ///
@@ -152,13 +172,90 @@ pub fn r3_encrypt(r: &R3, pub_key: &PubKey) -> Rq {
     hr
 }
 
-pub fn bytes_encrypt(r: &[u8], pub_key: &PubKey) {}
+pub fn bytes_encrypt(rng: &mut NTRURandom, bytes: &[u8], pub_key: &PubKey) -> Vec<u8> {
+    let unlimted_poly = r3::r3_decode_chunks(bytes);
+    let (chunks, size) = r3::r3_split_w_chunks(&unlimted_poly, rng);
+    let mut bytes: Vec<u8> = Vec::with_capacity(P * size.len());
+
+    for chunk in chunks {
+        let r3 = R3::from(chunk);
+        let hr = r3_encrypt(&r3, pub_key);
+        let rq_bytes = rq::encode(&hr.coeffs);
+
+        bytes.extend(rq_bytes);
+    }
+
+    let size_bytes = usize_vec_to_bytes(&size);
+    let size_len = size_bytes.len().to_ne_bytes().to_vec();
+
+    bytes.extend(size_bytes);
+    bytes.extend(size_len);
+
+    bytes
+}
+
+pub fn bytes_decrypt<'a>(bytes: &[u8], priv_key: &PrivKey) -> Result<Vec<u8>, NTRUErrors<'a>> {
+    let bytes_len = bytes.len();
+    let binding = bytes[bytes_len - 8..].try_into();
+    let size_bytes_len: &[u8; 8] = match &binding {
+        Ok(v) => v,
+        Err(_) => return Err(NTRUErrors::SliceError("incorrect or damaged cipher bytes")),
+    };
+    let size_len = usize::from_ne_bytes(*size_bytes_len);
+    let size_bytes = &bytes[bytes_len - size_len - 8..(bytes_len - 1)];
+    let size = byte_to_usize_vec(size_bytes);
+    let bytes_data = &bytes[..bytes_len - size_len - 8];
+    let chunks = bytes_data.chunks(RQ_BYTES);
+
+    let mut r3_chunks = Vec::new();
+
+    for chunk in chunks {
+        let rq_chunk: [u8; RQ_BYTES] = match chunk.try_into() {
+            Ok(c) => c,
+            Err(_) => {
+                return Err(NTRUErrors::SliceError(
+                    "Cannot into [u8; RQ_BYTES], Incorrect cipher!",
+                ))
+            }
+        };
+        let rq = Rq::from(rq::decode(&rq_chunk));
+        let r3 = rq_decrypt(&rq, priv_key);
+
+        r3_chunks.push(r3.coeffs);
+    }
+
+    let out_r3 = r3::r3_merge_w_chunks(&r3_chunks, &size);
+
+    Ok(r3::r3_encode_chunks(&out_r3))
+}
 
 #[cfg(test)]
 mod test_cipher {
     use super::*;
     use crate::random::CommonRandom;
     use crate::random::NTRURandom;
+
+    #[test]
+    fn test_bytes_cipher() {
+        let mut random: NTRURandom = NTRURandom::new();
+
+        let mut g: R3;
+        let ciphertext = random.randombytes::<1024>();
+        let f: Rq = Rq::from(random.short_random().unwrap());
+        let sk = loop {
+            g = R3::from(random.random_small().unwrap());
+
+            match PrivKey::compute(&f, &g) {
+                Ok(s) => break s,
+                Err(_) => continue,
+            };
+        };
+        let pk = PubKey::compute(&f, &g).unwrap();
+        let encrypted = bytes_encrypt(&mut random, &ciphertext, &pk);
+        let decrypted = bytes_decrypt(&encrypted, &sk).unwrap();
+
+        assert_eq!(decrypted, ciphertext);
+    }
 
     #[test]
     fn test_encrypt_and_decrypt() {
