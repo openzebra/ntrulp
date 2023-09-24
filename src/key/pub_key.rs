@@ -140,10 +140,6 @@ impl PubKey {
 
     /// Converts a public key, represented as a polynomial in the field `Fq`, into a byte array.
     ///
-    /// # Arguments
-    ///
-    /// * `public_key`: The public key represented as a polynomial in the field `Fq`.
-    ///
     /// # Returns
     ///
     /// Returns a byte array representing the public key.

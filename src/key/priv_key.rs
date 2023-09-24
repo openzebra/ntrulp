@@ -29,18 +29,6 @@ impl PrivKey {
     /// # Example
     ///
     /// ```rust
-    /// #[cfg(feature = "ntrulpr1013")]
-    /// use ntrulp::params::params1013::P;
-    /// #[cfg(feature = "ntrulpr1277")]
-    /// use ntrulp::params::params1277::P;
-    /// #[cfg(feature = "ntrulpr653")]
-    /// use ntrulp::params::params653::P;
-    /// #[cfg(feature = "ntrulpr761")]
-    /// use ntrulp::params::params761::P;
-    /// #[cfg(feature = "ntrulpr857")]
-    /// use ntrulp::params::params857::P;
-    /// #[cfg(feature = "ntrulpr953")]
-    /// use ntrulp::params::params953::P;
     /// use ntrulp::random::{CommonRandom, NTRURandom};
     /// use ntrulp::poly::rq::Rq;
     /// use ntrulp::poly::r3::R3;
@@ -71,10 +59,35 @@ impl PrivKey {
         Ok(PrivKey(f.r3_from_rq(), ginv))
     }
 
+    /// Converts a private key, represented as polynomials in the fields `Fq` and `R3`, into a byte array.
     ///
-    /// # Notes
+    /// # Returns
     ///
-    ///  convert privatekey from poly to bytes
+    /// Returns a byte array representing the private key.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use ntrulp::random::{CommonRandom, NTRURandom};
+    /// use ntrulp::poly::rq::Rq;
+    /// use ntrulp::poly::r3::R3;
+    /// use ntrulp::key::priv_key::PrivKey;
+    ///
+    /// let mut random: NTRURandom = NTRURandom::new();
+    /// // Create an Fq polynomial fq and a g3 polynomial g3
+    /// let fq = Rq::from(random.short_random().unwrap());
+    /// let mut g3: R3;
+    /// // Compute the private key
+    /// let priv_key = loop {
+    ///     g3 = R3::from(random.random_small().unwrap());
+    ///     match PrivKey::compute(&fq, &g3) {
+    ///         Ok(s) => break s,
+    ///         Err(_) => continue,
+    ///     };
+    /// };
+    /// let sk_as_bytes = priv_key.as_bytes();
+    /// let from_bytes = PrivKey::import(&sk_as_bytes).unwrap();
+    /// ```
     ///
     pub fn as_bytes(&self) -> [u8; SECRETKEYS_BYTES] {
         let mut sk = [0u8; SECRETKEYS_BYTES];
@@ -102,18 +115,6 @@ impl PrivKey {
     /// # Example
     ///
     /// ```rust
-    /// #[cfg(feature = "ntrulpr1013")]
-    /// use ntrulp::params::params1013::P;
-    /// #[cfg(feature = "ntrulpr1277")]
-    /// use ntrulp::params::params1277::P;
-    /// #[cfg(feature = "ntrulpr653")]
-    /// use ntrulp::params::params653::P;
-    /// #[cfg(feature = "ntrulpr761")]
-    /// use ntrulp::params::params761::P;
-    /// #[cfg(feature = "ntrulpr857")]
-    /// use ntrulp::params::params857::P;
-    /// #[cfg(feature = "ntrulpr953")]
-    /// use ntrulp::params::params953::P;
     /// use ntrulp::random::{CommonRandom, NTRURandom};
     /// use ntrulp::poly::rq::Rq;
     /// use ntrulp::poly::r3::R3;
