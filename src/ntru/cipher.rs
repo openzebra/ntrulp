@@ -369,6 +369,75 @@ pub fn bytes_decrypt<'a>(bytes: &[u8], priv_key: &PrivKey) -> Result<Vec<u8>, NT
     Ok(r3::r3_encode_chunks(&out_r3))
 }
 
+/// Encrypts bytes in parallel using multiple processor threads and the provided `NTRURandom` instance and recipient's public key.
+///
+/// # Arguments
+///
+/// * `rng`: An instance of `NTRURandom` used for encryption.
+/// * `bytes`: Bytes to be encrypted.
+/// * `pub_key`: The public key of the recipient.
+/// * `num_threads`: The number of processor threads to use for parallel encryption.
+///
+/// # Returns
+///
+/// Returns the encrypted bytes.
+///
+/// # Example
+///
+/// ```rust
+/// #[cfg(feature = "ntrulpr1013")]
+/// use ntrulp::params::params1013::P;
+/// #[cfg(feature = "ntrulpr1277")]
+/// use ntrulp::params::params1277::P;
+/// #[cfg(feature = "ntrulpr653")]
+/// use ntrulp::params::params653::P;
+/// #[cfg(feature = "ntrulpr761")]
+/// use ntrulp::params::params761::P;
+/// #[cfg(feature = "ntrulpr857")]
+/// use ntrulp::params::params857::P;
+/// #[cfg(feature = "ntrulpr953")]
+/// use ntrulp::params::params953::P;
+/// use ntrulp::key::priv_key::PrivKey;
+/// use ntrulp::poly::rq::Rq;
+/// use ntrulp::poly::r3::R3;
+/// use ntrulp::key::pub_key::PubKey;
+/// use ntrulp::random::{CommonRandom, NTRURandom};
+///
+/// use ntrulp::ntru::cipher::parallel_bytes_encrypt;
+/// use ntrulp::ntru::cipher::parallel_bytes_decrypt;
+/// use std::sync::Arc;
+///
+/// let mut random: NTRURandom = NTRURandom::new();
+/// let f = Rq::from(random.short_random().unwrap());
+/// let mut g: R3;
+///
+/// // Generate the private key priv_key
+/// let sk = loop {
+///     g = R3::from(random.random_small().unwrap());
+///     match PrivKey::compute(&f, &g) {
+///         Ok(s) => break Arc::new(s),
+///         Err(_) => continue,
+///     };
+/// };
+///
+/// // Generate an content for encrypt
+/// let ciphertext = Arc::new(random.randombytes::<128>().to_vec());
+///
+/// // set nums threads
+/// let num_threads = 2;
+/// let pk = Arc::new(PubKey::compute(&f, &g).unwrap());
+/// let encrypted =
+///    Arc::new(parallel_bytes_encrypt(&mut random, &ciphertext, &pk, num_threads).unwrap());
+/// let decrypted = parallel_bytes_decrypt(&encrypted, &sk, num_threads).unwrap();
+
+/// assert_eq!(decrypted, ciphertext.to_vec());
+/// ```
+///
+/// # Panics
+///
+/// The function may panic if encryption fails, the provided public key is invalid,
+/// or if the specified number of threads exceeds the available processor cores.
+///
 pub fn parallel_bytes_encrypt<'a>(
     rng: &mut NTRURandom,
     bytes: &Arc<Vec<u8>>,
@@ -453,6 +522,73 @@ pub fn parallel_bytes_encrypt<'a>(
     Ok(bytes)
 }
 
+/// Decrypts previously encrypted bytes in parallel using multiple processor threads.
+///
+/// # Arguments
+///
+/// * `bytes`: A reference to an `Arc<Vec<u8>>` containing the bytes to be decrypted.
+/// * `priv_key`: A reference to an `Arc<PrivKey>` representing the private key for decryption.
+/// * `num_threads`: The number of processor threads to use for parallel decryption.
+///
+/// # Returns
+///
+/// Returns the decrypted bytes.
+///
+/// # Example
+///
+/// ```rust
+/// #[cfg(feature = "ntrulpr1013")]
+/// use ntrulp::params::params1013::P;
+/// #[cfg(feature = "ntrulpr1277")]
+/// use ntrulp::params::params1277::P;
+/// #[cfg(feature = "ntrulpr653")]
+/// use ntrulp::params::params653::P;
+/// #[cfg(feature = "ntrulpr761")]
+/// use ntrulp::params::params761::P;
+/// #[cfg(feature = "ntrulpr857")]
+/// use ntrulp::params::params857::P;
+/// #[cfg(feature = "ntrulpr953")]
+/// use ntrulp::params::params953::P;
+/// use ntrulp::key::priv_key::PrivKey;
+/// use ntrulp::poly::rq::Rq;
+/// use ntrulp::poly::r3::R3;
+/// use ntrulp::key::pub_key::PubKey;
+/// use ntrulp::random::{CommonRandom, NTRURandom};
+///
+/// use ntrulp::ntru::cipher::parallel_bytes_encrypt;
+/// use ntrulp::ntru::cipher::parallel_bytes_decrypt;
+/// use std::sync::Arc;
+///
+/// let mut random: NTRURandom = NTRURandom::new();
+/// let f = Rq::from(random.short_random().unwrap());
+/// let mut g: R3;
+///
+/// // Generate the private key priv_key
+/// let sk = loop {
+///     g = R3::from(random.random_small().unwrap());
+///     match PrivKey::compute(&f, &g) {
+///         Ok(s) => break Arc::new(s),
+///         Err(_) => continue,
+///     };
+/// };
+///
+/// // Generate an content for encrypt
+/// let ciphertext = Arc::new(random.randombytes::<128>().to_vec());
+///
+/// // set nums threads
+/// let num_threads = 2;
+/// let pk = Arc::new(PubKey::compute(&f, &g).unwrap());
+/// let encrypted =
+///    Arc::new(parallel_bytes_encrypt(&mut random, &ciphertext, &pk, num_threads).unwrap());
+/// let decrypted = parallel_bytes_decrypt(&encrypted, &sk, num_threads).unwrap();
+
+/// assert_eq!(decrypted, ciphertext.to_vec());
+/// ```
+///
+/// # Panics
+///
+/// The function may panic if decryption fails or if the specified number of threads exceeds the available processor cores.
+///
 pub fn parallel_bytes_decrypt<'a>(
     bytes: &Arc<Vec<u8>>,
     priv_key: &Arc<PrivKey>,
@@ -578,7 +714,7 @@ mod test_cipher {
         let mut random: NTRURandom = NTRURandom::new();
 
         let mut g: R3;
-        let ciphertext = random.randombytes::<123>();
+        let ciphertext = random.randombytes::<1024>();
         let f: Rq = Rq::from(random.short_random().unwrap());
         let sk = loop {
             g = R3::from(random.random_small().unwrap());
@@ -589,10 +725,21 @@ mod test_cipher {
             };
         };
         let pk = PubKey::compute(&f, &g).unwrap();
-        let encrypted = bytes_encrypt(&mut random, &ciphertext, &pk);
+        let mut encrypted = bytes_encrypt(&mut random, &ciphertext, &pk);
         let decrypted = bytes_decrypt(&encrypted, &sk).unwrap();
 
         assert_eq!(decrypted, ciphertext);
+
+        encrypted[2] = 0;
+        encrypted[1] = 0;
+        encrypted[3] = 0;
+        encrypted[4] = 0;
+        encrypted[5] = 0;
+        encrypted[6] = 0;
+
+        let decrypted = bytes_decrypt(&encrypted, &sk).unwrap();
+
+        assert_ne!(decrypted, ciphertext);
     }
 
     #[test]
