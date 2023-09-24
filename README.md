@@ -7,12 +7,12 @@ This repository presents an implementation of high-security prime-degree large-G
 This implementation uses: Fields of the form (Z/q)[x]/(xp −x−1), where p is prime, are used in “NTRU Prime”, introduced in this paper, and have all of our recommended defenses.
 
 #### Parameter set:
-* P = 653, Q = 4621, W = 288, RQ_BYTES=994, ROUNDED_BYTES=865
-* p = 761, q = 4591, w = 286, RQ_BYTES=1158, ROUNDED_BYTES=1007
-* p = 857, q = 5167, w = 322, RQ_BYTES=1322, ROUNDED_BYTES=1152
-* p = 953, q = 6343, w = 396, RQ_BYTES=1505, ROUNDED_BYTES=1317
-* p = 1013, q = 7177, w = 448, RQ_BYTES=1623, ROUNDED_BYTES=1423
-* p = 1277, q = 7879, w = 492, RQ_BYTES=2067, ROUNDED_BYTES=1815
+* P = 653, Q = 4621, W = 288
+* p = 761, q = 4591, w = 286
+* p = 857, q = 5167, w = 322
+* p = 953, q = 6343, w = 396
+* p = 1013, q = 7177, w = 448
+* p = 1277, q = 7879, w = 492
 
 ### install
 ```bash
@@ -28,33 +28,67 @@ cargo test
 ```bash
 cargo bench
 ```
+## Keys Generation:
+```rust
+let mut rng = NTRURandom::new();
+let f: Rq = Rq::from(rng.short_random().unwrap());
+let mut g: R3;
+let sk = loop {
+    g = R3::from(rng.random_small().unwrap());
 
+    match PrivKey::compute(&f, &g) {
+        Ok(s) => break s,
+        Err(_) => continue,
+    };
+};
+
+let pk = PubKey::compute(&f, &g).unwrap();
+let imported_pk = PubKey::from_sk(&sk).unwrap();
+let pk_bytes = imported_pk.as_bytes();
+let from_bytes = PubKey::import(&pk_bytes).unwrap();
+
+assert_eq!(from_bytes.coeffs, pk.coeffs);
+```
 ## Encrypt/Decrypt bytes example
 ```rust
-const P: usize = 761;
-const W: usize = 286;
-const Q: usize = 4591;
-const Q12: usize = (Q - 1) / 2;
-const P_PLUS_ONE: usize = P + 1;
-const RQ_BYTES: usize = 1158;
-const P_TWICE_MINUS_ONE: usize = P + P - 1;
-const ROUNDED_BYTES: usize = 1007;
+use std::sync::Arc;
 
-let mut rng = rand::thread_rng();
-let rand_len = rng.gen_range(5..10_000);
-let mut ntrup =
-    NTRUPrime::<P, Q, W, Q12, ROUNDED_BYTES, RQ_BYTES, P_PLUS_ONE, P_TWICE_MINUS_ONE>::new()
-    .unwrap();
-let bytes: Vec<u8> = (0..rand_len).map(|_| rng.gen::<u8>()).collect();
+use ntrulp::key::priv_key::PrivKey;
+use ntrulp::key::pub_key::PubKey;
+use ntrulp::ntru::cipher::{
+    bytes_decrypt, parallel_bytes_decrypt, parallel_bytes_encrypt, 
+};
+use ntrulp::ntru::errors::NTRUErrors;
+use ntrulp::random::{CommonRandom, NTRURandom};
 
-ntrup.key_pair_gen().unwrap();
 
-let (pk, _) = ntrup.key_pair.export_pair().unwrap();
+fn gen_keys<'a>() -> Result<(Arc<PrivKey>, Arc<PubKey>), NTRUErrors<'a>> {
+    let mut rng = NTRURandom::new();
+    let mut g: R3;
+    let f: Rq = Rq::from(rng.short_random().unwrap());
+    let sk = loop {
+        g = R3::from(rng.random_small().unwrap());
 
-let encrypted = ntrup.encrypt(&bytes, &pk).unwrap();
-let decrypted = ntrup.decrypt(encrypted).unwrap();
+        match PrivKey::compute(&f, &g) {
+            Ok(s) => break s,
+            Err(_) => continue,
+        };
+    };
+    let pk = PubKey::compute(&f, &g).unwrap();
 
-assert_eq!(decrypted, bytes);
+    Ok((Arc::new(sk), Arc::new(pk)))
+}
+
+let mut rng = NTRURandom::new();
+let bytes = Arc::new(rng.randombytes::<1024>().to_vec());
+let (sk, pk) = gen_keys().unwrap();
+
+let num_threads = 4;
+let encrypted1 = Arc::new(parallel_bytes_encrypt(&mut rng, &bytes, &pk, num_threads).unwrap());
+let decrypted0 = parallel_bytes_decrypt(&encrypted1, &sk, num_threads).unwrap();
+let decrypted1 = bytes_decrypt(&encrypted1, &sk).unwrap();
+
+assert_eq!(decrypted0, decrypted1);
 ```
 
 ## TODO

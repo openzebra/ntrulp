@@ -29,38 +29,10 @@ fn gen_keys<'a>() -> Result<(Arc<PrivKey>, Arc<PubKey>), NTRUErrors<'a>> {
 }
 
 fn main() {
-    // let create content which should be encrypted
-    let content = "
-In the realm of digital night, Satoshi did conceive,
-A currency of cryptic might, for all to believe.
-In code and chains, he wove the tale,
-Of Bitcoin's birth, a revolution set to sail.
-
-A name unknown, a face unseen,
-Satoshi, a genius, behind the crypto machine.
-With whitepaper in hand and vision so clear,
-He birthed a new era, without any fear.
-
-Decentralized ledger, transparent and free,
-Bitcoin emerged, for the world to see.
-Mining for coins, nodes in a network,
-A financial system, no central clerk.
-
-The world was skeptical, yet curiosity grew,
-As Bitcoin's value steadily blew.
-From pennies to thousands, a meteoric rise,
-Satoshi's creation took us by surprise.
-
-But Nakamoto vanished, into the digital mist,
-Leaving behind a legacy, a cryptocurrency twist.
-In the hearts of hodlers, Satoshi's name lives on,
-A symbol of innovation, in the crypto dawn.
-";
-    // Convert utf8 string to bytes.
-    let bytes = Arc::new(content.as_bytes().to_vec());
-
     // create random generator.
     let mut rng = NTRURandom::new();
+
+    let bytes = Arc::new(rng.randombytes::<1024>().to_vec());
 
     let (sk, pk) = gen_keys().unwrap();
 
