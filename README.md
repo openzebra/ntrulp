@@ -68,7 +68,7 @@ ntrulp = { version = "0.1.6", features = ["ntrup761"] }
 ntrulp = { version = "0.1.6", features = ["ntrup857"] }
 ntrulp = { version = "0.1.6", features = ["ntrup953"] }
 ntrulp = { version = "0.1.6", features = ["ntrup1013"] }
-ntrulp = { version = "0.1.6", features = ["ntrulpr1277"] }
+ntrulp = { version = "0.1.6", features = ["ntrup1277"] }
 ```
 
 
@@ -84,14 +84,14 @@ cargo add ntrulp
 ```bash
 git clone https://github.com/zebra-sh/ntrulp.git
 cd ntrulp
-cargo test --features ntrulpr1277
+cargo test --features ntrup1277
 
 ```
 
 ```bash
 git clone https://github.com/zebra-sh/ntrulp.git
 cd ntrulp
-cargo bench
+cargo bench --features ntrup1277
 ```
 ## Keys Generation:
 ```rust
