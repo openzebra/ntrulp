@@ -641,6 +641,11 @@ mod test_cipher {
         let pk = Arc::new(PubKey::compute(&f, &g).unwrap());
         let encrypted =
             Arc::new(parallel_bytes_encrypt(&mut random, &ciphertext, &pk, num_threads).unwrap());
+        let encrypted1 =
+            Arc::new(parallel_bytes_encrypt(&mut random, &ciphertext, &pk, num_threads).unwrap());
+
+        assert_ne!(encrypted, encrypted1);
+
         let decrypted = parallel_bytes_decrypt(&encrypted, &sk, num_threads).unwrap();
 
         assert_eq!(decrypted, ciphertext.to_vec());
@@ -663,6 +668,8 @@ mod test_cipher {
         };
         let pk = PubKey::compute(&f, &g).unwrap();
         let mut encrypted = bytes_encrypt(&mut random, &ciphertext, &pk);
+        let encrypted1 = bytes_encrypt(&mut random, &ciphertext, &pk);
+        assert_ne!(encrypted, encrypted1);
         let decrypted = bytes_decrypt(&encrypted, &sk).unwrap();
 
         assert_eq!(decrypted, ciphertext);

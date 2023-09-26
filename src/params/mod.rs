@@ -8,6 +8,7 @@ pub mod params653 {
     pub const RQ_BYTES: usize = P * 2;
     pub const PUBLICKEYS_BYTES: usize = RQ_BYTES;
     pub const SECRETKEYS_BYTES: usize = R3_BYTES * 2;
+    pub const DIFFICULT: usize = 4;
 }
 
 #[cfg(feature = "ntrulpr761")]
@@ -20,6 +21,7 @@ pub mod params761 {
     pub const RQ_BYTES: usize = P * 2;
     pub const PUBLICKEYS_BYTES: usize = RQ_BYTES;
     pub const SECRETKEYS_BYTES: usize = R3_BYTES * 2;
+    pub const DIFFICULT: usize = 6;
 }
 
 #[cfg(feature = "ntrulpr857")]
@@ -32,6 +34,7 @@ pub mod params857 {
     pub const RQ_BYTES: usize = P * 2;
     pub const PUBLICKEYS_BYTES: usize = RQ_BYTES;
     pub const SECRETKEYS_BYTES: usize = R3_BYTES * 2;
+    pub const DIFFICULT: usize = 8;
 }
 
 #[cfg(feature = "ntrulpr953")]
@@ -44,6 +47,7 @@ pub mod params953 {
     pub const RQ_BYTES: usize = P * 2;
     pub const PUBLICKEYS_BYTES: usize = RQ_BYTES;
     pub const SECRETKEYS_BYTES: usize = R3_BYTES * 2;
+    pub const DIFFICULT: usize = 10;
 }
 
 #[cfg(feature = "ntrulpr1013")]
@@ -56,6 +60,7 @@ pub mod params1013 {
     pub const RQ_BYTES: usize = P * 2;
     pub const PUBLICKEYS_BYTES: usize = RQ_BYTES;
     pub const SECRETKEYS_BYTES: usize = R3_BYTES * 2;
+    pub const DIFFICULT: usize = 12;
 }
 
 #[cfg(feature = "ntrulpr1277")]
@@ -68,4 +73,5 @@ pub mod params1277 {
     pub const RQ_BYTES: usize = P * 2;
     pub const PUBLICKEYS_BYTES: usize = RQ_BYTES;
     pub const SECRETKEYS_BYTES: usize = R3_BYTES * 2;
+    pub const DIFFICULT: usize = 14;
 }

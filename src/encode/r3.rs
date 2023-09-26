@@ -1,15 +1,15 @@
 #[cfg(feature = "ntrulpr1013")]
-use crate::params::params1013::{P, R3_BYTES, W};
+use crate::params::params1013::{DIFFICULT, P, R3_BYTES, W};
 #[cfg(feature = "ntrulpr1277")]
-use crate::params::params1277::{P, R3_BYTES, W};
+use crate::params::params1277::{DIFFICULT, P, R3_BYTES, W};
 #[cfg(feature = "ntrulpr653")]
-use crate::params::params653::{P, R3_BYTES, W};
+use crate::params::params653::{DIFFICULT, P, R3_BYTES, W};
 #[cfg(feature = "ntrulpr761")]
-use crate::params::params761::{P, R3_BYTES, W};
+use crate::params::params761::{DIFFICULT, P, R3_BYTES, W};
 #[cfg(feature = "ntrulpr857")]
-use crate::params::params857::{P, R3_BYTES, W};
+use crate::params::params857::{DIFFICULT, P, R3_BYTES, W};
 #[cfg(feature = "ntrulpr953")]
-use crate::params::params953::{P, R3_BYTES, W};
+use crate::params::params953::{DIFFICULT, P, R3_BYTES, W};
 
 use crate::encode::shuffle::{shuffle_array, unshuffle_array};
 use crate::random::CommonRandom;
@@ -144,7 +144,6 @@ pub fn r3_merge_w_chunks(chunks: &[[i8; P]], size: &[usize], seed: u64) -> Vec<i
 }
 
 pub fn r3_split_w_chunks(input: &[i8], rng: &mut NTRURandom) -> (Vec<[i8; P]>, Vec<usize>, u64) {
-    const DIFFICULT: usize = 6;
     const LIMIT: usize = W - DIFFICULT;
 
     let origin_seed = rng.random_u64() - (input.len() / P) as u64;
