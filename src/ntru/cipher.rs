@@ -42,19 +42,37 @@ fn byte_to_usize_vec(list: &[u8]) -> Vec<usize> {
         .collect()
 }
 
-fn unpack_bytes<'a>(bytes: &[u8]) -> Result<(Vec<u8>, Vec<usize>, usize), NTRUErrors<'a>> {
+fn unpack_bytes<'a>(bytes: &[u8]) -> Result<(Vec<u8>, Vec<usize>, u64), NTRUErrors<'a>> {
     let bytes_len = bytes.len();
-    let binding = bytes[bytes_len - 8..].try_into();
-    let size_bytes_len: &[u8; 8] = match &binding {
-        Ok(v) => v,
+    let seed_bytes: [u8; 8] = match &bytes[bytes_len - 8..].try_into() {
+        Ok(v) => *v,
         Err(_) => return Err(NTRUErrors::SliceError("incorrect or damaged cipher bytes")),
     };
-    let size_len = usize::from_ne_bytes(*size_bytes_len);
-    let size_bytes = &bytes[bytes_len - size_len - 8..(bytes_len - 1)];
-    let size = byte_to_usize_vec(size_bytes);
-    let bytes_data = &bytes[..bytes_len - size_len - 8];
+    let size_bytes_len: [u8; 8] = match &bytes[bytes_len - 16..bytes_len - 8].try_into() {
+        Ok(v) => *v,
+        Err(_) => return Err(NTRUErrors::SliceError("incorrect or damaged cipher bytes")),
+    };
+    let size_len = usize::from_ne_bytes(size_bytes_len);
+    let seed = u64::from_ne_bytes(seed_bytes);
 
-    Ok((bytes_data.to_vec(), size, size_len))
+    let size_bytes = &bytes[bytes_len - size_len - 16..(bytes_len - 16)];
+    let size = byte_to_usize_vec(size_bytes);
+
+    let bytes_data = &bytes[..bytes_len - size_len - 16];
+
+    Ok((bytes_data.to_vec(), size, seed))
+}
+
+fn pack_bytes(mut bytes: Vec<u8>, size: Vec<usize>, seed: u64) -> Vec<u8> {
+    let size_bytes = usize_vec_to_bytes(&size);
+    let size_len = size_bytes.len().to_ne_bytes();
+    let seed_bytes = seed.to_ne_bytes();
+
+    bytes.extend(size_bytes);
+    bytes.extend(size_len);
+    bytes.extend(seed_bytes);
+
+    bytes
 }
 
 /// Decrypts a polynomial in the Fq field using a private key.
@@ -228,7 +246,7 @@ pub fn r3_encrypt(r: &R3, pub_key: &PubKey) -> Rq {
 ///
 pub fn bytes_encrypt(rng: &mut NTRURandom, bytes: &[u8], pub_key: &PubKey) -> Vec<u8> {
     let unlimted_poly = r3::r3_decode_chunks(bytes);
-    let (chunks, size) = r3::r3_split_w_chunks(&unlimted_poly, rng);
+    let (chunks, size, seed) = r3::r3_split_w_chunks(&unlimted_poly, rng);
     let mut bytes: Vec<u8> = Vec::with_capacity(P * size.len());
 
     for chunk in chunks {
@@ -239,13 +257,7 @@ pub fn bytes_encrypt(rng: &mut NTRURandom, bytes: &[u8], pub_key: &PubKey) -> Ve
         bytes.extend(rq_bytes);
     }
 
-    let size_bytes = usize_vec_to_bytes(&size);
-    let size_len = size_bytes.len().to_ne_bytes().to_vec();
-
-    bytes.extend(size_bytes);
-    bytes.extend(size_len);
-
-    bytes
+    pack_bytes(bytes, size, seed)
 }
 
 /// Decrypts bytes and retrieves the bytes previously encrypted using the `bytes_encrypt` function.
@@ -296,8 +308,9 @@ pub fn bytes_encrypt(rng: &mut NTRURandom, bytes: &[u8], pub_key: &PubKey) -> Ve
 /// The function may panic if decryption fails or if the private key is invalid.
 ///
 pub fn bytes_decrypt<'a>(bytes: &[u8], priv_key: &PrivKey) -> Result<Vec<u8>, NTRUErrors<'a>> {
-    let (bytes_data, size, size_len) = unpack_bytes(&bytes)?;
+    let (bytes_data, size, seed) = unpack_bytes(&bytes)?;
     let chunks = bytes_data.chunks(RQ_BYTES);
+    let size_len = size.len();
 
     let mut r3_chunks = Vec::with_capacity(size_len);
 
@@ -316,7 +329,7 @@ pub fn bytes_decrypt<'a>(bytes: &[u8], priv_key: &PrivKey) -> Result<Vec<u8>, NT
         r3_chunks.push(r3.coeffs);
     }
 
-    let out_r3 = r3::r3_merge_w_chunks(&r3_chunks, &size);
+    let out_r3 = r3::r3_merge_w_chunks(&r3_chunks, &size, seed);
 
     Ok(r3::r3_encode_chunks(&out_r3))
 }
@@ -385,7 +398,7 @@ pub fn parallel_bytes_encrypt<'a>(
     num_threads: usize,
 ) -> Result<Vec<u8>, NTRUErrors<'a>> {
     let unlimted_poly = r3::r3_decode_chunks(&bytes);
-    let (chunks, size) = r3::r3_split_w_chunks(&unlimted_poly, rng);
+    let (chunks, size, seed) = r3::r3_split_w_chunks(&unlimted_poly, rng);
 
     let mut bytes: Vec<u8> = Vec::with_capacity(P * size.len());
     let mut threads = Vec::with_capacity(num_threads);
@@ -442,8 +455,6 @@ pub fn parallel_bytes_encrypt<'a>(
         Ok(v) => v,
         Err(_) => return Err(NTRUErrors::ThreadError("cannot lock enc arc value!")),
     };
-    let size_bytes = usize_vec_to_bytes(&size);
-    let size_len = size_bytes.len().to_ne_bytes().to_vec();
 
     for i in 0..size.len() {
         match enc_ref.get(&i) {
@@ -456,10 +467,7 @@ pub fn parallel_bytes_encrypt<'a>(
         }
     }
 
-    bytes.extend(size_bytes);
-    bytes.extend(size_len);
-
-    Ok(bytes)
+    Ok(pack_bytes(bytes, size, seed))
 }
 
 /// Decrypts previously encrypted bytes in parallel using multiple processor threads.
@@ -522,9 +530,9 @@ pub fn parallel_bytes_decrypt<'a>(
     priv_key: &Arc<PrivKey>,
     num_threads: usize,
 ) -> Result<Vec<u8>, NTRUErrors<'a>> {
-    let (bytes_data, size, size_len) = unpack_bytes(&bytes)?;
+    let (bytes_data, size, seed) = unpack_bytes(&bytes)?;
     let chunks = bytes_data.chunks(RQ_BYTES);
-
+    let size_len = size.len();
     let sync_hash_map: Arc<Mutex<HashMap<usize, [i8; P]>>> = Arc::new(Mutex::new(HashMap::new()));
     let mut threads = Vec::with_capacity(num_threads);
 
@@ -599,7 +607,7 @@ pub fn parallel_bytes_decrypt<'a>(
             }
         }
 
-        let r3 = r3::r3_merge_w_chunks::<P>(&r3_chunks, &size);
+        let r3 = r3::r3_merge_w_chunks(&r3_chunks, &size, seed);
 
         r3::r3_encode_chunks(&r3)
     };
@@ -612,6 +620,7 @@ mod test_cipher {
     use super::*;
     use crate::random::CommonRandom;
     use crate::random::NTRURandom;
+    use rand::Rng;
 
     #[test]
     fn test_parallel_bytes_cipher() {
@@ -690,5 +699,15 @@ mod test_cipher {
         let decrypted = rq_decrypt(&encrypted, &sk);
 
         assert_eq!(decrypted.coeffs, r.coeffs);
+    }
+
+    #[test]
+    fn test_uszie_convert() {
+        let mut rng = rand::thread_rng();
+        let usize_list: Vec<usize> = (0..1024).map(|_| rng.gen::<usize>()).collect();
+        let bytes = usize_vec_to_bytes(&usize_list);
+        let out = byte_to_usize_vec(&bytes);
+
+        assert_eq!(out, usize_list);
     }
 }

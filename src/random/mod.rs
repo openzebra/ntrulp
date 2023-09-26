@@ -29,6 +29,7 @@ pub trait CommonRandom {
     fn random_range_3(&mut self) -> i8;
     fn randombytes<const SIZE: usize>(&mut self) -> [u8; SIZE];
     fn random_sign(&mut self) -> i8;
+    fn random_u64(&mut self) -> u64;
 }
 
 enum RngOptions {
@@ -59,6 +60,13 @@ impl RngOptions {
         match self {
             RngOptions::Seed(rng) => rng.gen::<bool>(),
             RngOptions::Thread(rng) => rng.gen::<bool>(),
+        }
+    }
+
+    pub fn random_u64(&mut self) -> u64 {
+        match self {
+            RngOptions::Seed(rng) => rng.gen::<u64>(),
+            RngOptions::Thread(rng) => rng.gen::<u64>(),
         }
     }
 }
@@ -109,6 +117,10 @@ impl CommonRandom for NTRURandom {
         } else {
             -1
         }
+    }
+
+    fn random_u64(&mut self) -> u64 {
+        self.rng.random_u64()
     }
 
     fn random_range_3(&mut self) -> i8 {
