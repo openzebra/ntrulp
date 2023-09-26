@@ -6,26 +6,84 @@ This repository presents an implementation of high-security prime-degree large-G
 
 This implementation uses: Fields of the form (Z/q)[x]/(xp −x−1), where p is prime, are used in “NTRU Prime”, introduced in this paper, and have all of our recommended defenses.
 
-#### Parameter set:
-* P = 653, Q = 4621, W = 288
-* p = 761, q = 4591, w = 286
-* p = 857, q = 5167, w = 322
-* p = 953, q = 6343, w = 396
-* p = 1013, q = 7177, w = 448
-* p = 1277, q = 7879, w = 492
+## Notation and Parameters for NTRU Prime
+
+In the context of NTRU Prime, several parameters and notations
+play a crucial role in defining the cryptographic system.
+
+### Parameter Set
+
+A parameter set for NTRU Prime is represented as a triple (p, q, w), 
+which forms the foundation of the primary algebraic structures in the system.
+Let's break down these parameters:
+
+ * P: This parameter corresponds to the degree of the irreducible polynomial P = xp − x − 1 and is required to be a prime number. Commonly used values for p in the parameter sets are 653, 761, 857, 953, 1013, 1277  .
+ * Q: Representing the characteristic of the field R/q = (Z/q)[x]/P, q is also a prime number. The values typically employed for q depend on the specific degree considered in [5] and include 4621, 4591, 5167, 6343, 7177, 7879.
+ * W: The weight parameter W is a positive integer that governs the number of non-zero coefficients within specific polynomials.
+
+ * P = 653, Q = 4621, W = 288
+ * P = 761, Q = 4591, W = 286
+ * P = 857, Q = 5167, W = 322
+ * P = 953, Q = 6343, W = 396
+ * P = 1013, Q = 7177, W = 448
+ * P = 1277, Q = 7879, W = 492
+
+#### Extra parameter Set
+ * `R3_BYTES` - Size of encoded R3 poly
+ * `RQ_BYTES` - Size of bytes encoded Rq poly
+ * `PUBLICKEYS_BYTES` - Size encoded public Key
+ * `SECRETKEYS_BYTES` - Size of Secret Key
+ * `DIFFICULT` - This parameter is responsible for the complexity of the algorithm for applying statistical analysis to it.
+
+Valid Parameter Set Conditions
+
+To ensure the validity of a parameter set, it must meet the following conditions:
+
+ * `2P ≥ 3W`: This inequality places a constraint on the relationship between p and w, emphasizing the importance of a balanced selection of these parameters.
+ * `Q ≥ 16W + 1`: Another crucial condition, this inequality imposes restrictions on q relative to the weight parameter w.
+
+Notational Abbreviations
+
+For brevity and clarity, the following notational abbreviations are used:
+
+R3: Denotes the ring (Z/3)[x]/P, which is a specific variant related to the ring R.
+Rq: Represents the field (Z/q)[x]/P, another critical element in the cryptographic system.
+
+## Rust Features
+
+ * default = "ntrulpr761"
+ * ntrulpr653
+ * ntrulpr761
+ * ntrulpr857
+ * ntrulpr953
+ * ntrulpr1013
+ * ntrulpr1277
+
 
 ### install
 ```bash
 cargo add ntrulp
+
+cargo install --features "ntrulpr653" ntrulp
+cargo install --features "ntrulpr761" ntrulp
+cargo install --features "ntrulpr857" ntrulp
+cargo install --features "ntrulpr953" ntrulp
+cargo install --features "ntrulpr1013" ntrulp
+cargo install --features "ntrulpr1277" ntrulp
 ```
+
 
 ### Testing
 
 ```bash
+git clone https://github.com/zebra-sh/ntrulp.git
+cd ntrulp
 cargo test
 ```
 
 ```bash
+git clone https://github.com/zebra-sh/ntrulp.git
+cd ntrulp
 cargo bench
 ```
 ## Keys Generation:
