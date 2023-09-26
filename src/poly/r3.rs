@@ -1,12 +1,25 @@
+#[cfg(feature = "ntrulpr1013")]
+use crate::params::params1013::P;
+#[cfg(feature = "ntrulpr1277")]
+use crate::params::params1277::P;
+#[cfg(feature = "ntrulpr653")]
+use crate::params::params653::P;
+#[cfg(feature = "ntrulpr761")]
+use crate::params::params761::P;
+#[cfg(feature = "ntrulpr857")]
+use crate::params::params857::P;
+#[cfg(feature = "ntrulpr953")]
+use crate::params::params953::P;
+
 use super::{errors::KemErrors, f3, fq, rq::Rq};
 use crate::math::nums::{i16_negative_mask, i16_nonzero_mask};
 
 #[derive(Debug)]
-pub struct R3<const P: usize, const Q: usize, const Q12: usize> {
+pub struct R3 {
     pub coeffs: [i8; P],
 }
 
-impl<const P: usize, const Q: usize, const Q12: usize> R3<P, Q, Q12> {
+impl R3 {
     pub fn new() -> Self {
         Self { coeffs: [0i8; P] }
     }
@@ -26,11 +39,11 @@ impl<const P: usize, const Q: usize, const Q12: usize> R3<P, Q, Q12> {
     }
 
     // h = f*g in the ring R3
-    pub fn mult<const P_TWICE_MINUS_ONE: usize>(&self, g3: &R3<P, Q, Q12>) -> R3<P, Q, Q12> {
+    pub fn mult(&self, g3: &R3) -> R3 {
         let f = self.coeffs;
         let g = g3.coeffs;
         let mut out = [0i8; P];
-        let mut fg = [0i8; P_TWICE_MINUS_ONE];
+        let mut fg = [0i8; P + P - 1];
 
         let quotient = |r: i8, f: i8, g: i8| {
             let x = r + f * g;
@@ -45,7 +58,7 @@ impl<const P: usize, const Q: usize, const Q12: usize> R3<P, Q, Q12> {
             }
             fg[i] = r;
         }
-        for i in P..P_TWICE_MINUS_ONE {
+        for i in P..P + P - 1 {
             let mut r = 0i8;
             for j in (i - P + 1)..P {
                 r = quotient(r, f[j], g[i - j]);
@@ -76,13 +89,13 @@ impl<const P: usize, const Q: usize, const Q12: usize> R3<P, Q, Q12> {
         self.coeffs[0] == 1
     }
 
-    pub fn recip<const P_PLUS_ONE: usize>(&self) -> Result<R3<P, Q, Q12>, KemErrors> {
+    pub fn recip(&self) -> Result<R3, KemErrors> {
         let input = self.coeffs;
         let mut out = [0i8; P];
-        let mut f = [0i8; P_PLUS_ONE];
-        let mut g = [0i8; P_PLUS_ONE];
-        let mut v = [0i8; P_PLUS_ONE];
-        let mut r = [0i8; P_PLUS_ONE];
+        let mut f = [0i8; P + 1];
+        let mut g = [0i8; P + 1];
+        let mut v = [0i8; P + 1];
+        let mut r = [0i8; P + 1];
         let mut delta: i8;
         let mut sign: i8;
         let mut swap: i8;
@@ -92,13 +105,6 @@ impl<const P: usize, const Q: usize, const Q12: usize> R3<P, Q, Q12> {
             let x = g + sign * f;
             f3::freeze(x as i16)
         };
-
-        for i in 0..P + 1 {
-            v[i] = 0;
-        }
-        for i in 0..P + 1 {
-            r[i] = 0;
-        }
 
         r[0] = 1;
 
@@ -128,7 +134,7 @@ impl<const P: usize, const Q: usize, const Q12: usize> R3<P, Q, Q12> {
             delta ^= swap & (delta ^ -delta);
             delta += 1;
 
-            for i in 0..P_PLUS_ONE {
+            for i in 0..P + 1 {
                 t = swap & (f[i] ^ g[i]);
                 f[i] ^= t;
                 g[i] ^= t;
@@ -162,11 +168,11 @@ impl<const P: usize, const Q: usize, const Q12: usize> R3<P, Q, Q12> {
         }
     }
 
-    pub fn rq_from_r3(&self) -> Rq<P, Q, Q12> {
+    pub fn rq_from_r3(&self) -> Rq {
         let mut out = [0i16; P];
 
         for i in 0..P {
-            out[i] = fq::freeze::<Q12, Q>(self.coeffs[i].into());
+            out[i] = fq::freeze(self.coeffs[i].into());
         }
 
         Rq::from(out)
@@ -175,18 +181,13 @@ impl<const P: usize, const Q: usize, const Q12: usize> R3<P, Q, Q12> {
 
 #[cfg(test)]
 mod test_r3 {
+    use super::*;
     use crate::random::{CommonRandom, NTRURandom};
 
-    use super::*;
-
+    #[cfg(feature = "ntrulpr761")]
     #[test]
     fn test_r3_mult() {
-        const P: usize = 761;
-        const Q: usize = 4591;
-        const Q12: usize = (Q - 1) / 2;
-        const P_TWICE_MINUS_ONE: usize = P + P - 1;
-
-        let f: R3<P, Q, Q12> = R3::from([
+        let f: R3 = R3::from([
             1, 0, -1, 0, 1, -1, 0, 0, -1, 0, -1, 1, -1, -1, 0, 1, 1, 0, 0, 0, 0, -1, 0, -1, 0, 1,
             0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, -1, -1, 1, 0, 0, 0, -1, 0, 0, 1, 1, 1, -1, 1, 1, 1, 1,
             0, 0, 1, -1, 0, 0, -1, 1, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 1, -1, -1, -1, 0,
@@ -216,7 +217,7 @@ mod test_r3 {
             -1, -1, 0, 0, 0, 0, -1, 1, 0, 0, -1, -1, 0, 0, 1, 0, -1, 0, 0, 0, 0, 0, 0, 1, -1, 1, 0,
             0, 0, 1, 1, 1, 0, 0, -1, 0, 0, -1, 0, 0, 0, 1, -1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0,
         ]);
-        let g: R3<P, Q, Q12> = R3::from([
+        let g: R3 = R3::from([
             -1, 1, -1, 0, 0, -1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, -1,
             -1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1,
             -1, 0, -1, -1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, -1, 0, 0, 1, 1, 0, 0, -1, -1,
@@ -246,7 +247,7 @@ mod test_r3 {
             0, 0, 1, 1, 1, -1, -1, -1, 0, 0, 0, 0, 1, -1, 1, 0, 0, 0, 0, 0, 1, 0, -1, 0, 1, -1, 0,
             0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, -1, 1,
         ]);
-        let h = f.mult::<P_TWICE_MINUS_ONE>(&g);
+        let h = f.mult(&g);
 
         assert_eq!(
             h.coeffs,
@@ -287,143 +288,17 @@ mod test_r3 {
     }
 
     #[test]
-    fn test_recip_761() {
-        const P: usize = 761;
-        const Q: usize = 4591;
-        const Q12: usize = (Q - 1) / 2;
-        const P_PLUS_ONE: usize = P + 1;
-        const P_TWICE_MINUS_ONE: usize = P + P - 1;
-
-        let mut random: NTRURandom<P> = NTRURandom::new();
+    fn test_recip() {
+        let mut random: NTRURandom = NTRURandom::new();
 
         for _ in 0..2 {
-            let r3: R3<P, Q, Q12> = R3::from(random.random_small().unwrap());
+            let r3: R3 = R3::from(random.random_small().unwrap());
 
-            let out = match r3.recip::<P_PLUS_ONE>() {
+            let out = match r3.recip() {
                 Ok(o) => o,
                 Err(_) => continue,
             };
-            let one = out.mult::<P_TWICE_MINUS_ONE>(&r3);
-
-            assert_eq!(one.coeffs[0], 1);
-            assert!(one.eq_one());
-        }
-    }
-
-    #[test]
-    fn test_recip_857() {
-        const P: usize = 857;
-        const Q: usize = 5167;
-        const P_PLUS_ONE: usize = P + 1;
-        const Q12: usize = (Q - 1) / 2;
-        const P_TWICE_MINUS_ONE: usize = P + P - 1;
-
-        let mut random: NTRURandom<P> = NTRURandom::new();
-
-        for _ in 0..10 {
-            let r3: R3<P, Q, Q12> = R3::from(random.random_small().unwrap());
-
-            let out = match r3.recip::<P_PLUS_ONE>() {
-                Ok(o) => o,
-                Err(_) => continue,
-            };
-            let one = out.mult::<P_TWICE_MINUS_ONE>(&r3);
-
-            assert_eq!(one.coeffs[0], 1);
-            assert!(one.eq_one());
-        }
-    }
-
-    #[test]
-    fn test_recip_653() {
-        const P: usize = 653;
-        const Q: usize = 4621;
-        const Q12: usize = (Q - 1) / 2;
-        const P_PLUS_ONE: usize = P + 1;
-        const P_TWICE_MINUS_ONE: usize = P + P - 1;
-
-        let mut random: NTRURandom<P> = NTRURandom::new();
-
-        for _ in 0..10 {
-            let r3: R3<P, Q, Q12> = R3::from(random.random_small().unwrap());
-
-            let out = match r3.recip::<P_PLUS_ONE>() {
-                Ok(o) => o,
-                Err(_) => continue,
-            };
-            let one = out.mult::<P_TWICE_MINUS_ONE>(&r3);
-
-            assert_eq!(one.coeffs[0], 1);
-            assert!(one.eq_one());
-        }
-    }
-
-    #[test]
-    fn test_recip_953() {
-        const P: usize = 953;
-        const Q: usize = 6343;
-        const P_PLUS_ONE: usize = P + 1;
-        const Q12: usize = (Q - 1) / 2;
-        const P_TWICE_MINUS_ONE: usize = P + P - 1;
-
-        let mut random: NTRURandom<P> = NTRURandom::new();
-
-        for _ in 0..10 {
-            let r3: R3<P, Q, Q12> = R3::from(random.random_small().unwrap());
-
-            let out = match r3.recip::<P_PLUS_ONE>() {
-                Ok(o) => o,
-                Err(_) => continue,
-            };
-            let one = out.mult::<P_TWICE_MINUS_ONE>(&r3);
-
-            assert_eq!(one.coeffs[0], 1);
-            assert!(one.eq_one());
-        }
-    }
-
-    #[test]
-    fn test_recip_1013() {
-        const P: usize = 1013;
-        const Q: usize = 7177;
-        const Q12: usize = (Q - 1) / 2;
-        const P_PLUS_ONE: usize = P + 1;
-        const P_TWICE_MINUS_ONE: usize = P + P - 1;
-
-        let mut random: NTRURandom<P> = NTRURandom::new();
-
-        for _ in 0..10 {
-            let r3: R3<P, Q, Q12> = R3::from(random.random_small().unwrap());
-
-            let out = match r3.recip::<P_PLUS_ONE>() {
-                Ok(o) => o,
-                Err(_) => continue,
-            };
-            let one = out.mult::<P_TWICE_MINUS_ONE>(&r3);
-
-            assert_eq!(one.coeffs[0], 1);
-            assert!(one.eq_one());
-        }
-    }
-
-    #[test]
-    fn test_recip_1277() {
-        const P: usize = 1277;
-        const Q: usize = 7879;
-        const Q12: usize = (Q - 1) / 2;
-        const P_PLUS_ONE: usize = P + 1;
-        const P_TWICE_MINUS_ONE: usize = P + P - 1;
-
-        let mut random: NTRURandom<P> = NTRURandom::new();
-
-        for _ in 0..10 {
-            let r3: R3<P, Q, Q12> = R3::from(random.random_small().unwrap());
-
-            let out = match r3.recip::<P_PLUS_ONE>() {
-                Ok(o) => o,
-                Err(_) => continue,
-            };
-            let one = out.mult::<P_TWICE_MINUS_ONE>(&r3);
+            let one = out.mult(&r3);
 
             assert_eq!(one.coeffs[0], 1);
             assert!(one.eq_one());
