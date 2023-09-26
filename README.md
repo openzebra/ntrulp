@@ -63,12 +63,12 @@ You can select parameters through features, you must select parameters!
 ```
 # Cargo.toml
 
-ntrulp = { version = "0.1.6", features = ["ntrup653"] }
-ntrulp = { version = "0.1.6", features = ["ntrup761"] }
-ntrulp = { version = "0.1.6", features = ["ntrup857"] }
-ntrulp = { version = "0.1.6", features = ["ntrup953"] }
-ntrulp = { version = "0.1.6", features = ["ntrup1013"] }
-ntrulp = { version = "0.1.6", features = ["ntrup1277"] }
+ntrulp = { version = "0.1.7", features = ["ntrup653"] }
+ntrulp = { version = "0.1.7", features = ["ntrup761"] }
+ntrulp = { version = "0.1.7", features = ["ntrup857"] }
+ntrulp = { version = "0.1.7", features = ["ntrup953"] }
+ntrulp = { version = "0.1.7", features = ["ntrup1013"] }
+ntrulp = { version = "0.1.7", features = ["ntrup1277"] }
 ```
 
 
