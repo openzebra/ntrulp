@@ -63,13 +63,10 @@ Rq: Represents the field (Z/q)[x]/P, another critical element in the cryptograph
 ### install
 ```bash
 cargo add ntrulp
+```
 
-cargo install --features "ntrulpr653" ntrulp
-cargo install --features "ntrulpr761" ntrulp
-cargo install --features "ntrulpr857" ntrulp
-cargo install --features "ntrulpr953" ntrulp
-cargo install --features "ntrulpr1013" ntrulp
-cargo install --features "ntrulpr1277" ntrulp
+```
+ntrulp = { version = "0.1.5", features = ["ntrulpr1277"] }
 ```
 
 
