@@ -106,13 +106,6 @@ impl R3 {
             f3::freeze(x as i16)
         };
 
-        for i in 0..P + 1 {
-            v[i] = 0;
-        }
-        for i in 0..P + 1 {
-            r[i] = 0;
-        }
-
         r[0] = 1;
 
         for i in 0..P {

@@ -11,12 +11,12 @@ use crate::params::params857::P;
 #[cfg(feature = "ntrulpr953")]
 use crate::params::params953::P;
 
-use crate::math::nums::i32_mod_u14;
+pub fn freeze(a: i16) -> i8 {
+    let a_32 = a as i32;
+    let b = a_32 - (3 * ((10923 * a_32) >> 15));
+    let c = b - (3 * ((89_478_485 * b + 134_217_728) >> 28));
 
-pub fn freeze(x: i16) -> i8 {
-    let r = i32_mod_u14(x as i32 + 1, 3) as i8;
-
-    r - 1
+    c as i8
 }
 
 pub fn round(a: &mut [i16; P]) {
@@ -28,12 +28,14 @@ pub fn round(a: &mut [i16; P]) {
 #[cfg(feature = "ntrulpr761")]
 #[test]
 fn test_round() {
-    use crate::kem::rq::Rq;
+    use crate::poly::rq::Rq;
     use crate::random::CommonRandom;
     use crate::random::NTRURandom;
 
     let mut random: NTRURandom = NTRURandom::new();
-    let mut r3: Rq = Rq::from(random.short_random().unwrap()).recip3().unwrap();
+    let mut r3: Rq = Rq::from(random.short_random().unwrap())
+        .recip::<3>()
+        .unwrap();
 
     fn round3(h: &mut [i16; 761]) {
         let f: [i16; 761] = *h;
