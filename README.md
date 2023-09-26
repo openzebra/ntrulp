@@ -51,7 +51,8 @@ Rq: Represents the field (Z/q)[x]/P, another critical element in the cryptograph
 
 ## Rust Features
 
- * default = "ntrulpr761"
+You can select parameters through features, you must select parameters!
+
  * ntrup653
  * ntrup761
  * ntrup857
@@ -59,15 +60,23 @@ Rq: Represents the field (Z/q)[x]/P, another critical element in the cryptograph
  * ntrup1013
  * ntrup1277
 
+```
+# Cargo.toml
+
+ntrulp = { version = "0.1.6", features = ["ntrup653"] }
+ntrulp = { version = "0.1.6", features = ["ntrup761"] }
+ntrulp = { version = "0.1.6", features = ["ntrup857"] }
+ntrulp = { version = "0.1.6", features = ["ntrup953"] }
+ntrulp = { version = "0.1.6", features = ["ntrup1013"] }
+ntrulp = { version = "0.1.6", features = ["ntrulpr1277"] }
+```
+
 
 ### install
 ```bash
 cargo add ntrulp
 ```
 
-```
-ntrulp = { version = "0.1.6", features = ["ntrup1277"] }
-```
 
 
 ### Testing
