@@ -1,14 +1,14 @@
-#[cfg(feature = "ntrulpr1013")]
+#[cfg(feature = "ntrup1013")]
 use crate::params::params1013::{DIFFICULT, P, R3_BYTES, W};
-#[cfg(feature = "ntrulpr1277")]
+#[cfg(feature = "ntrup1277")]
 use crate::params::params1277::{DIFFICULT, P, R3_BYTES, W};
-#[cfg(feature = "ntrulpr653")]
+#[cfg(feature = "ntrup653")]
 use crate::params::params653::{DIFFICULT, P, R3_BYTES, W};
-#[cfg(feature = "ntrulpr761")]
+#[cfg(feature = "ntrup761")]
 use crate::params::params761::{DIFFICULT, P, R3_BYTES, W};
-#[cfg(feature = "ntrulpr857")]
+#[cfg(feature = "ntrup857")]
 use crate::params::params857::{DIFFICULT, P, R3_BYTES, W};
-#[cfg(feature = "ntrulpr953")]
+#[cfg(feature = "ntrup953")]
 use crate::params::params953::{DIFFICULT, P, R3_BYTES, W};
 
 use crate::encode::shuffle::{shuffle_array, unshuffle_array};

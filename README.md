@@ -52,12 +52,12 @@ Rq: Represents the field (Z/q)[x]/P, another critical element in the cryptograph
 ## Rust Features
 
  * default = "ntrulpr761"
- * ntrulpr653
- * ntrulpr761
- * ntrulpr857
- * ntrulpr953
- * ntrulpr1013
- * ntrulpr1277
+ * ntrup653
+ * ntrup761
+ * ntrup857
+ * ntrup953
+ * ntrup1013
+ * ntrup1277
 
 
 ### install
@@ -66,7 +66,7 @@ cargo add ntrulp
 ```
 
 ```
-ntrulp = { version = "0.1.5", features = ["ntrulpr1277"] }
+ntrulp = { version = "0.1.6", features = ["ntrup1277"] }
 ```
 
 
@@ -75,7 +75,8 @@ ntrulp = { version = "0.1.5", features = ["ntrulpr1277"] }
 ```bash
 git clone https://github.com/zebra-sh/ntrulp.git
 cd ntrulp
-cargo test
+cargo test --features ntrulpr1277
+
 ```
 
 ```bash
