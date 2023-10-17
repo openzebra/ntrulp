@@ -55,7 +55,7 @@ fn unpack_bytes<'a>(bytes: &[u8]) -> Result<(Vec<u8>, Vec<usize>, u64), NTRUErro
     let size_len = usize::from_ne_bytes(size_bytes_len);
     let seed = u64::from_ne_bytes(seed_bytes);
 
-    if bytes_len < size_len || bytes_len / size_len != R3_BYTES {
+    if bytes_len < size_len || (bytes_len / size_len) < R3_BYTES {
         return Err(NTRUErrors::SipherError("Invalid sipher"));
     }
 
