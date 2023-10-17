@@ -687,6 +687,36 @@ mod test_cipher {
     }
 
     #[test]
+    fn test_invalid_keys() {
+        let mut random: NTRURandom = NTRURandom::new();
+
+        let mut g: R3;
+        let ciphertext = random.randombytes::<1024>();
+        let f: Rq = Rq::from(random.short_random().unwrap());
+        loop {
+            g = R3::from(random.random_small().unwrap());
+
+            match PrivKey::compute(&f, &g) {
+                Ok(_) => break,
+                Err(_) => continue,
+            };
+        }
+        let pk = PubKey::compute(&f, &g).unwrap();
+        let invalid_sk = loop {
+            g = R3::from(random.random_small().unwrap());
+
+            match PrivKey::compute(&f, &g) {
+                Ok(s) => break s,
+                Err(_) => continue,
+            };
+        };
+        let encrypted = bytes_encrypt(&mut random, &ciphertext, &pk);
+        let decrypted = bytes_decrypt(&encrypted, &invalid_sk).unwrap();
+
+        assert_ne!(decrypted, ciphertext);
+    }
+
+    #[test]
     fn test_encrypt_and_decrypt() {
         let mut random: NTRURandom = NTRURandom::new();
 
