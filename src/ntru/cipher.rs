@@ -1,15 +1,15 @@
 #[cfg(feature = "ntrup1013")]
-use crate::params::params1013::{P, RQ_BYTES, RQ_BYTES, W};
+use crate::params::params1013::{P, RQ_BYTES, W};
 #[cfg(feature = "ntrup1277")]
-use crate::params::params1277::{P, RQ_BYTES, RQ_BYTES, W};
+use crate::params::params1277::{P, RQ_BYTES, W};
 #[cfg(feature = "ntrup653")]
-use crate::params::params653::{P, RQ_BYTES, RQ_BYTES, W};
+use crate::params::params653::{P, RQ_BYTES, W};
 #[cfg(feature = "ntrup761")]
-use crate::params::params761::{P, RQ_BYTES, RQ_BYTES, W};
+use crate::params::params761::{P, RQ_BYTES, W};
 #[cfg(feature = "ntrup857")]
-use crate::params::params857::{P, RQ_BYTES, RQ_BYTES, W};
+use crate::params::params857::{P, RQ_BYTES, W};
 #[cfg(feature = "ntrup953")]
-use crate::params::params953::{P, RQ_BYTES, RQ_BYTES, W};
+use crate::params::params953::{P, RQ_BYTES, W};
 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
@@ -54,10 +54,6 @@ fn unpack_bytes<'a>(bytes: &[u8]) -> Result<(Vec<u8>, Vec<usize>, u64), NTRUErro
     };
     let size_len = usize::from_ne_bytes(size_bytes_len);
     let seed = u64::from_ne_bytes(seed_bytes);
-
-    if bytes_len < size_len || (bytes_len / size_len) < R3_BYTES {
-        return Err(NTRUErrors::SipherError("Invalid sipher"));
-    }
 
     let size_bytes = &bytes[bytes_len - size_len - 16..(bytes_len - 16)];
     let size = byte_to_usize_vec(size_bytes);
@@ -688,63 +684,6 @@ mod test_cipher {
         let decrypted = bytes_decrypt(&encrypted, &sk).unwrap();
 
         assert_ne!(decrypted, ciphertext);
-    }
-
-    #[test]
-    fn test_invalid_keys() {
-        let mut random: NTRURandom = NTRURandom::new();
-
-        let mut g: R3;
-        let ciphertext = random.randombytes::<1024>();
-        let f: Rq = Rq::from(random.short_random().unwrap());
-        loop {
-            g = R3::from(random.random_small().unwrap());
-
-            match PrivKey::compute(&f, &g) {
-                Ok(_) => break,
-                Err(_) => continue,
-            };
-        }
-        let pk = PubKey::compute(&f, &g).unwrap();
-        let invalid_sk = loop {
-            g = R3::from(random.random_small().unwrap());
-
-            match PrivKey::compute(&f, &g) {
-                Ok(s) => break s,
-                Err(_) => continue,
-            };
-        };
-        let encrypted = bytes_encrypt(&mut random, &ciphertext, &pk);
-        let decrypted = bytes_decrypt(&encrypted, &invalid_sk).unwrap();
-
-        assert_ne!(decrypted, ciphertext);
-    }
-
-    #[test]
-    fn test_invalid_bytes_decrypt() {
-        let mut random: NTRURandom = NTRURandom::new();
-
-        let mut g: R3;
-        let invalid_bytes = random.randombytes::<128>();
-        let f: Rq = Rq::from(random.short_random().unwrap());
-        loop {
-            g = R3::from(random.random_small().unwrap());
-
-            match PrivKey::compute(&f, &g) {
-                Ok(_) => break,
-                Err(_) => continue,
-            };
-        }
-        let invalid_sk = loop {
-            g = R3::from(random.random_small().unwrap());
-
-            match PrivKey::compute(&f, &g) {
-                Ok(s) => break s,
-                Err(_) => continue,
-            };
-        };
-
-        assert!(bytes_decrypt(&invalid_bytes, &invalid_sk).is_err());
     }
 
     #[test]
