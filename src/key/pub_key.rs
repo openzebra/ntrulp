@@ -1,14 +1,14 @@
-#[cfg(feature = "ntrulpr1013")]
+#[cfg(feature = "ntrup1013")]
 use crate::params::params1013::PUBLICKEYS_BYTES;
-#[cfg(feature = "ntrulpr1277")]
+#[cfg(feature = "ntrup1277")]
 use crate::params::params1277::PUBLICKEYS_BYTES;
-#[cfg(feature = "ntrulpr653")]
+#[cfg(feature = "ntrup653")]
 use crate::params::params653::PUBLICKEYS_BYTES;
-#[cfg(feature = "ntrulpr761")]
+#[cfg(feature = "ntrup761")]
 use crate::params::params761::PUBLICKEYS_BYTES;
-#[cfg(feature = "ntrulpr857")]
+#[cfg(feature = "ntrup857")]
 use crate::params::params857::PUBLICKEYS_BYTES;
-#[cfg(feature = "ntrulpr953")]
+#[cfg(feature = "ntrup953")]
 use crate::params::params953::PUBLICKEYS_BYTES;
 
 use crate::{

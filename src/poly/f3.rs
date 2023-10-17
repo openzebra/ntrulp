@@ -1,14 +1,14 @@
-#[cfg(feature = "ntrulpr1013")]
+#[cfg(feature = "ntrup1013")]
 use crate::params::params1013::P;
-#[cfg(feature = "ntrulpr1277")]
+#[cfg(feature = "ntrup1277")]
 use crate::params::params1277::P;
-#[cfg(feature = "ntrulpr653")]
+#[cfg(feature = "ntrup653")]
 use crate::params::params653::P;
-#[cfg(feature = "ntrulpr761")]
+#[cfg(feature = "ntrup761")]
 use crate::params::params761::P;
-#[cfg(feature = "ntrulpr857")]
+#[cfg(feature = "ntrup857")]
 use crate::params::params857::P;
-#[cfg(feature = "ntrulpr953")]
+#[cfg(feature = "ntrup953")]
 use crate::params::params953::P;
 
 pub fn freeze(a: i16) -> i8 {
@@ -25,7 +25,7 @@ pub fn round(a: &mut [i16; P]) {
     }
 }
 
-#[cfg(feature = "ntrulpr761")]
+#[cfg(feature = "ntrup761")]
 #[test]
 fn test_round() {
     use crate::poly::rq::Rq;
@@ -53,7 +53,7 @@ fn test_round() {
     assert_eq!(new_round, r3.coeffs);
 }
 
-#[cfg(feature = "ntrulpr761")]
+#[cfg(feature = "ntrup761")]
 #[test]
 fn test_freeze() {
     use rand::prelude::*;

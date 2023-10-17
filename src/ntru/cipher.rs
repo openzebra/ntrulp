@@ -1,15 +1,15 @@
-#[cfg(feature = "ntrulpr1013")]
-use crate::params::params1013::{P, R3_BYTES, RQ_BYTES, W};
-#[cfg(feature = "ntrulpr1277")]
-use crate::params::params1277::{P, R3_BYTES, RQ_BYTES, W};
-#[cfg(feature = "ntrulpr653")]
-use crate::params::params653::{P, R3_BYTES, RQ_BYTES, W};
-#[cfg(feature = "ntrulpr761")]
-use crate::params::params761::{P, R3_BYTES, RQ_BYTES, W};
-#[cfg(feature = "ntrulpr857")]
-use crate::params::params857::{P, R3_BYTES, RQ_BYTES, W};
-#[cfg(feature = "ntrulpr953")]
-use crate::params::params953::{P, R3_BYTES, RQ_BYTES, W};
+#[cfg(feature = "ntrup1013")]
+use crate::params::params1013::{P, RQ_BYTES, RQ_BYTES, W};
+#[cfg(feature = "ntrup1277")]
+use crate::params::params1277::{P, RQ_BYTES, RQ_BYTES, W};
+#[cfg(feature = "ntrup653")]
+use crate::params::params653::{P, RQ_BYTES, RQ_BYTES, W};
+#[cfg(feature = "ntrup761")]
+use crate::params::params761::{P, RQ_BYTES, RQ_BYTES, W};
+#[cfg(feature = "ntrup857")]
+use crate::params::params857::{P, RQ_BYTES, RQ_BYTES, W};
+#[cfg(feature = "ntrup953")]
+use crate::params::params953::{P, RQ_BYTES, RQ_BYTES, W};
 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};

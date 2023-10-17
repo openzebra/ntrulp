@@ -51,26 +51,32 @@ Rq: Represents the field (Z/q)[x]/P, another critical element in the cryptograph
 
 ## Rust Features
 
- * default = "ntrulpr761"
- * ntrulpr653
- * ntrulpr761
- * ntrulpr857
- * ntrulpr953
- * ntrulpr1013
- * ntrulpr1277
+You can select parameters through features, you must select parameters!
+
+ * ntrup653
+ * ntrup761
+ * ntrup857
+ * ntrup953
+ * ntrup1013
+ * ntrup1277
+
+```
+# Cargo.toml
+
+ntrulp = { version = "0.1.7", features = ["ntrup653"] }
+ntrulp = { version = "0.1.7", features = ["ntrup761"] }
+ntrulp = { version = "0.1.7", features = ["ntrup857"] }
+ntrulp = { version = "0.1.7", features = ["ntrup953"] }
+ntrulp = { version = "0.1.7", features = ["ntrup1013"] }
+ntrulp = { version = "0.1.7", features = ["ntrup1277"] }
+```
 
 
 ### install
 ```bash
 cargo add ntrulp
-
-cargo install --features "ntrulpr653" ntrulp
-cargo install --features "ntrulpr761" ntrulp
-cargo install --features "ntrulpr857" ntrulp
-cargo install --features "ntrulpr953" ntrulp
-cargo install --features "ntrulpr1013" ntrulp
-cargo install --features "ntrulpr1277" ntrulp
 ```
+
 
 
 ### Testing
@@ -78,13 +84,14 @@ cargo install --features "ntrulpr1277" ntrulp
 ```bash
 git clone https://github.com/zebra-sh/ntrulp.git
 cd ntrulp
-cargo test
+cargo test --features ntrup1277
+
 ```
 
 ```bash
 git clone https://github.com/zebra-sh/ntrulp.git
 cd ntrulp
-cargo bench
+cargo bench --features ntrup1277
 ```
 ## Keys Generation:
 ```rust

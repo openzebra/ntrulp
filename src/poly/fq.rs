@@ -1,14 +1,14 @@
-#[cfg(feature = "ntrulpr1013")]
+#[cfg(feature = "ntrup1013")]
 use crate::params::params1013::{Q, Q12};
-#[cfg(feature = "ntrulpr1277")]
+#[cfg(feature = "ntrup1277")]
 use crate::params::params1277::{Q, Q12};
-#[cfg(feature = "ntrulpr653")]
+#[cfg(feature = "ntrup653")]
 use crate::params::params653::{Q, Q12};
-#[cfg(feature = "ntrulpr761")]
+#[cfg(feature = "ntrup761")]
 use crate::params::params761::{Q, Q12};
-#[cfg(feature = "ntrulpr857")]
+#[cfg(feature = "ntrup857")]
 use crate::params::params857::{Q, Q12};
-#[cfg(feature = "ntrulpr953")]
+#[cfg(feature = "ntrup953")]
 use crate::params::params953::{Q, Q12};
 
 use crate::math::nums::i32_mod_u14;
@@ -35,17 +35,17 @@ pub fn recip(a1: i16) -> i16 {
 mod tests_fq {
     use super::*;
 
-    #[cfg(feature = "ntrulpr653")]
+    #[cfg(feature = "ntrup653")]
     const RQ_FREEZE: i32 = 58_078;
-    #[cfg(feature = "ntrulpr761")]
+    #[cfg(feature = "ntrup761")]
     const RQ_FREEZE: i32 = 58_470;
-    #[cfg(feature = "ntrulpr857")]
+    #[cfg(feature = "ntrup857")]
     const RQ_FREEZE: i32 = 51_949;
-    #[cfg(feature = "ntrulpr953")]
+    #[cfg(feature = "ntrup953")]
     const RQ_FREEZE: i32 = 42_319;
-    #[cfg(feature = "ntrulpr1013")]
+    #[cfg(feature = "ntrup1013")]
     const RQ_FREEZE: i32 = 37_402;
-    #[cfg(feature = "ntrulpr1277")]
+    #[cfg(feature = "ntrup1277")]
     const RQ_FREEZE: i32 = 34_069;
 
     #[test]

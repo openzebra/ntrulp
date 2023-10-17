@@ -1,4 +1,4 @@
-#[cfg(feature = "ntrulpr653")]
+#[cfg(feature = "ntrup653")]
 pub mod params653 {
     pub const P: usize = 653;
     pub const Q: usize = 4621;
@@ -11,7 +11,7 @@ pub mod params653 {
     pub const DIFFICULT: usize = 4;
 }
 
-#[cfg(feature = "ntrulpr761")]
+#[cfg(feature = "ntrup761")]
 pub mod params761 {
     pub const P: usize = 761;
     pub const W: usize = 286;
@@ -24,7 +24,7 @@ pub mod params761 {
     pub const DIFFICULT: usize = 6;
 }
 
-#[cfg(feature = "ntrulpr857")]
+#[cfg(feature = "ntrup857")]
 pub mod params857 {
     pub const P: usize = 857;
     pub const W: usize = 322;
@@ -37,7 +37,7 @@ pub mod params857 {
     pub const DIFFICULT: usize = 8;
 }
 
-#[cfg(feature = "ntrulpr953")]
+#[cfg(feature = "ntrup953")]
 pub mod params953 {
     pub const P: usize = 953;
     pub const Q: usize = 6343;
@@ -50,7 +50,7 @@ pub mod params953 {
     pub const DIFFICULT: usize = 10;
 }
 
-#[cfg(feature = "ntrulpr1013")]
+#[cfg(feature = "ntrup1013")]
 pub mod params1013 {
     pub const P: usize = 1013;
     pub const Q: usize = 7177;
@@ -63,7 +63,7 @@ pub mod params1013 {
     pub const DIFFICULT: usize = 12;
 }
 
-#[cfg(feature = "ntrulpr1277")]
+#[cfg(feature = "ntrup1277")]
 pub mod params1277 {
     pub const P: usize = 1277;
     pub const Q: usize = 7879;
