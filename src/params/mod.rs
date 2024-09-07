@@ -102,6 +102,3 @@ pub use params1277 as params;
     not(feature = "ntrup1277")
 ))]
 pub use params1277 as params;
-
-#[cfg(feature = "ntrup1277")]
-pub use params1277 as params;

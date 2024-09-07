@@ -13,7 +13,7 @@ pub fn recip(a1: i16) -> i16 {
     let mut ai = a1;
 
     while i < Q - 2 {
-        ai = freeze((a1 as i32) * (ai as i32)) as i16;
+        ai = freeze((a1 as i32) * (ai as i32));
         i += 1;
     }
 
@@ -70,7 +70,7 @@ mod tests_fq {
 
     #[test]
     fn test_recip() {
-        assert_eq!(recip(42), recip(-42) * -1);
-        assert_eq!(recip(-42), recip(42) * -1);
+        assert_eq!(recip(42), -recip(-42));
+        assert_eq!(recip(-42), -recip(42));
     }
 }
