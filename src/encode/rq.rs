@@ -34,10 +34,6 @@ mod tests_fq {
     use rand::SeedableRng;
     use rand_chacha::ChaCha20Rng;
 
-    use crate::rng::short_random;
-
-    use super::*;
-
     // #[test]
     // fn test_encode_decode() {
     //     let mut rng = ChaCha20Rng::from_entropy();

@@ -119,10 +119,9 @@ pub fn short_random<R: RngCore>(rng: &mut R) -> Result<[i16; P], RandomErrors> {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use rand::SeedableRng;
     use rand_chacha::ChaCha20Rng;
-
-    use super::*;
 
     #[test]
     fn test_short_random() {
@@ -149,7 +148,7 @@ mod tests {
 
         for _ in 0..200 {
             let r = random_range_3(&mut rng);
-            assert!(r <= 1 && r >= -1);
+            assert!((-1..=1).contains(&r));
         }
     }
 
