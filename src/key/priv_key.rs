@@ -78,11 +78,11 @@ impl PrivKey {
     ///         Err(_) => continue,
     ///     };
     /// };
-    /// let sk_as_bytes = priv_key.as_bytes();
+    /// let sk_as_bytes = priv_key.to_bytes();
     /// let from_bytes = PrivKey::import(&sk_as_bytes).unwrap();
     /// ```
     ///
-    pub fn as_bytes(&self) -> [u8; SECRETKEYS_BYTES] {
+    pub fn to_bytes(&self) -> [u8; SECRETKEYS_BYTES] {
         let mut sk = [0u8; SECRETKEYS_BYTES];
 
         sk[..R3_BYTES].copy_from_slice(&self.1.to_bytes());
@@ -122,7 +122,7 @@ impl PrivKey {
     ///         Err(_) => continue,
     ///     };
     /// };
-    /// let sk_as_bytes = priv_key.as_bytes();
+    /// let sk_as_bytes = priv_key.to_bytes();
     /// let imported_sk = PrivKey::import(&sk_as_bytes).unwrap();
     /// ```
     ///
@@ -169,7 +169,7 @@ mod test_private_key {
                 Ok(sk) => sk,
                 Err(_) => continue,
             };
-            let bytes = secret_key.as_bytes();
+            let bytes = secret_key.to_bytes();
             let new_secret_key = match PrivKey::import(&bytes) {
                 Ok(v) => v,
                 Err(_) => continue,

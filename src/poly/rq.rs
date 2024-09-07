@@ -373,14 +373,15 @@ impl PartialEq<[i16; P]> for Rq {
 
 #[cfg(test)]
 mod test_rq {
-    use rand::RngCore;
-
     use super::*;
     use crate::rng::short_random;
 
+    use rand::{RngCore, SeedableRng};
+    use rand_chacha::ChaCha20Rng;
+
     #[test]
     fn test_mult_int() {
-        let mut rng = rand::thread_rng();
+        let mut rng = ChaCha20Rng::from_entropy();
         let mut bytes = [0u8; 5];
         rng.fill_bytes(&mut bytes);
         let num = bytes[2] as i16;
@@ -396,7 +397,7 @@ mod test_rq {
     fn test_recip() {
         const RATIO: i16 = 1;
 
-        let mut rng = rand::thread_rng();
+        let mut rng = ChaCha20Rng::from_entropy();
         let rq: Rq = Rq::from(short_random(&mut rng).unwrap());
         let out = rq.recip::<RATIO>().unwrap();
         let h = out.mult_r3(&rq.r3_from_rq());

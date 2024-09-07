@@ -136,16 +136,24 @@ impl PubKey {
     }
 }
 
-// impl TryFrom<PrivKey> for PubKey {}
+impl TryFrom<PrivKey> for PubKey {
+    type Error = KemErrors;
+    fn try_from(value: PrivKey) -> Result<Self, Self::Error> {
+        Self::from_sk(&value)
+    }
+}
 
 #[cfg(test)]
 mod test_pub_key {
+    use rand::SeedableRng;
+    use rand_chacha::ChaCha20Rng;
+
     use super::*;
     use crate::rng::{random_small, short_random};
 
     #[test]
     fn test_import_export() {
-        let mut rng = rand::thread_rng();
+        let mut rng = ChaCha20Rng::from_entropy();
 
         for _ in 0..1 {
             let f: Rq = Rq::from(short_random(&mut rng).unwrap());
@@ -160,7 +168,7 @@ mod test_pub_key {
 
     #[test]
     fn test_from_sk() {
-        let mut rng = rand::thread_rng();
+        let mut rng = ChaCha20Rng::from_entropy();
         let f: Rq = Rq::from(short_random(&mut rng).unwrap());
         let mut g: R3;
 
