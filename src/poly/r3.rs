@@ -1,6 +1,9 @@
 use core::ops::{Index, IndexMut};
 
-use crate::params::params::P;
+use crate::{
+    encode::r3::{r3_decode, r3_encode},
+    params::{params::P, params1277::R3_BYTES},
+};
 
 use super::{error::KemErrors, f3, fq, rq::Rq};
 use crate::math::nums::{i16_negative_mask, i16_nonzero_mask};
@@ -173,6 +176,22 @@ impl R3 {
         }
 
         Rq::from(out)
+    }
+
+    pub fn to_bytes(&self) -> [u8; R3_BYTES] {
+        r3_encode(self.as_ref())
+    }
+}
+
+impl From<Rq> for R3 {
+    fn from(value: Rq) -> Self {
+        value.r3_from_rq()
+    }
+}
+
+impl From<[u8; R3_BYTES]> for R3 {
+    fn from(value: [u8; R3_BYTES]) -> Self {
+        r3_decode(&value).into()
     }
 }
 
