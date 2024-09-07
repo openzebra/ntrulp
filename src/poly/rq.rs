@@ -5,7 +5,7 @@ use crate::{
     params::{params::P, params1277::PUBLICKEYS_BYTES},
 };
 
-use super::{error::KemErrors, f3, r3::R3};
+use super::{error::PolyErrors, f3, r3::R3};
 use crate::{
     math::nums::{i16_negative_mask, i16_nonzero_mask},
     poly::fq,
@@ -124,7 +124,7 @@ impl Rq {
     /// This function calculates the inverse of a polynomial in the Fq field using the `ratio` coefficient as a multiplier for the polynomial.
     ///
     /// out = 1/(RATIO*F) in Rq
-    pub fn recip<const RATIO: i16>(&self) -> Result<Rq, KemErrors> {
+    pub fn recip<const RATIO: i16>(&self) -> Result<Rq, PolyErrors> {
         let input = self.coeffs;
         let mut out = [0i16; P];
         let mut f = [0i16; P + 1];
@@ -198,7 +198,7 @@ impl Rq {
         if i16_nonzero_mask(delta) == 0 {
             Ok(Rq::from(out))
         } else {
-            Err(KemErrors::NoSolutionRecip3)
+            Err(PolyErrors::NoSolutionRecip3)
         }
     }
 

@@ -1,5 +1,5 @@
 #[derive(Debug, PartialEq, Eq)]
-pub enum KemErrors {
+pub enum PolyErrors {
     NoSolutionRecip3,
     R3NoSolutionRecip,
     SliceLengthNotR3Size,

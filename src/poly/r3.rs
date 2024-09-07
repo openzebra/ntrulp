@@ -5,7 +5,7 @@ use crate::{
     params::{params::P, params1277::R3_BYTES},
 };
 
-use super::{error::KemErrors, f3, fq, rq::Rq};
+use super::{error::PolyErrors, f3, fq, rq::Rq};
 use crate::math::nums::{i16_negative_mask, i16_nonzero_mask};
 
 #[derive(Debug)]
@@ -89,7 +89,7 @@ impl R3 {
         self.coeffs[0] == 1
     }
 
-    pub fn recip(&self) -> Result<R3, KemErrors> {
+    pub fn recip(&self) -> Result<R3, PolyErrors> {
         let input = self.coeffs;
         let mut out = [0i8; P];
         let mut f = [0i8; P + 1];
@@ -164,7 +164,7 @@ impl R3 {
         if i16_nonzero_mask(delta as i16) == 0 {
             Ok(R3::from(out))
         } else {
-            Err(KemErrors::R3NoSolutionRecip)
+            Err(PolyErrors::R3NoSolutionRecip)
         }
     }
 
@@ -246,11 +246,11 @@ impl IndexMut<usize> for R3 {
 }
 
 impl TryFrom<&[i8]> for R3 {
-    type Error = KemErrors;
+    type Error = PolyErrors;
 
     fn try_from(slice: &[i8]) -> Result<Self, Self::Error> {
         if slice.len() != P {
-            Err(KemErrors::SliceLengthNotR3Size)
+            Err(PolyErrors::SliceLengthNotR3Size)
         } else {
             let mut coeffs = [0; P];
             coeffs.copy_from_slice(slice);

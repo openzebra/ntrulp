@@ -1,9 +1,9 @@
 use crate::params::params::PUBLICKEYS_BYTES;
 
+use super::kem_error::KemErrors;
 use crate::{
     encode::rq,
-    errors::NTRUErrors,
-    poly::{error::KemErrors, r3::R3, rq::Rq},
+    poly::{r3::R3, rq::Rq},
 };
 
 use super::priv_key::PrivKey;
@@ -42,7 +42,7 @@ impl PubKey {
     /// in the Fq field, combining entropy from `fq` and `g3`.
     ///
     pub fn compute(f: &Rq, g: &R3) -> Result<Self, KemErrors> {
-        let finv = f.recip::<3>()?;
+        let finv = f.recip::<3>().map_err(KemErrors::PolyErrors)?;
 
         Ok(finv.mult_r3(g))
     }
@@ -68,10 +68,18 @@ impl PubKey {
     /// use ntrulp::rng::{random_small, short_random};
     ///
     /// let mut rng = rand::thread_rng();
+    ///
     /// // Create an Fq polynomial fq and a g3 polynomial g3
-    /// let fq = Rq::from(short_random(&mut rng).unwrap());
-    /// let g3 = R3::from(random_small(&mut rng));
-    /// let priv_key = PrivKey::compute(&fq, &g3).unwrap();
+    /// let f: Rq = Rq::from(short_random(&mut rng).unwrap());
+    /// let mut g: R3;
+    /// let priv_key = loop {
+    ///     g = R3::from(random_small(&mut rng));
+    ///
+    ///     match PrivKey::compute(&f, &g) {
+    ///          Ok(s) => break s,
+    ///          Err(_) => continue,
+    ///      };
+    /// };
     /// let load_from_sk = PubKey::from_sk(&priv_key);
     /// ```
     ///
@@ -82,8 +90,8 @@ impl PubKey {
     pub fn from_sk(priv_key: &PrivKey) -> Result<Self, KemErrors> {
         let f = priv_key.0.rq_from_r3();
         let ginv = &priv_key.1;
-        let g = ginv.recip()?;
-        let finv = f.recip::<3>()?;
+        let g = ginv.recip().map_err(KemErrors::PolyErrors)?;
+        let finv = f.recip::<3>().map_err(KemErrors::PolyErrors)?;
         let h = finv.mult_r3(&g);
 
         Ok(h)
@@ -114,7 +122,7 @@ impl PubKey {
     /// let g3 = R3::from(random_small(&mut rng));
     /// // Compute the public key
     /// let pub_key = PubKey::compute(&fq, &g3).unwrap();
-    /// let imported_pub_key = PubKey::import(&pub_key.to_bytes()).unwrap();
+    /// let imported_pub_key = PubKey::import(&pub_key.to_bytes());
     ///
     /// assert_eq!(pub_key.coeffs, imported_pub_key.coeffs);
     /// ```
@@ -123,10 +131,12 @@ impl PubKey {
     ///
     /// The function may panic if deserialization fails due to invalid or corrupted data.
     ///
-    pub fn import(bytes: &[u8; PUBLICKEYS_BYTES]) -> Result<Self, NTRUErrors> {
-        Ok(rq::decode(bytes).into())
+    pub fn import(bytes: &[u8; PUBLICKEYS_BYTES]) -> Self {
+        rq::decode(bytes).into()
     }
 }
+
+// impl TryFrom<PrivKey> for PubKey {}
 
 #[cfg(test)]
 mod test_pub_key {
@@ -142,10 +152,7 @@ mod test_pub_key {
             let g: R3 = R3::from(random_small(&mut rng));
             let pub_key = PubKey::compute(&f, &g).unwrap();
             let bytes = pub_key.to_bytes();
-            let new_pub_key = match PubKey::import(&bytes) {
-                Ok(v) => v,
-                Err(_) => continue,
-            };
+            let new_pub_key = PubKey::import(&bytes);
 
             assert_eq!(new_pub_key.coeffs, pub_key.coeffs);
         }

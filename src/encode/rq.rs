@@ -34,18 +34,23 @@ mod tests_fq {
     use rand::SeedableRng;
     use rand_chacha::ChaCha20Rng;
 
-    // #[test]
-    // fn test_encode_decode() {
-    //     let mut rng = ChaCha20Rng::from_entropy();
-    //
-    //     for _ in 0..100 {
-    //         let coeffs = short_random(&mut rng).unwrap();
-    //         let rq = Rq::from(coeffs);
-    //
-    //         let bytes = encode(&rq.coeffs);
-    //         let res = decode(&bytes);
-    //
-    //         assert_eq!(rq.coeffs, res);
-    //     }
-    // }
+    use crate::{
+        encode::rq::{decode, encode, Rq},
+        rng::short_random,
+    };
+
+    #[test]
+    fn test_encode_decode() {
+        let mut rng = ChaCha20Rng::from_entropy();
+
+        for _ in 0..100 {
+            let coeffs = short_random(&mut rng).unwrap();
+            let rq = Rq::from(coeffs);
+
+            let bytes = encode(&rq);
+            let res = decode(&bytes);
+
+            assert_eq!(rq, res);
+        }
+    }
 }

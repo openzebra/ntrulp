@@ -2,9 +2,10 @@ use crate::params::params::{R3_BYTES, SECRETKEYS_BYTES};
 
 use crate::{
     encode::r3,
-    errors::NTRUErrors,
-    poly::{error::KemErrors, r3::R3, rq::Rq},
+    poly::{r3::R3, rq::Rq},
 };
+
+use super::kem_error::KemErrors;
 
 pub struct PrivKey(pub R3, pub R3);
 
@@ -45,7 +46,7 @@ impl PrivKey {
     /// which are derived from entropy and random data in the Fq and F3 fields respectively.
     ///
     pub fn compute(f: &Rq, g: &R3) -> Result<Self, KemErrors> {
-        let ginv = g.recip()?;
+        let ginv = g.recip().map_err(KemErrors::PolyErrors)?;
 
         Ok(PrivKey(f.r3_from_rq(), ginv))
     }
@@ -83,13 +84,9 @@ impl PrivKey {
     ///
     pub fn as_bytes(&self) -> [u8; SECRETKEYS_BYTES] {
         let mut sk = [0u8; SECRETKEYS_BYTES];
-        let f = &self.0;
-        let ginv = &self.1.coeffs;
-        let f_bytes = r3::r3_encode(&f.coeffs);
-        let ginv_bytes = r3::r3_encode(ginv);
 
-        sk[..R3_BYTES].copy_from_slice(&ginv_bytes);
-        sk[R3_BYTES..].copy_from_slice(&f_bytes);
+        sk[..R3_BYTES].copy_from_slice(&self.1.to_bytes());
+        sk[R3_BYTES..].copy_from_slice(&self.0.to_bytes());
 
         sk
     }
@@ -133,21 +130,26 @@ impl PrivKey {
     ///
     /// Import privateKey as bytes format and convert it to poly
     ///
-    pub fn import<'a>(sk: &[u8; SECRETKEYS_BYTES]) -> Result<Self, NTRUErrors<'a>> {
-        let common_error = NTRUErrors::PrivateKeyImport("Incorrect SK");
-        let ginv_bytes: [u8; R3_BYTES] = match sk[..R3_BYTES].try_into() {
-            Ok(bytes) => bytes,
-            Err(_) => return Err(common_error),
-        };
-        let f_bytes: [u8; R3_BYTES] = match sk[R3_BYTES..].try_into() {
-            Ok(bytes) => bytes,
-            Err(_) => return Err(common_error),
-        };
+    pub fn import(sk: &[u8; SECRETKEYS_BYTES]) -> Result<Self, KemErrors> {
+        let ginv_bytes: [u8; R3_BYTES] = sk[..R3_BYTES]
+            .try_into()
+            .or(Err(KemErrors::InvalidR3GInvrBytes))?;
+
+        let f_bytes: [u8; R3_BYTES] = sk[R3_BYTES..]
+            .try_into()
+            .or(Err(KemErrors::InvalidR3FBytes))?;
 
         let ginv = R3::from(r3::r3_decode(&ginv_bytes));
         let f = R3::from(r3::r3_decode(&f_bytes));
 
         Ok(PrivKey(f, ginv))
+    }
+}
+
+impl TryFrom<[u8; SECRETKEYS_BYTES]> for PrivKey {
+    type Error = KemErrors;
+    fn try_from(value: [u8; SECRETKEYS_BYTES]) -> Result<Self, Self::Error> {
+        Self::import(&value)
     }
 }
 
