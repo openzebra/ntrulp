@@ -1,3 +1,5 @@
+use core::ops::{Index, IndexMut};
+
 use crate::params::params::P;
 
 use super::{error::KemErrors, f3, r3::R3};
@@ -131,7 +133,6 @@ impl Rq {
         let mut t: i16;
         let mut f0: i32;
         let mut g0: i32;
-        let scale: i16;
 
         let quotient = |out: &mut [i16], f0: i32, g0: i32, fv: &[i16]| {
             for i in 0..P + 1 {
@@ -184,11 +185,11 @@ impl Rq {
             g[P] = 0;
         }
 
-        scale = fq::recip(f[0]);
+        let scale = fq::recip(f[0]);
 
         for i in 0..P {
             let x = scale as i32 * (v[P - 1 - i] as i32);
-            out[i] = fq::freeze(x) as i16;
+            out[i] = fq::freeze(x);
         }
 
         if i16_nonzero_mask(delta) == 0 {
@@ -234,10 +235,10 @@ impl Rq {
     pub fn mult_int(&self, num: i16) -> Rq {
         let mut out = [0i16; P];
 
-        for i in 0..P {
+        for (i, v) in out.iter_mut().enumerate() {
             let x = (num * self.coeffs[i]) as i32;
 
-            out[i] = fq::freeze(x);
+            *v = fq::freeze(x);
         }
 
         Rq::from(out)
@@ -246,11 +247,108 @@ impl Rq {
     pub fn r3_from_rq(&self) -> R3 {
         let mut out = [0i8; P];
 
-        for i in 0..P {
-            out[i] = f3::freeze(self.coeffs[i])
+        for (i, v) in out.iter_mut().enumerate() {
+            *v = f3::freeze(self.coeffs[i])
         }
 
         R3::from(out)
+    }
+}
+
+impl From<[i16; P]> for Rq {
+    fn from(coeffs: [i16; P]) -> Self {
+        Rq { coeffs }
+    }
+}
+
+impl From<Rq> for [i16; P] {
+    fn from(rq: Rq) -> Self {
+        rq.coeffs
+    }
+}
+
+impl AsRef<[i16; P]> for Rq {
+    fn as_ref(&self) -> &[i16; P] {
+        &self.coeffs
+    }
+}
+
+impl AsMut<[i16; P]> for Rq {
+    fn as_mut(&mut self) -> &mut [i16; P] {
+        &mut self.coeffs
+    }
+}
+
+impl AsRef<[i16]> for Rq {
+    fn as_ref(&self) -> &[i16] {
+        &self.coeffs
+    }
+}
+
+impl AsMut<[i16]> for Rq {
+    fn as_mut(&mut self) -> &mut [i16] {
+        &mut self.coeffs
+    }
+}
+
+impl Index<usize> for Rq {
+    type Output = i16;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.coeffs[index]
+    }
+}
+
+impl IndexMut<usize> for Rq {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.coeffs[index]
+    }
+}
+
+impl TryFrom<&[i16]> for Rq {
+    type Error = &'static str;
+
+    fn try_from(slice: &[i16]) -> Result<Self, Self::Error> {
+        if slice.len() != P {
+            Err("Slice length does not match Rq size")
+        } else {
+            let mut coeffs = [0; P];
+            coeffs.copy_from_slice(slice);
+            Ok(Rq { coeffs })
+        }
+    }
+}
+
+impl IntoIterator for Rq {
+    type Item = i16;
+    type IntoIter = core::array::IntoIter<i16, P>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.coeffs.into_iter()
+    }
+}
+
+impl<'a> IntoIterator for &'a Rq {
+    type Item = &'a i16;
+    type IntoIter = core::slice::Iter<'a, i16>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.coeffs.iter()
+    }
+}
+
+impl<'a> IntoIterator for &'a mut Rq {
+    type Item = &'a mut i16;
+    type IntoIter = core::slice::IterMut<'a, i16>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.coeffs.iter_mut()
+    }
+}
+
+impl PartialEq<[i16; P]> for Rq {
+    fn eq(&self, other: &[i16; P]) -> bool {
+        self.coeffs == *other
     }
 }
 
