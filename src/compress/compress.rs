@@ -45,7 +45,7 @@ pub fn unpack_bytes(bytes: &[u8]) -> Result<(Vec<u8>, Vec<usize>, u64), Compress
     const X2_SYS_SIZE: usize = SYS_SIZE * 2;
 
     let bytes_len = bytes.len();
-    let seed_bytes: [u8; SYS_SIZE] = bytes[bytes_len - SYS_SIZE..]
+    let seed_bytes: [u8; 8] = bytes[bytes_len - 8..]
         .try_into()
         .or(Err(CompressError::SeedSliceError))?;
     let size_bytes_len: [u8; SYS_SIZE] = bytes[bytes_len - X2_SYS_SIZE..bytes_len - SYS_SIZE]
