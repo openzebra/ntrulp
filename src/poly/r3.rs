@@ -189,6 +189,12 @@ impl From<Rq> for R3 {
     }
 }
 
+impl From<&[u8; R3_BYTES]> for R3 {
+    fn from(value: &[u8; R3_BYTES]) -> Self {
+        r3_decode(value).into()
+    }
+}
+
 impl From<[u8; R3_BYTES]> for R3 {
     fn from(value: [u8; R3_BYTES]) -> Self {
         r3_decode(&value).into()

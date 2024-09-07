@@ -2,7 +2,7 @@ use core::ops::{Index, IndexMut};
 
 use crate::{
     encode::rq,
-    params::{params::P, params1277::PUBLICKEYS_BYTES},
+    params::{params::P, params1277::RQ_BYTES},
 };
 
 use super::{error::PolyErrors, f3, r3::R3};
@@ -257,14 +257,20 @@ impl Rq {
         R3::from(out)
     }
 
-    pub fn to_bytes(&self) -> [u8; PUBLICKEYS_BYTES] {
+    pub fn to_bytes(&self) -> [u8; RQ_BYTES] {
         rq::encode(self.as_ref())
     }
 }
 
-impl From<[u8; PUBLICKEYS_BYTES]> for Rq {
-    fn from(value: [u8; PUBLICKEYS_BYTES]) -> Self {
+impl From<[u8; RQ_BYTES]> for Rq {
+    fn from(value: [u8; RQ_BYTES]) -> Self {
         rq::decode(&value).into()
+    }
+}
+
+impl From<&[u8; RQ_BYTES]> for Rq {
+    fn from(value: &[u8; RQ_BYTES]) -> Self {
+        rq::decode(value).into()
     }
 }
 

@@ -9,6 +9,8 @@ use crate::{
     poly::{f3::round, r3::R3, rq::Rq},
 };
 
+use super::error::CipherError;
+
 pub fn rq_decrypt(c: &Rq, priv_key: &PrivKey) -> R3 {
     let f = &priv_key.0;
     let ginv = &priv_key.1;
@@ -38,6 +40,14 @@ pub fn r3_encrypt(r: &R3, pub_key: &PubKey) -> Rq {
     hr
 }
 
+pub fn bytes_encrypt(bytes: &[u8; R3_BYTES], pub_key: &PubKey) -> [u8; RQ_BYTES] {
+    r3_encrypt(&bytes.into(), pub_key).to_bytes()
+}
+
+pub fn bytes_decrypt(cipher_bytes: &[u8; RQ_BYTES], priv_key: &PrivKey) -> [u8; R3_BYTES] {
+    rq_decrypt(&cipher_bytes.into(), priv_key).to_bytes()
+}
+
 #[cfg(test)]
 mod test_cipher {
     use rand::SeedableRng;
@@ -48,9 +58,8 @@ mod test_cipher {
     use super::*;
 
     #[test]
-    fn test_encrypt_and_decrypt() {
+    fn test_bytes_encrypt_and_decrypt() {
         let mut rng = ChaCha20Rng::from_entropy();
-        let r: R3 = Rq::from(short_random(&mut rng).unwrap()).r3_from_rq();
         let f: Rq = Rq::from(short_random(&mut rng).unwrap());
         let mut g: R3;
         let sk = loop {
@@ -62,9 +71,37 @@ mod test_cipher {
             };
         };
         let pk = PubKey::compute(&f, &g).unwrap();
-        let encrypted = r3_encrypt(&r, &pk);
+
+        let plaintext = Rq::from(short_random(&mut rng).unwrap())
+            .r3_from_rq()
+            .to_bytes();
+
+        let encrypted = bytes_encrypt(&plaintext, &pk);
+        let decrypted = bytes_decrypt(&encrypted, &sk);
+
+        assert_eq!(decrypted, plaintext);
+    }
+
+    #[test]
+    fn test_encrypt_and_decrypt() {
+        let mut rng = ChaCha20Rng::from_entropy();
+        let f: Rq = Rq::from(short_random(&mut rng).unwrap());
+        let mut g: R3;
+        let sk = loop {
+            g = R3::from(random_small(&mut rng));
+
+            match PrivKey::compute(&f, &g) {
+                Ok(s) => break s,
+                Err(_) => continue,
+            };
+        };
+        let pk = PubKey::compute(&f, &g).unwrap();
+
+        let plaintext: R3 = Rq::from(short_random(&mut rng).unwrap()).r3_from_rq();
+
+        let encrypted = r3_encrypt(&plaintext, &pk);
         let decrypted = rq_decrypt(&encrypted, &sk);
 
-        assert_eq!(decrypted.coeffs, r.coeffs);
+        assert_eq!(decrypted, plaintext.into());
     }
 }
