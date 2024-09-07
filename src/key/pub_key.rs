@@ -106,7 +106,7 @@ impl PubKey {
     /// use ntrulp::poly::r3::R3;
     /// use ntrulp::key::pub_key::PubKey;
     /// use rand::RngCore;
-    /// use ntrulp::random::{random_small, short_random};
+    /// use ntrulp::rng::{random_small, short_random};
     ///
     /// let mut rng = rand::thread_rng();
     /// // Create an Fq polynomial fq and a g3 polynomial g3
@@ -114,7 +114,7 @@ impl PubKey {
     /// let g3 = R3::from(random_small(&mut rng));
     /// // Compute the public key
     /// let pub_key = PubKey::compute(&fq, &g3).unwrap();
-    /// let imported_pub_key = PubKey::import(&pub_key.as_bytes()).unwrap();
+    /// let imported_pub_key = PubKey::import(&pub_key.to_bytes()).unwrap();
     ///
     /// assert_eq!(pub_key.coeffs, imported_pub_key.coeffs);
     /// ```
@@ -124,42 +124,7 @@ impl PubKey {
     /// The function may panic if deserialization fails due to invalid or corrupted data.
     ///
     pub fn import(bytes: &[u8; PUBLICKEYS_BYTES]) -> Result<Self, NTRUErrors> {
-        let coeffs = rq::decode(bytes);
-        let h = Rq::from(coeffs);
-
-        Ok(h)
-    }
-
-    /// Converts a public key, represented as a polynomial in the field `Fq`, into a byte array.
-    ///
-    /// # Returns
-    ///
-    /// Returns a byte array representing the public key.
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// use ntrulp::poly::rq::Rq;
-    /// use ntrulp::poly::r3::R3;
-    /// use ntrulp::key::pub_key::PubKey;
-    /// use rand::RngCore;
-    /// use ntrulp::random::{random_small, short_random};
-    ///
-    /// let mut rng = rand::thread_rng();
-    /// // Create an Fq polynomial fq and a g3 polynomial g3
-    /// let fq = Rq::from(short_random(&mut rng).unwrap());
-    /// let g3 = R3::from(random_small(&mut rng));
-    /// // Compute the public key
-    /// let pub_key = PubKey::compute(&fq, &g3).unwrap();
-    /// let imported_pub_key = PubKey::import(&pub_key.as_bytes()).unwrap();
-    ///
-    /// assert_eq!(pub_key.coeffs, imported_pub_key.coeffs);
-    /// ```
-    ///
-    pub fn as_bytes(&self) -> [u8; PUBLICKEYS_BYTES] {
-        let h = self.coeffs;
-
-        rq::encode(&h)
+        Ok(rq::decode(bytes).into())
     }
 }
 
@@ -176,7 +141,7 @@ mod test_pub_key {
             let f: Rq = Rq::from(short_random(&mut rng).unwrap());
             let g: R3 = R3::from(random_small(&mut rng));
             let pub_key = PubKey::compute(&f, &g).unwrap();
-            let bytes = pub_key.as_bytes();
+            let bytes = pub_key.to_bytes();
             let new_pub_key = match PubKey::import(&bytes) {
                 Ok(v) => v,
                 Err(_) => continue,

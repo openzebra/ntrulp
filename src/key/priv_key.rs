@@ -126,14 +126,14 @@ impl PrivKey {
     ///     };
     /// };
     /// let sk_as_bytes = priv_key.as_bytes();
-    /// let imported_sk = PrivKey::import(sk_as_bytes).unwrap();
+    /// let imported_sk = PrivKey::import(&sk_as_bytes).unwrap();
     /// ```
     ///
     /// # Notes
     ///
     /// Import privateKey as bytes format and convert it to poly
     ///
-    pub fn import<'a>(sk: [u8; SECRETKEYS_BYTES]) -> Result<Self, NTRUErrors<'a>> {
+    pub fn import<'a>(sk: &[u8; SECRETKEYS_BYTES]) -> Result<Self, NTRUErrors<'a>> {
         let common_error = NTRUErrors::PrivateKeyImport("Incorrect SK");
         let ginv_bytes: [u8; R3_BYTES] = match sk[..R3_BYTES].try_into() {
             Ok(bytes) => bytes,
@@ -150,13 +150,6 @@ impl PrivKey {
         Ok(PrivKey(f, ginv))
     }
 }
-
-// impl<'a> TryFrom<[u8; SECRETKEYS_BYTES]> for PrivKey {
-//     type Error = NTRUErrors<'a>;
-//     fn try_from(value: [u8; SECRETKEYS_BYTES]) -> Result<Self, Self::Error> {
-//         Self::import(value)
-//     }
-// }
 
 #[cfg(test)]
 mod test_private_key {
@@ -175,7 +168,7 @@ mod test_private_key {
                 Err(_) => continue,
             };
             let bytes = secret_key.as_bytes();
-            let new_secret_key = match PrivKey::import(bytes) {
+            let new_secret_key = match PrivKey::import(&bytes) {
                 Ok(v) => v,
                 Err(_) => continue,
             };
