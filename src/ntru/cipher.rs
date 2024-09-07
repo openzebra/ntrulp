@@ -35,11 +35,11 @@ pub fn r3_encrypt(r: &R3, pub_key: &PubKey) -> Rq {
     hr
 }
 
-pub fn bytes_encrypt(bytes: &[u8; R3_BYTES], pub_key: &PubKey) -> [u8; RQ_BYTES] {
+pub fn static_bytes_encrypt(bytes: &[u8; R3_BYTES], pub_key: &PubKey) -> [u8; RQ_BYTES] {
     r3_encrypt(&bytes.into(), pub_key).to_bytes()
 }
 
-pub fn bytes_decrypt(cipher_bytes: &[u8; RQ_BYTES], priv_key: &PrivKey) -> [u8; R3_BYTES] {
+pub fn static_bytes_decrypt(cipher_bytes: &[u8; RQ_BYTES], priv_key: &PrivKey) -> [u8; R3_BYTES] {
     rq_decrypt(&cipher_bytes.into(), priv_key).to_bytes()
 }
 
@@ -71,8 +71,8 @@ mod test_cipher {
             .r3_from_rq()
             .to_bytes();
 
-        let encrypted = bytes_encrypt(&plaintext, &pk);
-        let decrypted = bytes_decrypt(&encrypted, &sk);
+        let encrypted = static_bytes_encrypt(&plaintext, &pk);
+        let decrypted = static_bytes_decrypt(&encrypted, &sk);
 
         assert_eq!(decrypted, plaintext);
     }
