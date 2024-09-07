@@ -4,13 +4,67 @@ use crate::{
     encode::shuffle::{shuffle_array, unshuffle_array},
     params::{
         params::P,
-        params1277::{DIFFICULT, W},
+        params1277::{DIFFICULT, R3_BYTES, W},
     },
     rng::random_sign,
 };
 
+use super::error::CompressError;
+
 pub const BITS_SIZE: usize = 6;
 const EMPTY: [i8; BITS_SIZE] = [0i8; BITS_SIZE];
+const SYS_SIZE: usize = std::mem::size_of::<usize>();
+
+fn usize_vec_to_bytes(list: &[usize]) -> Vec<u8> {
+    list.iter().flat_map(|&x| x.to_ne_bytes()).collect()
+}
+
+fn byte_to_usize_vec(list: &[u8]) -> Vec<usize> {
+    list.chunks_exact(SYS_SIZE)
+        .map(|chunk| {
+            let mut bytes = [0; SYS_SIZE];
+            bytes.copy_from_slice(chunk);
+            usize::from_ne_bytes(bytes)
+        })
+        .collect()
+}
+
+pub fn pack_bytes(mut bytes: Vec<u8>, size: Vec<usize>, seed: u64) -> Vec<u8> {
+    let size_bytes = usize_vec_to_bytes(&size);
+    let size_len = size_bytes.len().to_ne_bytes();
+    let seed_bytes = seed.to_ne_bytes();
+
+    bytes.extend(size_bytes);
+    bytes.extend(size_len);
+    bytes.extend(seed_bytes);
+
+    bytes
+}
+
+pub fn unpack_bytes(bytes: &[u8]) -> Result<(Vec<u8>, Vec<usize>, u64), CompressError> {
+    const X2_SYS_SIZE: usize = SYS_SIZE * 2;
+
+    let bytes_len = bytes.len();
+    let seed_bytes: [u8; SYS_SIZE] = bytes[bytes_len - SYS_SIZE..]
+        .try_into()
+        .or(Err(CompressError::SeedSliceError))?;
+    let size_bytes_len: [u8; SYS_SIZE] = bytes[bytes_len - X2_SYS_SIZE..bytes_len - SYS_SIZE]
+        .try_into()
+        .or(Err(CompressError::SizeSliceError))?;
+    let size_len = usize::from_ne_bytes(size_bytes_len);
+    let seed = u64::from_ne_bytes(seed_bytes);
+
+    if bytes_len < size_len || (bytes_len / size_len) < R3_BYTES {
+        return Err(CompressError::ByteslengthError);
+    }
+
+    let size_bytes = &bytes[bytes_len - size_len - X2_SYS_SIZE..(bytes_len - X2_SYS_SIZE)];
+    let size = byte_to_usize_vec(size_bytes);
+
+    let bytes_data = &bytes[..bytes_len - size_len - X2_SYS_SIZE];
+
+    Ok((bytes_data.to_vec(), size, seed))
+}
 
 pub fn convert_to_ternary(num: u8) -> [i8; BITS_SIZE] {
     let mut result = [0i8; BITS_SIZE];
@@ -140,7 +194,41 @@ mod r3_compressro_test {
     use rand::{Rng, SeedableRng};
     use rand_chacha::ChaCha20Rng;
 
+    use crate::params::params1277::RQ_BYTES;
+
     use super::*;
+
+    #[test]
+    fn pack_unpack_bytes() {
+        let mut rng = ChaCha20Rng::from_entropy();
+        let bytes: Vec<u8> = (0..1000).map(|_| rng.gen()).collect();
+        let unlimted_poly = r3_decode_chunks(&bytes);
+        let (chunks, size, seed) = r3_split_w_chunks(&unlimted_poly, &mut rng);
+        let mut bytes: Vec<u8> = Vec::with_capacity(P * size.len());
+
+        for _ in chunks {
+            let mut rq_bytes: [u8; RQ_BYTES] = [0u8; RQ_BYTES];
+            rng.fill_bytes(&mut rq_bytes);
+            bytes.extend(rq_bytes);
+        }
+
+        let packed = pack_bytes(bytes.clone(), size.clone(), seed);
+        let unpack_bytes = unpack_bytes(&packed).unwrap();
+
+        assert_eq!(unpack_bytes.0, bytes);
+        assert_eq!(unpack_bytes.1, size);
+        assert_eq!(unpack_bytes.2, seed);
+    }
+
+    #[test]
+    fn test_u64_convert() {
+        let mut rng = ChaCha20Rng::from_entropy();
+        let usize_list: Vec<usize> = (0..1024).map(|_| rng.gen()).collect();
+        let bytes = usize_vec_to_bytes(&usize_list);
+        let out = byte_to_usize_vec(&bytes);
+
+        assert_eq!(out, usize_list);
+    }
 
     #[test]
     fn test_bit_convert() {

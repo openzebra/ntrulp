@@ -1,6 +1,3 @@
-use rand::RngCore;
-
-use crate::encode::{r3, rq};
 use crate::key::priv_key::PrivKey;
 use crate::key::pub_key::PubKey;
 use crate::params::params::{P, R3_BYTES, RQ_BYTES, W};
@@ -8,8 +5,6 @@ use crate::{
     math::nums::weightw_mask,
     poly::{f3::round, r3::R3, rq::Rq},
 };
-
-use super::error::CipherError;
 
 pub fn rq_decrypt(c: &Rq, priv_key: &PrivKey) -> R3 {
     let f = &priv_key.0;
