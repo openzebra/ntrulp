@@ -10,13 +10,14 @@ license-file = "LICENSE"
 keywords = ["NTRU", "rust", "ideal-lattice-based", "cryptography"]
 
 [features]
-default = []
+default = ["std"]
 ntrup653 = []
 ntrup761 = []
 ntrup857 = []
 ntrup953 = []
 ntrup1013 = []
 ntrup1277 = []
+std = []
 
 [dependencies]
 rand = "0.8.5"
