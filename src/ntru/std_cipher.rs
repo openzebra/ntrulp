@@ -7,7 +7,7 @@ use crate::params::params::RQ_BYTES;
 use crate::compress;
 use crate::key::priv_key::PrivKey;
 use crate::key::pub_key::PubKey;
-use crate::params::params1277::P;
+use crate::params::params::P;
 use crate::poly::r3::R3;
 use crate::poly::rq::Rq;
 

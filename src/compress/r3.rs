@@ -2,10 +2,7 @@ use rand::RngCore;
 
 use crate::{
     encode::shuffle::{shuffle_array, unshuffle_array},
-    params::{
-        params::P,
-        params1277::{DIFFICULT, R3_BYTES, W},
-    },
+    params::params::{DIFFICULT, P, R3_BYTES, W},
     rng::random_sign,
 };
 
