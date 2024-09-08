@@ -8,7 +8,7 @@ use crate::{
 use super::{error::PolyErrors, f3, fq, rq::Rq};
 use crate::math::nums::{i16_negative_mask, i16_nonzero_mask};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct R3 {
     pub coeffs: [i8; P],
 }

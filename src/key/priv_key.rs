@@ -7,6 +7,7 @@ use crate::{
 
 use super::kem_error::KemErrors;
 
+#[derive(Clone)]
 pub struct PrivKey(pub R3, pub R3);
 
 impl PrivKey {

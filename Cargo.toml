@@ -17,9 +17,10 @@ ntrup857 = []
 ntrup953 = []
 ntrup1013 = []
 ntrup1277 = []
-std = []
+std = ["dep:num_cpus"]
 
 [dependencies]
+num_cpus = { version = "1.16.0", optional = true }
 rand = "0.8.5"
 rand_chacha = "0.3.1"
 

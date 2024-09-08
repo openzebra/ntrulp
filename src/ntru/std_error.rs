@@ -4,4 +4,6 @@ use crate::compress::error::CompressError;
 pub enum CipherError {
     CompressError(CompressError),
     InvalidRqChunkSize,
+    SyncThreadJoinError,
+    SyncLockError,
 }

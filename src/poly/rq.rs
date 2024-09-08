@@ -11,7 +11,7 @@ use crate::{
     poly::fq,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Rq {
     pub coeffs: [i16; P],
 }
