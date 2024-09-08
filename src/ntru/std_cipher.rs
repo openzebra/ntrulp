@@ -14,6 +14,59 @@ use crate::poly::rq::Rq;
 use super::cipher::{r3_encrypt, rq_decrypt};
 use super::std_error::CipherError;
 
+/// Encrypts bytes in parallel using multiple processor threads and the provided `NTRURandom` instance and recipient's public key.
+///
+/// # Arguments
+///
+/// * `rng`: An instance of `Rng` used for encryption.
+/// * `bytes`: Bytes to be encrypted.
+/// * `pub_key`: The public key of the recipient.
+///
+/// # Returns
+///
+/// Returns the encrypted bytes.
+///
+/// # Example
+///
+/// ```rust
+/// use ntrulp::ntru::std_cipher::bytes_decrypt;
+/// use ntrulp::ntru::std_cipher::bytes_encrypt;
+/// use rand::SeedableRng;
+/// use rand::RngCore;
+/// use rand_chacha::ChaCha20Rng;
+/// use ntrulp::key::priv_key::PrivKey;
+/// use ntrulp::key::pub_key::PubKey;
+/// use ntrulp::poly::rq::Rq;
+/// use ntrulp::poly::r3::R3;
+/// use ntrulp::rng::{random_small, short_random};
+///
+///
+/// let mut rng = ChaCha20Rng::from_entropy();
+/// let mut g: R3;
+/// let mut ciphertext = vec![0u8; 1024];
+/// rng.fill_bytes(&mut ciphertext);
+///
+/// let f: Rq = Rq::from(short_random(&mut rng).unwrap());
+/// let sk = loop {
+///     g = R3::from(random_small(&mut rng));
+///
+///     match PrivKey::compute(&f, &g) {
+///         Ok(s) => break s,
+///         Err(_) => continue,
+///     };
+/// };
+/// let pk = PubKey::compute(&f, &g).unwrap();
+/// let mut encrypted = bytes_encrypt(&mut rng, &ciphertext, pk.clone()).unwrap();
+/// let decrypted = bytes_decrypt(&encrypted, sk.clone()).unwrap();
+///
+/// assert_eq!(decrypted, ciphertext.to_vec());
+/// ```
+///
+/// # Panics
+///
+/// The function may panic if encryption fails, the provided public key is invalid,
+/// or if the specified number of threads exceeds the available processor cores.
+///
 pub fn bytes_encrypt<R: RngCore>(
     rng: &mut R,
     plaintext: &[u8],
