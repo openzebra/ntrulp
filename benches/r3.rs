@@ -1,5 +1,5 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use ntrulp::{poly::r3::R3, random::random_small};
+use ntrulp::{poly::r3::R3, rng::random_small};
 
 fn encoder_benchmark(cb: &mut Criterion) {
     let mut rng = rand::thread_rng();

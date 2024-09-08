@@ -69,6 +69,9 @@ ntrulp = { version = "0.1.7", features = ["ntrup857"] }
 ntrulp = { version = "0.1.7", features = ["ntrup953"] }
 ntrulp = { version = "0.1.7", features = ["ntrup1013"] }
 ntrulp = { version = "0.1.7", features = ["ntrup1277"] }
+
+#enable std
+ntrulp = { version = "0.1.7", features = ["ntrup1277", "std"] }
 ```
 
 
@@ -82,24 +85,24 @@ cargo add ntrulp
 ### Testing
 
 ```bash
-git clone https://github.com/zebra-sh/ntrulp.git
-cd ntrulp
 cargo test --features ntrup1277
 
 ```
 
 ```bash
-git clone https://github.com/zebra-sh/ntrulp.git
-cd ntrulp
-cargo bench --features ntrup1277
+cargo bench --features std
 ```
+
 ## Keys Generation:
 ```rust
-let mut rng = NTRURandom::new();
-let f: Rq = Rq::from(rng.short_random().unwrap());
+let mut rng = rand::thread_rng();
+let f: Rq = Rq::from(short_random(&mut rng).unwrap());
 let mut g: R3;
 let sk = loop {
-    g = R3::from(rng.random_small().unwrap());
+    // use a loop because there are no guarantees that
+    // the random number generator will produce the correct
+    // combination that can enter and combine with f.
+    g = R3::from(random_small(&mut rng));
 
     match PrivKey::compute(&f, &g) {
         Ok(s) => break s,
@@ -107,53 +110,49 @@ let sk = loop {
     };
 };
 
+// if you have f, and g use compute, because it is faster!
 let pk = PubKey::compute(&f, &g).unwrap();
+
+// create PubKey from secret key.
 let imported_pk = PubKey::from_sk(&sk).unwrap();
-let pk_bytes = imported_pk.as_bytes();
-let from_bytes = PubKey::import(&pk_bytes).unwrap();
+
+// convert to bytes
+let pk_bytes = imported_pk.to_bytes();
+
+// restore from bytes.
+let from_bytes: PubKey = pk_bytes.into();
 
 assert_eq!(from_bytes.coeffs, pk.coeffs);
 ```
 ## Encrypt/Decrypt bytes example
 ```rust
-use std::sync::Arc;
+// create random generator.
+let mut rng = rand::thread_rng();
+let mut bytes = [0u8; R3_BYTES];
 
-use ntrulp::key::priv_key::PrivKey;
-use ntrulp::key::pub_key::PubKey;
-use ntrulp::ntru::cipher::{
-    bytes_decrypt, parallel_bytes_decrypt, parallel_bytes_encrypt, 
-};
-use ntrulp::ntru::errors::NTRUErrors;
-use ntrulp::random::{CommonRandom, NTRURandom};
+rng.fill_bytes(&mut bytes);
 
-
-fn gen_keys<'a>() -> Result<(Arc<PrivKey>, Arc<PubKey>), NTRUErrors<'a>> {
-    let mut rng = NTRURandom::new();
-    let mut g: R3;
-    let f: Rq = Rq::from(rng.short_random().unwrap());
-    let sk = loop {
-        g = R3::from(rng.random_small().unwrap());
-
-        match PrivKey::compute(&f, &g) {
-            Ok(s) => break s,
-            Err(_) => continue,
-        };
-    };
-    let pk = PubKey::compute(&f, &g).unwrap();
-
-    Ok((Arc::new(sk), Arc::new(pk)))
-}
-
-let mut rng = NTRURandom::new();
-let bytes = Arc::new(rng.randombytes::<1024>().to_vec());
+// see Keys Generation
 let (sk, pk) = gen_keys().unwrap();
 
-let num_threads = 4;
-let encrypted1 = Arc::new(parallel_bytes_encrypt(&mut rng, &bytes, &pk, num_threads).unwrap());
-let decrypted0 = parallel_bytes_decrypt(&encrypted1, &sk, num_threads).unwrap();
-let decrypted1 = bytes_decrypt(&encrypted1, &sk).unwrap();
+// encryption for one thread only.
+let plaintext = Rq::from(short_random(&mut rng).unwrap())
+    .r3_from_rq()
+    .to_bytes();
 
-assert_eq!(decrypted0, decrypted1);
+let encrypted = static_bytes_encrypt(&plaintext, &pk);
+let decrypted = static_bytes_decrypt(&encrypted, &sk);
+
+assert_eq!(decrypted, plaintext);
+
+let mut origin_plaintext = vec![0u8; 1024];
+rng.fill_bytes(&mut origin_plaintext);
+
+let mut ciphertext =
+    std_cipher::bytes_encrypt(&mut rng, &origin_plaintext, pk.clone()).unwrap();
+let plaintext = std_cipher::bytes_decrypt(&ciphertext, sk.clone()).unwrap();
+
+assert_eq!(plaintext, origin_plaintext);
 ```
 
 ## TODO

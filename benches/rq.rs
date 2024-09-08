@@ -1,7 +1,7 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use ntrulp::poly::r3::R3;
 use ntrulp::poly::rq::Rq;
-use ntrulp::random::{random_small, short_random};
+use ntrulp::rng::{random_small, short_random};
 
 fn encoder_benchmark(cb: &mut Criterion) {
     let mut rng = rand::thread_rng();

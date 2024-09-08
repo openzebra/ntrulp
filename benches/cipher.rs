@@ -1,15 +1,12 @@
-use std::sync::Arc;
-
 use criterion::{criterion_group, criterion_main, Criterion};
 use ntrulp::key::priv_key::PrivKey;
 use ntrulp::key::pub_key::PubKey;
-use ntrulp::ntru::cipher::{
-    bytes_decrypt, bytes_encrypt, parallel_bytes_decrypt, parallel_bytes_encrypt, r3_encrypt,
-    rq_decrypt,
-};
+use ntrulp::ntru::cipher::{r3_encrypt, rq_decrypt, static_bytes_decrypt, static_bytes_encrypt};
+use ntrulp::ntru::std_cipher;
+use ntrulp::params::params::R3_BYTES;
 use ntrulp::poly::r3::R3;
 use ntrulp::poly::rq::Rq;
-use ntrulp::random::{random_small, short_random};
+use ntrulp::rng::{random_small, short_random};
 use rand::RngCore;
 
 fn encoder_benchmark(cb: &mut Criterion) {
@@ -32,45 +29,35 @@ fn encoder_benchmark(cb: &mut Criterion) {
         });
     });
 
-    let mut rng1 = rand::thread_rng();
-
-    let mut ciphertext = [0u8; 1024];
+    let mut ciphertext: [u8; R3_BYTES] = r.to_bytes();
     rng.fill_bytes(&mut ciphertext);
-    let cipher = bytes_encrypt(&mut rng1, &ciphertext, &pk);
+    let cipher = static_bytes_encrypt(&ciphertext, &pk);
 
-    cb.bench_function("bytes_encrypt", |b| {
+    cb.bench_function("static_bytes_encrypt", |b| {
         b.iter(|| {
-            bytes_encrypt(&mut rng1, &ciphertext, &pk);
+            static_bytes_encrypt(&ciphertext, &pk);
         });
     });
-    cb.bench_function("bytes_decrypt", |b| {
+    cb.bench_function("static_bytes_decrypt", |b| {
         b.iter(|| {
-            bytes_decrypt(&cipher, &sk).unwrap();
+            static_bytes_decrypt(&cipher, &sk);
         });
     });
 
-    extern crate num_cpus;
+    let mut origin_plaintext = [0u8; 1024];
+    rng.fill_bytes(&mut origin_plaintext);
+    let origin_plaintext = origin_plaintext.to_vec();
 
-    let num_threads = num_cpus::get();
-    let mut rng2 = rand::thread_rng();
-
-    let sk = Arc::new(sk);
-    let pk = Arc::new(pk);
-
-    let mut ciphertext = [0u8; 1024];
-    rng.fill_bytes(&mut ciphertext);
-    let ciphertext = Arc::new(ciphertext.to_vec());
-    let cipher =
-        Arc::new(parallel_bytes_encrypt(&mut rng2, &ciphertext, &pk, num_threads).unwrap());
+    let cipher = std_cipher::bytes_encrypt(&mut rng, &origin_plaintext, pk.clone()).unwrap();
 
     cb.bench_function("parallel_bytes_encrypt", |b| {
         b.iter(|| {
-            parallel_bytes_encrypt(&mut rng2, &ciphertext, &pk, num_threads).unwrap();
+            std_cipher::bytes_encrypt(&mut rng, &origin_plaintext, pk.clone()).unwrap();
         });
     });
     cb.bench_function("parallel_bytes_decrypt", |b| {
         b.iter(|| {
-            parallel_bytes_decrypt(&cipher, &sk, num_threads).unwrap();
+            std_cipher::bytes_decrypt(&cipher, sk.clone()).unwrap();
         });
     });
 }
