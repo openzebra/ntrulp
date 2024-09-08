@@ -1,13 +1,23 @@
 [package]
 name = "ntrulp"
 description = "Pure implementation of high-security prime-degree large-Galois-group inert-modulus ideal-lattice-based cryptography."
-version = "0.1.8"
+version = "0.2.0"
 edition = "2021"
 publish = true
 authors = ["Rinat hicc0rus@gmail.com"]
+documentation = "https://github.com/openzebra/ntrulp/blob/master/README.md"
+homepage = "https://github.com/openzebra/ntrulp"
+repository = "https://github.com/openzebra/ntrulp"
 readme = "README.md"
 license-file = "LICENSE"
-keywords = ["NTRU", "rust", "ideal-lattice-based", "cryptography"]
+categories = ["cryptography", "no-std", "algorithms"]
+keywords = [
+  "post-quantum",
+  "ntru",
+  "cryptography",
+  "encryption",
+  "key-exchange",
+]
 
 [features]
 default = []
