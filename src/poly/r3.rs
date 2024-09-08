@@ -2,7 +2,7 @@ use core::ops::{Index, IndexMut};
 
 use crate::{
     encode::r3::{r3_decode, r3_encode},
-    params::{params::P, params1277::R3_BYTES},
+    params::{params::P, params::R3_BYTES},
 };
 
 use super::{error::PolyErrors, f3, fq, rq::Rq};

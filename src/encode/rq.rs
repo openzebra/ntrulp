@@ -1,9 +1,6 @@
 use crate::params::params::{P, RQ_BYTES};
 
-pub type Rq = [i16; P];
-pub type RqEncoded = [u8; RQ_BYTES];
-
-pub fn encode(input: &Rq) -> RqEncoded {
+pub fn encode(input: &[i16; P]) -> [u8; RQ_BYTES] {
     let mut bytes = [0u8; RQ_BYTES];
 
     input
@@ -16,7 +13,7 @@ pub fn encode(input: &Rq) -> RqEncoded {
     bytes
 }
 
-pub fn decode(input: &RqEncoded) -> Rq {
+pub fn decode(input: &[u8; RQ_BYTES]) -> [i16; P] {
     let mut coeffs = [0i16; P];
 
     input
@@ -35,7 +32,8 @@ mod tests_fq {
     use rand_chacha::ChaCha20Rng;
 
     use crate::{
-        encode::rq::{decode, encode, Rq},
+        encode::rq::{decode, encode},
+        poly::rq::Rq,
         rng::short_random,
     };
 
@@ -47,7 +45,7 @@ mod tests_fq {
             let coeffs = short_random(&mut rng).unwrap();
             let rq = Rq::from(coeffs);
 
-            let bytes = encode(&rq);
+            let bytes = encode(rq.as_ref());
             let res = decode(&bytes);
 
             assert_eq!(rq, res);
