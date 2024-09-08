@@ -10,7 +10,7 @@ license-file = "LICENSE"
 keywords = ["NTRU", "rust", "ideal-lattice-based", "cryptography"]
 
 [features]
-default = ["std"]
+default = []
 ntrup653 = []
 ntrup761 = []
 ntrup857 = []
@@ -25,3 +25,28 @@ rand = "0.8.5"
 rand_chacha = "0.3.1"
 
 [dev-dependencies]
+criterion = "0.5.1"
+
+[[example]]
+name = "cipher"
+required-features = ["std"]
+
+[[bench]]
+name = "rq"
+harness = false
+
+[[bench]]
+name = "r3"
+harness = false
+
+[[bench]]
+name = "fq_encode"
+harness = false
+
+[[bench]]
+name = "kem"
+harness = false
+
+[[bench]]
+name = "cipher"
+harness = false
