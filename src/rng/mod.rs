@@ -2,7 +2,7 @@ use crate::params::params::{P, W};
 
 use rand::{Rng, RngCore};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum RandomErrors {
     OverFlow,
     Mod2ShouldZero,
