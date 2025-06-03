@@ -1,7 +1,7 @@
 use ntrulp::key::kem_error::KemErrors;
 use ntrulp::key::priv_key::PrivKey;
 use ntrulp::key::pub_key::PubKey;
-use ntrulp::ntru::cipher::{r3_encrypt, rq_decrypt, static_bytes_decrypt, static_bytes_encrypt};
+use ntrulp::ntru::cipher::{static_bytes_decrypt, static_bytes_encrypt};
 use ntrulp::ntru::std_cipher;
 use ntrulp::params::params::R3_BYTES;
 use ntrulp::poly::r3::R3;
@@ -49,8 +49,7 @@ fn main() {
     let mut origin_plaintext = vec![0u8; 1024];
     rng.fill_bytes(&mut origin_plaintext);
 
-    let mut ciphertext =
-        std_cipher::bytes_encrypt(&mut rng, &origin_plaintext, pk.clone()).unwrap();
+    let ciphertext = std_cipher::bytes_encrypt(&mut rng, &origin_plaintext, pk.clone()).unwrap();
     let plaintext = std_cipher::bytes_decrypt(&ciphertext, sk.clone()).unwrap();
 
     assert_eq!(plaintext, origin_plaintext);

@@ -9,31 +9,30 @@ use crate::{
 use super::error::CompressError;
 
 pub const BITS_SIZE: usize = 6;
-const EMPTY: [i8; BITS_SIZE] = [0i8; BITS_SIZE];
 const SYS_SIZE: usize = std::mem::size_of::<usize>();
 
-fn usize_vec_to_bytes(list: &[usize]) -> Vec<u8> {
-    list.iter().flat_map(|&x| x.to_ne_bytes()).collect()
-}
-
 fn byte_to_usize_vec(list: &[u8]) -> Vec<usize> {
-    list.chunks_exact(SYS_SIZE)
-        .map(|chunk| {
-            let mut bytes = [0; SYS_SIZE];
-            bytes.copy_from_slice(chunk);
-            usize::from_ne_bytes(bytes)
-        })
-        .collect()
+    let num_elements = list.len() / SYS_SIZE;
+    let mut vec = Vec::with_capacity(num_elements);
+    for chunk in list.chunks_exact(SYS_SIZE) {
+        let mut bytes = [0; SYS_SIZE];
+        bytes.copy_from_slice(chunk);
+        vec.push(usize::from_ne_bytes(bytes));
+    }
+    vec
 }
 
 pub fn pack_bytes(mut bytes: Vec<u8>, size: Vec<usize>, seed: u64) -> Vec<u8> {
-    let size_bytes = usize_vec_to_bytes(&size);
-    let size_len = size_bytes.len().to_ne_bytes();
-    let seed_bytes = seed.to_ne_bytes();
+    let size_bytes_len = size.len() * SYS_SIZE;
+    let additional_size = size_bytes_len + SYS_SIZE + 8;
+    bytes.reserve(additional_size);
 
-    bytes.extend(size_bytes);
-    bytes.extend(size_len);
-    bytes.extend(seed_bytes);
+    for &s in &size {
+        bytes.extend_from_slice(&s.to_ne_bytes());
+    }
+    let size_len_bytes = size_bytes_len.to_ne_bytes();
+    bytes.extend_from_slice(&size_len_bytes);
+    bytes.extend_from_slice(&seed.to_ne_bytes());
 
     bytes
 }
@@ -99,12 +98,16 @@ pub fn convert_to_decimal(ternary: [i8; BITS_SIZE]) -> u8 {
 }
 
 pub fn r3_encode_chunks(r3: &[i8]) -> Vec<u8> {
-    let mut output: Vec<u8> = Vec::new();
+    let num_chunks = (r3.len() + BITS_SIZE - 1) / BITS_SIZE;
+    let mut output = Vec::with_capacity(num_chunks);
 
-    for chunk in r3.chunks(BITS_SIZE) {
-        let bits: [i8; BITS_SIZE] = chunk.try_into().unwrap_or(EMPTY);
+    for start in (0..r3.len()).step_by(BITS_SIZE) {
+        let end = (start + BITS_SIZE).min(r3.len());
+        let mut bits = [0i8; BITS_SIZE];
+        for (i, &val) in r3[start..end].iter().enumerate() {
+            bits[i] = val;
+        }
         let byte = convert_to_decimal(bits);
-
         output.push(byte);
     }
 
@@ -112,19 +115,19 @@ pub fn r3_encode_chunks(r3: &[i8]) -> Vec<u8> {
 }
 
 pub fn r3_decode_chunks(bytes: &[u8]) -> Vec<i8> {
-    let mut output: Vec<i8> = Vec::new();
+    let mut output = Vec::with_capacity(bytes.len() * BITS_SIZE);
 
-    for byte in bytes {
-        let bits = convert_to_ternary(*byte);
-
-        output.extend(bits);
+    for &byte in bytes {
+        let bits = convert_to_ternary(byte);
+        output.extend_from_slice(&bits);
     }
 
     output
 }
 
 pub fn r3_merge_w_chunks(chunks: &[[i8; P]], size: &[usize], seed: u64) -> Vec<i8> {
-    let mut out = Vec::new();
+    let total_size: usize = size.iter().sum();
+    let mut out = Vec::with_capacity(total_size);
 
     for (index, chunk) in chunks.iter().enumerate() {
         let seed = seed + index as u64;
@@ -194,6 +197,14 @@ mod r3_compressro_test {
     use crate::params::params1277::RQ_BYTES;
 
     use super::*;
+
+    fn usize_vec_to_bytes(list: &[usize]) -> Vec<u8> {
+        let mut bytes = Vec::with_capacity(list.len() * SYS_SIZE);
+        for &x in list {
+            bytes.extend_from_slice(&x.to_ne_bytes());
+        }
+        bytes
+    }
 
     #[test]
     fn pack_unpack_bytes() {
