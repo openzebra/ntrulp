@@ -4,7 +4,7 @@ use ntrulp::poly::rq::Rq;
 use ntrulp::rng::{random_small, short_random};
 
 fn encoder_benchmark(cb: &mut Criterion) {
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let coeffs = short_random(&mut rng).unwrap();
     let rq = Rq::from(coeffs);
     let r3 = R3::from(random_small(&mut rng));

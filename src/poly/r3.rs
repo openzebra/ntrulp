@@ -408,7 +408,7 @@ mod test_r3 {
 
     #[test]
     fn test_recip() {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
 
         for _ in 0..2 {
             let r3: R3 = R3::from(random_small(&mut rng));

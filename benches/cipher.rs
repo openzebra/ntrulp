@@ -7,10 +7,10 @@ use ntrulp::params::params::R3_BYTES;
 use ntrulp::poly::r3::R3;
 use ntrulp::poly::rq::Rq;
 use ntrulp::rng::{random_small, short_random};
-use rand::RngCore;
+use rand::RngExt;
 
 fn encoder_benchmark(cb: &mut Criterion) {
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let r: R3 = Rq::from(short_random(&mut rng).unwrap()).r3_from_rq();
     let f: Rq = Rq::from(short_random(&mut rng).unwrap());
     let g: R3 = R3::from(random_small(&mut rng));
@@ -30,7 +30,7 @@ fn encoder_benchmark(cb: &mut Criterion) {
     });
 
     let mut ciphertext: [u8; R3_BYTES] = r.to_bytes();
-    rng.fill_bytes(&mut ciphertext);
+    rng.fill(&mut ciphertext[..]);
     let cipher = static_bytes_encrypt(&ciphertext, &pk);
 
     cb.bench_function("static_bytes_encrypt", |b| {
@@ -45,7 +45,7 @@ fn encoder_benchmark(cb: &mut Criterion) {
     });
 
     let mut origin_plaintext = [0u8; 1024];
-    rng.fill_bytes(&mut origin_plaintext);
+    rng.fill(&mut origin_plaintext[..]);
     let origin_plaintext = origin_plaintext.to_vec();
 
     let cipher = std_cipher::bytes_encrypt(&mut rng, &origin_plaintext, pk.clone()).unwrap();

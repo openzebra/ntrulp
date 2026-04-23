@@ -48,7 +48,7 @@ mod r3_encoder_tests {
 
     #[test]
     fn test_r3_encode() {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let r3: [i8; P] = random_small(&mut rng);
         let bytes = r3_encode(&r3);
         let dec = r3_decode(&bytes);

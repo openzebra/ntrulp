@@ -24,10 +24,10 @@ impl PrivKey {
     /// use ntrulp::poly::r3::R3;
     /// use ntrulp::key::priv_key::PrivKey;
     ///
-    /// use rand::RngCore;
+
     /// use ntrulp::rng::{random_small, short_random};
     ///
-    /// let mut rng = rand::thread_rng();
+    /// let mut rng = rand::rng();
     /// // Create an Fq polynomial fq and a g3 polynomial g3
     /// let fq = Rq::from(short_random(&mut rng).unwrap());
     /// let mut g3: R3;
@@ -64,10 +64,10 @@ impl PrivKey {
     /// use ntrulp::poly::rq::Rq;
     /// use ntrulp::poly::r3::R3;
     /// use ntrulp::key::priv_key::PrivKey;
-    /// use rand::RngCore;
+
     /// use ntrulp::rng::{random_small, short_random};
     ///
-    /// let mut rng = rand::thread_rng();
+    /// let mut rng = rand::rng();
     /// // Create an Fq polynomial fq and a g3 polynomial g3
     /// let fq = Rq::from(short_random(&mut rng).unwrap());
     /// let mut g3: R3;
@@ -108,10 +108,10 @@ impl PrivKey {
     /// use ntrulp::poly::rq::Rq;
     /// use ntrulp::poly::r3::R3;
     /// use ntrulp::key::priv_key::PrivKey;
-    /// use rand::RngCore;
+
     /// use ntrulp::rng::{random_small, short_random};
     ///
-    /// let mut rng = rand::thread_rng();
+    /// let mut rng = rand::rng();
     /// // Create an Fq polynomial fq and a g3 polynomial g3
     /// let fq = Rq::from(short_random(&mut rng).unwrap());
     /// let mut g3: R3;
@@ -161,7 +161,7 @@ mod test_private_key {
 
     #[test]
     fn test_import_export() {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
 
         for _ in 0..2 {
             let f: Rq = Rq::from(short_random(&mut rng).unwrap());

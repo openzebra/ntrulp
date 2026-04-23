@@ -25,10 +25,10 @@ impl PubKey {
     /// use ntrulp::poly::rq::Rq;
     /// use ntrulp::poly::r3::R3;
     /// use ntrulp::key::pub_key::PubKey;
-    /// use rand::RngCore;
+
     /// use ntrulp::rng::{random_small, short_random};
     ///
-    /// let mut rng = rand::thread_rng();
+    /// let mut rng = rand::rng();
     /// // Create an Fq polynomial fq and a g3 polynomial g3
     /// let fq = Rq::from(short_random(&mut rng).unwrap());
     /// let g3 = R3::from(random_small(&mut rng));
@@ -64,10 +64,10 @@ impl PubKey {
     /// use ntrulp::poly::r3::R3;
     /// use ntrulp::key::pub_key::PubKey;
     /// use ntrulp::key::priv_key::PrivKey;
-    /// use rand::RngCore;
+
     /// use ntrulp::rng::{random_small, short_random};
     ///
-    /// let mut rng = rand::thread_rng();
+    /// let mut rng = rand::rng();
     ///
     /// // Create an Fq polynomial fq and a g3 polynomial g3
     /// let f: Rq = Rq::from(short_random(&mut rng).unwrap());
@@ -113,10 +113,10 @@ impl PubKey {
     /// use ntrulp::poly::rq::Rq;
     /// use ntrulp::poly::r3::R3;
     /// use ntrulp::key::pub_key::PubKey;
-    /// use rand::RngCore;
+
     /// use ntrulp::rng::{random_small, short_random};
     ///
-    /// let mut rng = rand::thread_rng();
+    /// let mut rng = rand::rng();
     /// // Create an Fq polynomial fq and a g3 polynomial g3
     /// let fq = Rq::from(short_random(&mut rng).unwrap());
     /// let g3 = R3::from(random_small(&mut rng));
@@ -153,7 +153,7 @@ mod test_pub_key {
 
     #[test]
     fn test_import_export() {
-        let mut rng = ChaCha20Rng::from_entropy();
+        let mut rng = ChaCha20Rng::from_rng(&mut rand::rng());
 
         for _ in 0..1 {
             let f: Rq = Rq::from(short_random(&mut rng).unwrap());
@@ -168,7 +168,7 @@ mod test_pub_key {
 
     #[test]
     fn test_from_sk() {
-        let mut rng = ChaCha20Rng::from_entropy();
+        let mut rng = ChaCha20Rng::from_rng(&mut rand::rng());
         let f: Rq = Rq::from(short_random(&mut rng).unwrap());
         let mut g: R3;
 

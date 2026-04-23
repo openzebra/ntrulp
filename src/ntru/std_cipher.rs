@@ -1,4 +1,4 @@
-use rand::RngCore;
+use rand::Rng;
 use std::sync::Arc;
 use std::thread;
 
@@ -32,7 +32,6 @@ use super::std_error::CipherError;
 /// use ntrulp::ntru::std_cipher::bytes_decrypt;
 /// use ntrulp::ntru::std_cipher::bytes_encrypt;
 /// use rand::SeedableRng;
-/// use rand::RngCore;
 /// use rand_chacha::ChaCha20Rng;
 /// use ntrulp::key::priv_key::PrivKey;
 /// use ntrulp::key::pub_key::PubKey;
@@ -41,10 +40,10 @@ use super::std_error::CipherError;
 /// use ntrulp::rng::{random_small, short_random};
 ///
 ///
-/// let mut rng = ChaCha20Rng::from_entropy();
+/// let mut rng = ChaCha20Rng::from_rng(&mut rand::rng());
 /// let mut g: R3;
 /// let mut ciphertext = vec![0u8; 1024];
-/// rng.fill_bytes(&mut ciphertext);
+/// rng.fill(&mut ciphertext);
 ///
 /// let f: Rq = Rq::from(short_random(&mut rng).unwrap());
 /// let sk = loop {
@@ -67,7 +66,7 @@ use super::std_error::CipherError;
 /// The function may panic if encryption fails, the provided public key is invalid,
 /// or if the specified number of threads exceeds the available processor cores.
 ///
-pub fn bytes_encrypt<R: RngCore>(
+pub fn bytes_encrypt<R: Rng>(
     rng: &mut R,
     plaintext: &[u8],
     pub_key: PubKey,
@@ -129,7 +128,6 @@ pub fn bytes_encrypt<R: RngCore>(
 /// use ntrulp::ntru::std_cipher::bytes_decrypt;
 /// use ntrulp::ntru::std_cipher::bytes_encrypt;
 /// use rand::SeedableRng;
-/// use rand::RngCore;
 /// use rand_chacha::ChaCha20Rng;
 /// use ntrulp::key::priv_key::PrivKey;
 /// use ntrulp::key::pub_key::PubKey;
@@ -138,10 +136,10 @@ pub fn bytes_encrypt<R: RngCore>(
 /// use ntrulp::rng::{random_small, short_random};
 ///
 ///
-/// let mut rng = ChaCha20Rng::from_entropy();
+/// let mut rng = ChaCha20Rng::from_rng(&mut rand::rng());
 /// let mut g: R3;
 /// let mut ciphertext = vec![0u8; 1024];
-/// rng.fill_bytes(&mut ciphertext);
+/// rng.fill(&mut ciphertext);
 ///
 /// let f: Rq = Rq::from(short_random(&mut rng).unwrap());
 /// let sk = loop {
@@ -209,7 +207,7 @@ pub fn bytes_decrypt(cipher: &[u8], priv_key: PrivKey) -> Result<Vec<u8>, Cipher
 
 #[cfg(test)]
 mod test_cipher_std {
-    use rand::SeedableRng;
+    use rand::{RngExt, SeedableRng};
     use rand_chacha::ChaCha20Rng;
 
     use crate::rng::{random_small, short_random};
@@ -218,10 +216,10 @@ mod test_cipher_std {
 
     #[test]
     fn test_bytes_cipher() {
-        let mut rng = ChaCha20Rng::from_entropy();
+        let mut rng = ChaCha20Rng::from_rng(&mut rand::rng());
         let mut g: R3;
         let mut ciphertext = vec![0u8; 1024];
-        rng.fill_bytes(&mut ciphertext);
+        rng.fill(&mut ciphertext);
         let f: Rq = Rq::from(short_random(&mut rng).unwrap());
         let sk = loop {
             g = R3::from(random_small(&mut rng));
@@ -255,10 +253,10 @@ mod test_cipher_std {
 
     #[test]
     fn test_invalid_keys() {
-        let mut rng = ChaCha20Rng::from_entropy();
+        let mut rng = ChaCha20Rng::from_rng(&mut rand::rng());
         let mut g: R3;
         let mut ciphertext = vec![0u8; 1024];
-        rng.fill_bytes(&mut ciphertext);
+        rng.fill(&mut ciphertext);
         let f: Rq = Rq::from(short_random(&mut rng).unwrap());
         loop {
             g = R3::from(random_small(&mut rng));
@@ -285,10 +283,10 @@ mod test_cipher_std {
 
     #[test]
     fn test_invalid_bytes_decrypt() {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let mut g: R3;
         let mut invalid_bytes = vec![0u8; 128];
-        rng.fill_bytes(&mut invalid_bytes);
+        rng.fill(&mut invalid_bytes);
         let f: Rq = Rq::from(short_random(&mut rng).unwrap());
         loop {
             g = R3::from(random_small(&mut rng));

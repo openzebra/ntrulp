@@ -1,4 +1,4 @@
-use rand::RngCore;
+use rand::Rng;
 
 use crate::{
     encode::shuffle::{shuffle_array, unshuffle_array},
@@ -141,7 +141,7 @@ pub fn r3_merge_w_chunks(chunks: &[[i8; P]], size: &[usize], seed: u64) -> Vec<i
     out
 }
 
-pub fn r3_split_w_chunks<R: RngCore>(input: &[i8], rng: &mut R) -> (Vec<[i8; P]>, Vec<usize>, u64) {
+pub fn r3_split_w_chunks<R: Rng>(input: &[i8], rng: &mut R) -> (Vec<[i8; P]>, Vec<usize>, u64) {
     const LIMIT: usize = W - DIFFICULT;
 
     let origin_seed: u64 = rng.next_u64() - (input.len() / P) as u64;
@@ -191,7 +191,7 @@ pub fn r3_split_w_chunks<R: RngCore>(input: &[i8], rng: &mut R) -> (Vec<[i8; P]>
 
 #[cfg(test)]
 mod r3_compressro_test {
-    use rand::{Rng, SeedableRng};
+    use rand::{Rng, RngExt, SeedableRng};
     use rand_chacha::ChaCha20Rng;
 
     use crate::params::params1277::RQ_BYTES;
@@ -208,15 +208,15 @@ mod r3_compressro_test {
 
     #[test]
     fn pack_unpack_bytes() {
-        let mut rng = ChaCha20Rng::from_entropy();
-        let bytes: Vec<u8> = (0..1000).map(|_| rng.gen()).collect();
+        let mut rng = ChaCha20Rng::from_rng(&mut rand::rng());
+        let bytes: Vec<u8> = (0..1000).map(|_| rng.random::<u8>()).collect();
         let unlimted_poly = r3_decode_chunks(&bytes);
         let (chunks, size, seed) = r3_split_w_chunks(&unlimted_poly, &mut rng);
         let mut bytes: Vec<u8> = Vec::with_capacity(P * size.len());
 
         for _ in chunks {
             let mut rq_bytes: [u8; RQ_BYTES] = [0u8; RQ_BYTES];
-            rng.fill_bytes(&mut rq_bytes);
+            rng.fill(&mut rq_bytes);
             bytes.extend(rq_bytes);
         }
 
@@ -230,8 +230,8 @@ mod r3_compressro_test {
 
     #[test]
     fn test_u64_convert() {
-        let mut rng = ChaCha20Rng::from_entropy();
-        let usize_list: Vec<usize> = (0..1024).map(|_| rng.gen()).collect();
+        let mut rng = ChaCha20Rng::from_rng(&mut rand::rng());
+        let usize_list: Vec<usize> = (0..1024).map(|_| rng.random::<usize>()).collect();
         let bytes = usize_vec_to_bytes(&usize_list);
         let out = byte_to_usize_vec(&bytes);
 
@@ -252,10 +252,10 @@ mod r3_compressro_test {
 
     #[test]
     fn test_r3_encode_decode_chunks() {
-        let mut rng = ChaCha20Rng::from_entropy();
+        let mut rng = ChaCha20Rng::from_rng(&mut rand::rng());
 
         for _ in 0..10 {
-            let bytes: Vec<u8> = (0..1000).map(|_| rng.gen()).collect();
+            let bytes: Vec<u8> = (0..1000).map(|_| rng.random::<u8>()).collect();
 
             let r3 = r3_decode_chunks(&bytes);
             let out = r3_encode_chunks(&r3);
@@ -266,11 +266,11 @@ mod r3_compressro_test {
 
     #[test]
     fn test_encode_decode_bytes_by_chunks_spliter_merge() {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
 
         for _ in 0..100 {
-            let rand_len = rng.gen_range(5..1000);
-            let bytes: Vec<u8> = (0..rand_len).map(|_| rng.gen::<u8>()).collect();
+            let rand_len = rng.random_range(5..1000);
+            let bytes: Vec<u8> = (0..rand_len).map(|_| rng.random::<u8>()).collect();
             let r3 = r3_decode_chunks(&bytes);
             let (chunks, size, seed) = r3_split_w_chunks(&r3, &mut rng);
             let merged = r3_merge_w_chunks(&chunks, &size, seed);
@@ -295,11 +295,11 @@ mod r3_compressro_test {
 
     #[test]
     fn test_spliter() {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
 
         for _ in 0..10 {
-            let rand_len = rng.gen_range(5..1000);
-            let bytes: Vec<u8> = (0..rand_len).map(|_| rng.gen::<u8>()).collect();
+            let rand_len = rng.random_range(5..1000);
+            let bytes: Vec<u8> = (0..rand_len).map(|_| rng.random::<u8>()).collect();
             let r3 = r3_decode_chunks(&bytes);
             let (chunks, size, _) = r3_split_w_chunks(&r3, &mut rng);
 

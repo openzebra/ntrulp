@@ -63,15 +63,15 @@ You can select parameters through features, you must select parameters!
 ```
 # Cargo.toml
 
-ntrulp = { version = "0.1.7", features = ["ntrup653"] }
-ntrulp = { version = "0.1.7", features = ["ntrup761"] }
-ntrulp = { version = "0.1.7", features = ["ntrup857"] }
-ntrulp = { version = "0.1.7", features = ["ntrup953"] }
-ntrulp = { version = "0.1.7", features = ["ntrup1013"] }
-ntrulp = { version = "0.1.7", features = ["ntrup1277"] }
+ntrulp = { version = "0.2.4", features = ["ntrup653"] }
+ntrulp = { version = "0.2.4", features = ["ntrup761"] }
+ntrulp = { version = "0.2.4", features = ["ntrup857"] }
+ntrulp = { version = "0.2.4", features = ["ntrup953"] }
+ntrulp = { version = "0.2.4", features = ["ntrup1013"] }
+ntrulp = { version = "0.2.4", features = ["ntrup1277"] }
 
 #enable std
-ntrulp = { version = "0.1.7", features = ["ntrup1277", "std"] }
+ntrulp = { version = "0.2.4", features = ["ntrup1277", "std"] }
 ```
 
 
@@ -95,7 +95,7 @@ cargo bench --features std
 
 ## Keys Generation:
 ```rust
-let mut rng = rand::thread_rng();
+let mut rng = rand::rng();
 let f: Rq = Rq::from(short_random(&mut rng).unwrap());
 let mut g: R3;
 let sk = loop {
@@ -126,11 +126,13 @@ assert_eq!(from_bytes.coeffs, pk.coeffs);
 ```
 ## Encrypt/Decrypt bytes example
 ```rust
+use rand::RngExt;
+
 // create random generator.
-let mut rng = rand::thread_rng();
+let mut rng = rand::rng();
 let mut bytes = [0u8; R3_BYTES];
 
-rng.fill_bytes(&mut bytes);
+rng.fill(&mut bytes[..]);
 
 // see Keys Generation
 let (sk, pk) = gen_keys().unwrap();
@@ -146,14 +148,26 @@ let decrypted = static_bytes_decrypt(&encrypted, &sk);
 assert_eq!(decrypted, plaintext);
 
 let mut origin_plaintext = vec![0u8; 1024];
-rng.fill_bytes(&mut origin_plaintext);
+rng.fill(&mut origin_plaintext);
 
-let mut ciphertext =
+let ciphertext =
     std_cipher::bytes_encrypt(&mut rng, &origin_plaintext, pk.clone()).unwrap();
 let plaintext = std_cipher::bytes_decrypt(&ciphertext, sk.clone()).unwrap();
 
 assert_eq!(plaintext, origin_plaintext);
 ```
+
+## Dependencies
+
+| Crate | Version |
+|---|---|
+| `rand` | 0.10 |
+| `rand_chacha` | 0.10 |
+
+> **Note (v0.2.4):** Updated to `rand` 0.10 / `rand_chacha` 0.10. The rand API changed significantly:
+> `thread_rng()` → `rand::rng()`, `gen()` → `random()`, `gen_range()` → `random_range()`,
+> `fill_bytes()` → `fill()`, `from_entropy()` → `from_rng(&mut rand::rng())`.
+> Also requires `use rand::RngExt` to call the extension methods.
 
 ## TODO
  - add Falcon algorithm for sign,verify signature

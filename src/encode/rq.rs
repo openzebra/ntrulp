@@ -39,7 +39,7 @@ mod tests_fq {
 
     #[test]
     fn test_encode_decode() {
-        let mut rng = ChaCha20Rng::from_entropy();
+        let mut rng = ChaCha20Rng::from_rng(&mut rand::rng());
 
         for _ in 0..100 {
             let coeffs = short_random(&mut rng).unwrap();

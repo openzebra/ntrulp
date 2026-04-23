@@ -7,10 +7,10 @@ use ntrulp::params::params::R3_BYTES;
 use ntrulp::poly::r3::R3;
 use ntrulp::poly::rq::Rq;
 use ntrulp::rng::{random_small, short_random};
-use rand::RngCore;
+use rand::RngExt;
 
 fn gen_keys() -> Result<(PrivKey, PubKey), KemErrors> {
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let mut g: R3;
     let f: Rq = Rq::from(short_random(&mut rng).unwrap());
     let sk = loop {
@@ -28,11 +28,11 @@ fn gen_keys() -> Result<(PrivKey, PubKey), KemErrors> {
 
 fn main() {
     // create random generator.
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
 
     let mut bytes = [0u8; R3_BYTES];
 
-    rng.fill_bytes(&mut bytes);
+    rng.fill(&mut bytes[..]);
 
     let (sk, pk) = gen_keys().unwrap();
 
@@ -47,7 +47,7 @@ fn main() {
     assert_eq!(decrypted, plaintext);
 
     let mut origin_plaintext = vec![0u8; 1024];
-    rng.fill_bytes(&mut origin_plaintext);
+    rng.fill(&mut origin_plaintext);
 
     let ciphertext = std_cipher::bytes_encrypt(&mut rng, &origin_plaintext, pk.clone()).unwrap();
     let plaintext = std_cipher::bytes_decrypt(&ciphertext, sk.clone()).unwrap();

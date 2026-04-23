@@ -18,7 +18,7 @@ fn test_round() {
     use crate::poly::rq::Rq;
     use crate::rng::short_random;
 
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let mut r3: Rq = Rq::from(short_random(&mut rng).unwrap())
         .recip::<3>()
         .unwrap();
@@ -42,9 +42,9 @@ fn test_round() {
 #[cfg(feature = "ntrup761")]
 #[test]
 fn test_freeze() {
-    use rand::prelude::*;
+    use rand::RngExt;
 
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
 
     pub fn test_freeze(a: i32) -> i8 {
         let b = a - (3 * ((10923 * a) >> 15));
@@ -54,7 +54,7 @@ fn test_freeze() {
     }
 
     for _ in 0..1000 {
-        let r = rng.gen::<i16>();
+        let r = rng.random::<i16>();
 
         let t1 = test_freeze(r as i32);
         let t2 = freeze(r);

@@ -107,11 +107,11 @@ impl Rq {
     ///
     /// ```
     /// use ntrulp::poly::rq::Rq;
-    /// use rand::RngCore;
+
     /// use ntrulp::rng::{random_small, short_random};
     ///
     /// const RATIO: i16 = 1;
-    /// let mut rng = rand::thread_rng();
+    /// let mut rng = rand::rng();
     /// let rq: Rq = Rq::from(short_random(&mut rng).unwrap());
     /// let out = rq.recip::<RATIO>().unwrap();
     /// let h = out.mult_r3(&rq.r3_from_rq());
@@ -220,9 +220,9 @@ impl Rq {
     /// ```
     /// use ntrulp::params::params::P;
     /// use ntrulp::poly::rq::Rq;
-    /// use rand::RngCore;
+
     ///
-    /// let mut rng = rand::thread_rng();
+    /// let mut rng = rand::rng();
     /// let rq: Rq = Rq::from([1_i16; P]);
     /// let out = rq.mult_int(3);
     ///
@@ -382,14 +382,14 @@ mod test_rq {
     use super::*;
     use crate::rng::short_random;
 
-    use rand::{RngCore, SeedableRng};
+    use rand::{RngExt, SeedableRng};
     use rand_chacha::ChaCha20Rng;
 
     #[test]
     fn test_mult_int() {
-        let mut rng = ChaCha20Rng::from_entropy();
+        let mut rng = ChaCha20Rng::from_rng(&mut rand::rng());
         let mut bytes = [0u8; 5];
-        rng.fill_bytes(&mut bytes);
+        rng.fill(&mut bytes);
         let num = bytes[2] as i16;
         let rq: Rq = Rq::from([1_i16; P]);
         let out = rq.mult_int(num);
@@ -403,7 +403,7 @@ mod test_rq {
     fn test_recip() {
         const RATIO: i16 = 1;
 
-        let mut rng = ChaCha20Rng::from_entropy();
+        let mut rng = ChaCha20Rng::from_rng(&mut rand::rng());
         let rq: Rq = Rq::from(short_random(&mut rng).unwrap());
         let out = rq.recip::<RATIO>().unwrap();
         let h = out.mult_r3(&rq.r3_from_rq());

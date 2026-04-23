@@ -1,6 +1,6 @@
 use crate::params::params::{P, W};
 
-use rand::{Rng, RngCore};
+use rand::{Rng, RngExt};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum RandomErrors {
@@ -30,43 +30,43 @@ pub enum RandomErrors {
 /// ```
 /// use ntrulp::rng::urandom32;
 ///
-/// let mut rng = rand::thread_rng();
+/// let mut rng = rand::rng();
 /// let r = urandom32(&mut rng);
 ///
 /// assert!(r <= std::u32::MAX);
 /// ```
 ///
 /// This function is a simple way to generate 32-bit random numbers using a random number generator.
-pub fn urandom32<R: RngCore>(rng: &mut R) -> u32 {
-    let c0 = rng.gen::<u8>() as u32;
-    let c1 = rng.gen::<u8>() as u32;
-    let c2 = rng.gen::<u8>() as u32;
-    let c3 = rng.gen::<u8>() as u32;
+pub fn urandom32<R: Rng>(rng: &mut R) -> u32 {
+    let c0 = rng.random::<u8>() as u32;
+    let c1 = rng.random::<u8>() as u32;
+    let c2 = rng.random::<u8>() as u32;
+    let c3 = rng.random::<u8>() as u32;
 
     c0 + 256 * c1 + 65536 * c2 + 16777216 * c3
 }
 
-pub fn random_sign<R: RngCore>(rng: &mut R) -> i8 {
-    if rng.gen::<bool>() {
+pub fn random_sign<R: Rng>(rng: &mut R) -> i8 {
+    if rng.random::<bool>() {
         1
     } else {
         -1
     }
 }
 
-pub fn random_range_3<R: RngCore>(rng: &mut R) -> i8 {
+pub fn random_range_3<R: Rng>(rng: &mut R) -> i8 {
     let r: u32 = urandom32(rng);
 
     (((r & 0x3fffffff) * 3) >> 30) as i8 - 1
 }
 
-pub fn random_small<R: RngCore>(rng: &mut R) -> [i8; P] {
+pub fn random_small<R: Rng>(rng: &mut R) -> [i8; P] {
     let mut r = [0i8; P];
     r.iter_mut().for_each(|x| *x = random_range_3(rng));
     r
 }
 
-pub fn short_random<R: RngCore>(rng: &mut R) -> Result<[i16; P], RandomErrors> {
+pub fn short_random<R: Rng>(rng: &mut R) -> Result<[i16; P], RandomErrors> {
     let mut list: [u32; P] = core::array::from_fn(|i| {
         let value = urandom32(rng);
         if i < W {
@@ -125,7 +125,7 @@ mod tests {
 
     #[test]
     fn test_short_random() {
-        let mut rng = ChaCha20Rng::from_entropy();
+        let mut rng = ChaCha20Rng::from_rng(&mut rand::rng());
 
         for _ in 0..100 {
             let r = short_random(&mut rng).unwrap();
@@ -144,7 +144,7 @@ mod tests {
 
     #[test]
     fn test_random_range_3() {
-        let mut rng = ChaCha20Rng::from_entropy();
+        let mut rng = ChaCha20Rng::from_rng(&mut rand::rng());
 
         for _ in 0..200 {
             let r = random_range_3(&mut rng);
@@ -154,7 +154,7 @@ mod tests {
 
     #[test]
     fn test_small_random() {
-        let mut rng = ChaCha20Rng::from_entropy();
+        let mut rng = ChaCha20Rng::from_rng(&mut rand::rng());
 
         for _ in 0..100 {
             let r = random_small(&mut rng);

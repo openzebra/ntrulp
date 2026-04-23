@@ -6,7 +6,7 @@ use ntrulp::poly::rq::Rq;
 use ntrulp::rng::{random_small, short_random};
 
 fn encoder_benchmark(cb: &mut Criterion) {
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let f: Rq = Rq::from(short_random(&mut rng).unwrap());
     let g: R3 = R3::from(random_small(&mut rng));
     let sk = PrivKey::compute(&f, &g).unwrap();

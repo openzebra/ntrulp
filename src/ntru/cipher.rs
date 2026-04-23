@@ -20,14 +20,14 @@ use crate::{
 /// # Example
 ///
 /// ```rust
-/// use rand::RngCore;
+
 /// use ntrulp::key::priv_key::PrivKey;
 /// use ntrulp::poly::rq::Rq;
 /// use ntrulp::poly::r3::R3;
 /// use ntrulp::ntru::cipher::rq_decrypt;
 /// use ntrulp::rng::{random_small, short_random};
 ///
-/// let mut rng = rand::thread_rng();
+/// let mut rng = rand::rng();
 /// let f = Rq::from(short_random(&mut rng).unwrap());
 /// let mut g: R3;
 ///
@@ -85,7 +85,7 @@ pub fn rq_decrypt(c: &Rq, priv_key: &PrivKey) -> R3 {
 /// # Example
 ///
 /// ```rust
-/// use rand::RngCore;
+
 /// use ntrulp::key::priv_key::PrivKey;
 /// use ntrulp::poly::rq::Rq;
 /// use ntrulp::poly::r3::R3;
@@ -94,7 +94,7 @@ pub fn rq_decrypt(c: &Rq, priv_key: &PrivKey) -> R3 {
 /// use ntrulp::key::pub_key::PubKey;
 /// use ntrulp::rng::{random_small, short_random};
 ///
-/// let mut rng = rand::thread_rng();
+/// let mut rng = rand::rng();
 /// let f = Rq::from(short_random(&mut rng).unwrap());
 /// let mut g: R3;
 ///
@@ -144,7 +144,7 @@ pub fn r3_encrypt(r: &R3, pub_key: &PubKey) -> Rq {
 ///
 /// # Example
 /// ```rust
-/// use rand::RngCore;
+
 /// use ntrulp::key::priv_key::PrivKey;
 /// use ntrulp::poly::rq::Rq;
 /// use ntrulp::poly::r3::R3;
@@ -153,7 +153,7 @@ pub fn r3_encrypt(r: &R3, pub_key: &PubKey) -> Rq {
 /// use ntrulp::key::pub_key::PubKey;
 /// use ntrulp::rng::{random_small, short_random};
 ///
-/// let mut rng = rand::thread_rng();
+/// let mut rng = rand::rng();
 /// let f = Rq::from(short_random(&mut rng).unwrap());
 /// let mut g: R3;
 ///
@@ -202,7 +202,7 @@ pub fn static_bytes_encrypt(bytes: &[u8; R3_BYTES], pub_key: &PubKey) -> [u8; RQ
 /// # Example
 ///
 /// ```rust
-/// use rand::RngCore;
+
 /// use ntrulp::key::priv_key::PrivKey;
 /// use ntrulp::poly::rq::Rq;
 /// use ntrulp::poly::r3::R3;
@@ -211,7 +211,7 @@ pub fn static_bytes_encrypt(bytes: &[u8; R3_BYTES], pub_key: &PubKey) -> [u8; RQ
 /// use ntrulp::key::pub_key::PubKey;
 /// use ntrulp::rng::{random_small, short_random};
 ///
-/// let mut rng = rand::thread_rng();
+/// let mut rng = rand::rng();
 /// let f = Rq::from(short_random(&mut rng).unwrap());
 /// let mut g: R3;
 ///
@@ -256,7 +256,7 @@ mod test_cipher {
 
     #[test]
     fn test_bytes_encrypt_and_decrypt() {
-        let mut rng = ChaCha20Rng::from_entropy();
+        let mut rng = ChaCha20Rng::from_rng(&mut rand::rng());
         let f: Rq = Rq::from(short_random(&mut rng).unwrap());
         let mut g: R3;
         let sk = loop {
@@ -281,7 +281,7 @@ mod test_cipher {
 
     #[test]
     fn test_encrypt_and_decrypt() {
-        let mut rng = ChaCha20Rng::from_entropy();
+        let mut rng = ChaCha20Rng::from_rng(&mut rand::rng());
         let f: Rq = Rq::from(short_random(&mut rng).unwrap());
         let mut g: R3;
         let sk = loop {

@@ -5,7 +5,7 @@ use ntrulp::poly::rq::Rq;
 use ntrulp::rng::{random_small, short_random};
 
 fn main() {
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let f: Rq = Rq::from(short_random(&mut rng).unwrap());
     let mut g: R3;
     let sk = loop {
