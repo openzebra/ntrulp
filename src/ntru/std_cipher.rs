@@ -31,7 +31,7 @@ use super::std_error::CipherError;
 /// ```rust
 /// use ntrulp::ntru::std_cipher::bytes_decrypt;
 /// use ntrulp::ntru::std_cipher::bytes_encrypt;
-/// use rand::SeedableRng;
+/// use rand::{RngExt, SeedableRng};
 /// use rand_chacha::ChaCha20Rng;
 /// use ntrulp::key::priv_key::PrivKey;
 /// use ntrulp::key::pub_key::PubKey;
@@ -127,7 +127,7 @@ pub fn bytes_encrypt<R: Rng>(
 /// ```rust
 /// use ntrulp::ntru::std_cipher::bytes_decrypt;
 /// use ntrulp::ntru::std_cipher::bytes_encrypt;
-/// use rand::SeedableRng;
+/// use rand::{RngExt, SeedableRng};
 /// use rand_chacha::ChaCha20Rng;
 /// use ntrulp::key::priv_key::PrivKey;
 /// use ntrulp::key::pub_key::PubKey;

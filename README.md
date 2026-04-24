@@ -63,15 +63,15 @@ You can select parameters through features, you must select parameters!
 ```
 # Cargo.toml
 
-ntrulp = { version = "0.2.4", features = ["ntrup653"] }
-ntrulp = { version = "0.2.4", features = ["ntrup761"] }
-ntrulp = { version = "0.2.4", features = ["ntrup857"] }
-ntrulp = { version = "0.2.4", features = ["ntrup953"] }
-ntrulp = { version = "0.2.4", features = ["ntrup1013"] }
-ntrulp = { version = "0.2.4", features = ["ntrup1277"] }
+ntrulp = { version = "0.2.5", features = ["ntrup653"] }
+ntrulp = { version = "0.2.5", features = ["ntrup761"] }
+ntrulp = { version = "0.2.5", features = ["ntrup857"] }
+ntrulp = { version = "0.2.5", features = ["ntrup953"] }
+ntrulp = { version = "0.2.5", features = ["ntrup1013"] }
+ntrulp = { version = "0.2.5", features = ["ntrup1277"] }
 
 #enable std
-ntrulp = { version = "0.2.4", features = ["ntrup1277", "std"] }
+ntrulp = { version = "0.2.5", features = ["ntrup1277", "std"] }
 ```
 
 
@@ -164,10 +164,17 @@ assert_eq!(plaintext, origin_plaintext);
 | `rand` | 0.10 |
 | `rand_chacha` | 0.10 |
 
-> **Note (v0.2.4):** Updated to `rand` 0.10 / `rand_chacha` 0.10. The rand API changed significantly:
+> **Note (v0.2.5):** Updated to `rand` 0.10 / `rand_chacha` 0.10. The rand API changed significantly:
 > `thread_rng()` → `rand::rng()`, `gen()` → `random()`, `gen_range()` → `random_range()`,
 > `fill_bytes()` → `fill()`, `from_entropy()` → `from_rng(&mut rand::rng())`.
 > Also requires `use rand::RngExt` to call the extension methods.
+>
+> **Cipher compatibility:** The internal shuffle sampler in `src/encode/shuffle.rs`
+> is pinned to rand 0.8.5's `UniformInt<usize>::sample_single_inclusive` algorithm
+> so that ciphertexts produced under v0.2.3 remain decryptable. **Skip v0.2.4** —
+> it was published with rand 0.10's `random_range` sampler and cannot decrypt
+> v0.2.3 ciphertexts. Any v0.2.4 ciphertexts produced in the wild are not
+> decryptable by v0.2.5 either.
 
 ## TODO
  - add Falcon algorithm for sign,verify signature

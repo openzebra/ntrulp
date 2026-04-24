@@ -231,7 +231,7 @@ mod r3_compressro_test {
     #[test]
     fn test_u64_convert() {
         let mut rng = ChaCha20Rng::from_rng(&mut rand::rng());
-        let usize_list: Vec<usize> = (0..1024).map(|_| rng.random::<usize>()).collect();
+        let usize_list: Vec<usize> = (0..1024).map(|_| rng.random::<u64>() as usize).collect();
         let bytes = usize_vec_to_bytes(&usize_list);
         let out = byte_to_usize_vec(&bytes);
 
