@@ -53,42 +53,34 @@ impl Rq {
 
     // h = f*g in the ring Rq
     pub fn mult_r3(&self, gq: &R3) -> Rq {
+        let f = &self.coeffs;
+        let g = &gq.coeffs;
         let mut out = [0i16; P];
-        let f = self.coeffs;
-        let g = gq.coeffs;
         let mut fg = [0i16; P + P - 1];
 
-        let quotient = |r: i16, f: i16, g: i8| {
-            let value = r + f * g as i16;
-            fq::freeze(value as i32)
-        };
-
+        // Schoolbook convolution with lazy reduction: accumulate raw i32
+        // products (|sum| <= P * Q12) and freeze once per output coefficient.
         for i in 0..P {
-            let mut result = 0i16;
-
+            let mut result = 0i32;
             for j in 0..=i {
-                result = quotient(result, f[j], g[i - j]);
+                result += f[j] as i32 * g[i - j] as i32;
             }
-
-            fg[i] = result;
+            fg[i] = fq::freeze(result);
         }
-
         for i in P..P + P - 1 {
-            let mut result = 0i16;
-
+            let mut result = 0i32;
             for j in (i - P + 1)..P {
-                result = quotient(result, f[j], g[i - j]);
+                result += f[j] as i32 * g[i - j] as i32;
             }
-
-            fg[i] = result;
+            fg[i] = fq::freeze(result);
         }
 
         for i in (P..=(P + P - 2)).rev() {
-            fg[i - P] = fq::freeze((fg[i - P] + fg[i]) as i32);
-            fg[i - P + 1] = fq::freeze((fg[i - P + 1] + fg[i]) as i32);
+            fg[i - P] = fq::freeze(fg[i - P] as i32 + fg[i] as i32);
+            fg[i - P + 1] = fq::freeze(fg[i - P + 1] as i32 + fg[i] as i32);
         }
 
-        out[..P].copy_from_slice(&fg[..P]);
+        out.copy_from_slice(&fg[..P]);
 
         Rq::from(out)
     }
@@ -125,7 +117,7 @@ impl Rq {
     ///
     /// out = 1/(RATIO*F) in Rq
     pub fn recip<const RATIO: i16>(&self) -> Result<Rq, PolyErrors> {
-        let input = self.coeffs;
+        let input = &self.coeffs;
         let mut out = [0i16; P];
         let mut f = [0i16; P + 1];
         let mut g = [0i16; P + 1];
@@ -239,7 +231,7 @@ impl Rq {
         let mut out = [0i16; P];
 
         for (i, v) in out.iter_mut().enumerate() {
-            let x = (num * self.coeffs[i]) as i32;
+            let x = num as i32 * self.coeffs[i] as i32;
 
             *v = fq::freeze(x);
         }

@@ -50,7 +50,11 @@ pub fn unpack_bytes(bytes: &[u8]) -> Result<(Vec<u8>, Vec<usize>, u64), Compress
     let size_len = usize::from_ne_bytes(size_bytes_len);
     let seed = u64::from_ne_bytes(seed_bytes);
 
-    if bytes_len < size_len || (bytes_len / size_len) < R3_BYTES {
+    if bytes_len < SYS_SIZE * 3
+        || size_len == 0
+        || bytes_len < size_len
+        || (bytes_len / size_len) < R3_BYTES
+    {
         return Err(CompressError::ByteslengthError);
     }
 
@@ -72,7 +76,7 @@ pub fn convert_to_ternary(num: u8) -> [i8; BITS_SIZE] {
             0 => 0,
             1 => 1,
             2 => -1,
-            _ => unreachable!(),
+            _ => -1,
         };
         n /= 3;
     }
@@ -88,7 +92,7 @@ pub fn convert_to_decimal(ternary: [i8; BITS_SIZE]) -> u8 {
             0 => 0,
             1 => 1,
             -1 => 2,
-            _ => unreachable!(),
+            _ => 0,
         };
 
         result = result * 3 + x as i16;
@@ -144,7 +148,7 @@ pub fn r3_merge_w_chunks(chunks: &[[i8; P]], size: &[usize], seed: u64) -> Vec<i
 pub fn r3_split_w_chunks<R: Rng>(input: &[i8], rng: &mut R) -> (Vec<[i8; P]>, Vec<usize>, u64) {
     const LIMIT: usize = W - DIFFICULT;
 
-    let origin_seed: u64 = rng.next_u64() - (input.len() / P) as u64;
+    let origin_seed: u64 = rng.next_u64().wrapping_sub((input.len() / P) as u64);
     let mut seed = origin_seed;
     let mut chunks: Vec<[i8; P]> = Vec::new();
     let mut size: Vec<usize> = Vec::new();
@@ -154,8 +158,10 @@ pub fn r3_split_w_chunks<R: Rng>(input: &[i8], rng: &mut R) -> (Vec<[i8; P]>, Ve
     let mut input_ptr: usize = 0;
     let mut part_ptr: usize = 0;
 
-    while input_ptr != input.len() {
-        while sum != LIMIT {
+    // `part_ptr < P` guards against out-of-bounds writes: zero coefficients
+    // contribute nothing to `sum`, so long zero runs can overfill `part`.
+    while input_ptr < input.len() && part_ptr < P {
+        while sum != LIMIT && part_ptr < P {
             let value = match input.get(input_ptr) {
                 Some(v) => *v,
                 None => break,
@@ -169,7 +175,7 @@ pub fn r3_split_w_chunks<R: Rng>(input: &[i8], rng: &mut R) -> (Vec<[i8; P]>, Ve
 
         size.push(part_ptr);
 
-        while sum != W {
+        while sum != W && part_ptr < P {
             let value = random_sign(rng);
 
             part[part_ptr] = value;

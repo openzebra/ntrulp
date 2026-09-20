@@ -10,7 +10,7 @@ pub fn r3_encode(f: &[i8; P]) -> [u8; R3_BYTES] {
             .fold(0u8, |acc, (j, &val)| acc | ((val + 1) as u8) << (j * 2));
     });
 
-    if P % 4 != 0 {
+    if !P.is_multiple_of(4) {
         s[P / 4] = (f[P - 1] + 1) as u8;
     }
 

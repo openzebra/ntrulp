@@ -1,5 +1,4 @@
 use rand::Rng;
-use std::sync::Arc;
 use std::thread;
 
 use crate::params::params::RQ_BYTES;
@@ -75,36 +74,33 @@ pub fn bytes_encrypt<R: Rng>(
     let (chunks, size, seed) = compress::r3::r3_split_w_chunks(&unlimted_poly, rng);
 
     let chunk_count = chunks.len();
-    let thread_count = std::cmp::min(chunk_count, num_cpus::get());
+    // `.max(1)` prevents a division by zero for empty input.
+    let thread_count = std::cmp::min(chunk_count, num_cpus::get()).max(1);
     let chunks_per_thread = (chunk_count + thread_count - 1) / thread_count;
 
-    let pub_key = Arc::new(pub_key);
-    let results: Vec<_> = chunks
-        .chunks(chunks_per_thread)
-        .enumerate()
-        .map(|(thread_index, chunk_slice)| {
-            let chunk_slice = chunk_slice.to_vec();
-            let pub_key = Arc::clone(&pub_key);
-
-            thread::spawn(move || -> Result<(usize, Vec<u8>), CipherError> {
-                let mut thread_results = Vec::with_capacity(chunk_slice.len() * RQ_BYTES);
-                for chunk in chunk_slice {
-                    let r3: R3 = chunk.into();
-                    let hr = r3_encrypt(&r3, &pub_key);
-                    let rq_bytes = hr.to_bytes();
-                    thread_results.extend_from_slice(&rq_bytes);
-                }
-                Ok((thread_index, thread_results))
+    // Scoped threads borrow `pub_key` directly: no `Arc`, no per-thread copies.
+    let ordered_results: Vec<Vec<u8>> = thread::scope(|scope| -> Result<_, CipherError> {
+        let handles: Vec<_> = chunks
+            .chunks(chunks_per_thread)
+            .map(|chunk_slice| {
+                scope.spawn(|| -> Result<Vec<u8>, CipherError> {
+                    let mut thread_results = Vec::with_capacity(chunk_slice.len() * RQ_BYTES);
+                    for chunk in chunk_slice {
+                        let r3: R3 = (*chunk).into();
+                        let hr = r3_encrypt(&r3, &pub_key);
+                        thread_results.extend_from_slice(&hr.to_bytes());
+                    }
+                    Ok(thread_results)
+                })
             })
-        })
-        .collect();
+            .collect();
 
-    let mut ordered_results = vec![Vec::new(); results.len()];
-
-    for handle in results {
-        let (index, result) = handle.join().or(Err(CipherError::SyncThreadJoinError))??;
-        ordered_results[index] = result;
-    }
+        let mut ordered_results = Vec::with_capacity(handles.len());
+        for handle in handles {
+            ordered_results.push(handle.join().or(Err(CipherError::SyncThreadJoinError))??);
+        }
+        Ok(ordered_results)
+    })?;
 
     let bytes: Vec<u8> = ordered_results.into_iter().flatten().collect();
 
@@ -166,38 +162,35 @@ pub fn bytes_decrypt(cipher: &[u8], priv_key: PrivKey) -> Result<Vec<u8>, Cipher
     let (bytes_data, size, seed) =
         compress::r3::unpack_bytes(cipher).map_err(CipherError::CompressError)?;
     let chunk_count = bytes_data.len() / RQ_BYTES;
-    let thread_count = std::cmp::min(chunk_count, num_cpus::get());
+    // `.max(1)` prevents a division by zero for empty input.
+    let thread_count = std::cmp::min(chunk_count, num_cpus::get()).max(1);
     let chunks_per_thread = (chunk_count + thread_count - 1) / thread_count;
 
-    let priv_key = Arc::new(priv_key);
-    let results: Vec<_> = bytes_data
-        .chunks(chunks_per_thread * RQ_BYTES)
-        .enumerate()
-        .map(|(thread_index, chunk_slice)| {
-            let chunk_slice = chunk_slice.to_vec();
-            let priv_key = Arc::clone(&priv_key);
-
-            thread::spawn(move || -> Result<(usize, Vec<[i8; P]>), CipherError> {
-                let mut thread_results = Vec::with_capacity(chunk_slice.len() / RQ_BYTES);
-                for chunk in chunk_slice.chunks(RQ_BYTES) {
-                    let rq_chunk: [u8; RQ_BYTES] =
-                        chunk.try_into().or(Err(CipherError::InvalidRqChunkSize))?;
-                    let rq: Rq = rq_chunk.into();
-                    let r3 = rq_decrypt(&rq, &priv_key);
-                    thread_results.push(r3.coeffs);
-                }
-                Ok((thread_index, thread_results))
+    // Scoped threads borrow `priv_key` and the ciphertext directly.
+    let ordered_results: Vec<Vec<[i8; P]>> = thread::scope(|scope| -> Result<_, CipherError> {
+        let handles: Vec<_> = bytes_data
+            .chunks(chunks_per_thread * RQ_BYTES)
+            .map(|chunk_slice| {
+                scope.spawn(|| -> Result<Vec<[i8; P]>, CipherError> {
+                    let mut thread_results = Vec::with_capacity(chunk_slice.len() / RQ_BYTES);
+                    for chunk in chunk_slice.chunks(RQ_BYTES) {
+                        let rq_chunk: [u8; RQ_BYTES] =
+                            chunk.try_into().or(Err(CipherError::InvalidRqChunkSize))?;
+                        let rq: Rq = rq_chunk.into();
+                        let r3 = rq_decrypt(&rq, &priv_key);
+                        thread_results.push(r3.coeffs);
+                    }
+                    Ok(thread_results)
+                })
             })
-        })
-        .collect();
+            .collect();
 
-    let mut ordered_results = vec![Vec::new(); results.len()];
-    for handle in results {
-        let (index, result) = handle
-            .join()
-            .map_err(|_| CipherError::SyncThreadJoinError)??;
-        ordered_results[index] = result;
-    }
+        let mut ordered_results = Vec::with_capacity(handles.len());
+        for handle in handles {
+            ordered_results.push(handle.join().or(Err(CipherError::SyncThreadJoinError))??);
+        }
+        Ok(ordered_results)
+    })?;
 
     let r3_chunks: Vec<[i8; P]> = ordered_results.into_iter().flatten().collect();
     let out_r3 = compress::r3::r3_merge_w_chunks(&r3_chunks, &size, seed);

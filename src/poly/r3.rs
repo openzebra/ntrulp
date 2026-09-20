@@ -40,30 +40,26 @@ impl R3 {
 
     // h = f*g in the ring R3
     pub fn mult(&self, g3: &R3) -> R3 {
-        let f = self.coeffs;
-        let g = g3.coeffs;
+        let f = &self.coeffs;
+        let g = &g3.coeffs;
         let mut out = [0i8; P];
         let mut fg = [0i8; P + P - 1];
 
-        let quotient = |r: i8, f: i8, g: i8| {
-            let x = r + f * g;
-
-            f3::freeze(x as i16)
-        };
-
+        // Schoolbook convolution with lazy reduction: accumulate raw i16
+        // products (|sum| <= P) and freeze once per output coefficient.
         for i in 0..P {
-            let mut r = 0i8;
+            let mut r = 0i16;
             for j in 0..=i {
-                r = quotient(r, f[j], g[i - j]);
+                r += f[j] as i16 * g[i - j] as i16;
             }
-            fg[i] = r;
+            fg[i] = f3::freeze(r);
         }
         for i in P..P + P - 1 {
-            let mut r = 0i8;
+            let mut r = 0i16;
             for j in (i - P + 1)..P {
-                r = quotient(r, f[j], g[i - j]);
+                r += f[j] as i16 * g[i - j] as i16;
             }
-            fg[i] = r;
+            fg[i] = f3::freeze(r);
         }
 
         for i in (P..P + P - 1).rev() {
@@ -74,7 +70,7 @@ impl R3 {
             fg[i - P + 1] = f3::freeze(x1 as i16);
         }
 
-        out[..P].clone_from_slice(&fg[..P]);
+        out[..P].copy_from_slice(&fg[..P]);
 
         R3::from(out)
     }
@@ -90,13 +86,15 @@ impl R3 {
     }
 
     pub fn recip(&self) -> Result<R3, PolyErrors> {
-        let input = self.coeffs;
+        let input = &self.coeffs;
         let mut out = [0i8; P];
         let mut f = [0i8; P + 1];
         let mut g = [0i8; P + 1];
         let mut v = [0i8; P + 1];
         let mut r = [0i8; P + 1];
-        let mut delta: i8;
+        // delta must be i16: the (2*P - 1)-step extended-Euclid loop can drive
+        // it well below -127, where i8 negation and arithmetic would overflow.
+        let mut delta: i16;
         let mut sign: i8;
         let mut swap: i8;
         let mut t: i8;
@@ -130,8 +128,8 @@ impl R3 {
             v[0] = 0;
 
             sign = -g[0] * f[0];
-            swap = (i16_negative_mask(-delta as i16) & i16_nonzero_mask(g[0] as i16)) as i8;
-            delta ^= swap & (delta ^ -delta);
+            swap = (i16_negative_mask(-delta) & i16_nonzero_mask(g[0] as i16)) as i8;
+            delta ^= swap as i16 & (delta ^ -delta);
             delta += 1;
 
             for i in 0..P + 1 {
@@ -161,7 +159,7 @@ impl R3 {
             out[i] = sign * v[P - 1 - i];
         }
 
-        if i16_nonzero_mask(delta as i16) == 0 {
+        if i16_nonzero_mask(delta) == 0 {
             Ok(R3::from(out))
         } else {
             Err(PolyErrors::R3NoSolutionRecip)

@@ -1,23 +1,42 @@
 use crate::params::params::{Q, Q12};
 
-use crate::math::nums::i32_mod_u14;
-
+/// Reduces `x` into `(-Q12..Q12)` via a constant-modulus Barrett reduction.
+///
+/// Equivalent to `i32_mod_u14(x + Q12, Q) - Q12`: the `+Q12` shift inside the
+/// reduction makes the result the centered representative of `x` mod `Q`.
+/// The i64 intermediate keeps this exact for every `i32` input, and it is
+/// far cheaper than the shift-subtract divmod loop it replaces.
 pub fn freeze(x: i32) -> i16 {
-    let r = i32_mod_u14(x + Q12 as i32, Q as u16);
+    const K: u32 = 40;
+    const M: i64 = (1i64 << K) / Q as i64;
+    let q = Q as i64;
 
-    r as i16 - Q12 as i16
+    let c = x as i64 + Q12 as i64;
+    let mut b = c - q * ((c * M) >> K);
+    b -= q & -((b >= q) as i64);
+    b += q & -((b < 0) as i64);
+
+    (b - Q12 as i64) as i16
 }
 
+/// Computes `a^(-1) mod q` via Fermat's little theorem using
+/// square-and-multiply: O(log q) multiplications instead of O(q).
 pub fn recip(a1: i16) -> i16 {
-    let mut i = 1;
-    let mut ai = a1;
+    let mut result: i16 = 1;
+    let mut base = freeze(a1 as i32);
+    let mut exponent = Q - 2;
 
-    while i < Q - 2 {
-        ai = freeze((a1 as i32) * (ai as i32));
-        i += 1;
+    while exponent > 0 {
+        if exponent & 1 == 1 {
+            result = freeze(result as i32 * base as i32);
+        }
+        exponent >>= 1;
+        if exponent > 0 {
+            base = freeze(base as i32 * base as i32);
+        }
     }
 
-    ai
+    result
 }
 
 #[cfg(test)]

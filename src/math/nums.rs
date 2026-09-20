@@ -4,18 +4,8 @@ const V: u32 = 0x80000000;
 
 // return -1 if x!=0; else return 0
 pub fn i16_nonzero_mask(x: i16) -> i16 {
-    let u = x as u16;
-    let mut v = u as u32;
-
-    // v = !v;
-    v = if v == 0 { 0 } else { !v.wrapping_add(1) };
-    v >>= 31;
-
-    if v != 0 {
-        -1
-    } else {
-        0
-    }
+    // Branchless: negation of a nonzero u16 always sets bit 31 of the u32.
+    ((x as u16 as u32).wrapping_neg() >> 31).wrapping_neg() as i16
 }
 
 pub fn i16_negative_mask(x: i16) -> i16 {

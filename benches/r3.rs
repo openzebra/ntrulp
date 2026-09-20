@@ -11,7 +11,7 @@ fn encoder_benchmark(cb: &mut Criterion) {
             r3.recip().unwrap();
         });
     });
-    cb.bench_function("rq_recip_3", |b| {
+    cb.bench_function("r3_mult", |b| {
         b.iter(|| {
             r3.mult(&r30);
         });

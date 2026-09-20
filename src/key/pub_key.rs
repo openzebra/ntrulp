@@ -82,11 +82,6 @@ impl PubKey {
     /// };
     /// let load_from_sk = PubKey::from_sk(&priv_key);
     /// ```
-    ///
-    /// # Panics
-    ///
-    /// The function may panic if the computation of the public key fails due to an invalid private key.
-    ///
     pub fn from_sk(priv_key: &PrivKey) -> Result<Self, KemErrors> {
         let f = priv_key.0.rq_from_r3();
         let ginv = &priv_key.1;
@@ -126,11 +121,6 @@ impl PubKey {
     ///
     /// assert_eq!(pub_key.coeffs, imported_pub_key.coeffs);
     /// ```
-    ///
-    /// # Panics
-    ///
-    /// The function may panic if deserialization fails due to invalid or corrupted data.
-    ///
     pub fn import(bytes: &[u8; PUBLICKEYS_BYTES]) -> Self {
         rq::decode(bytes).into()
     }
