@@ -80,14 +80,17 @@ pub fn bytes_encrypt<R: Rng>(
 
     // Scoped threads borrow `pub_key` directly: no `Arc`, no per-thread copies.
     let ordered_results: Vec<Vec<u8>> = thread::scope(|scope| -> Result<_, CipherError> {
+        // Reborrows as a shared reference so each `move` closure copies the
+        // reference, not the non-`Copy` `Rq`.
+        let pub_key = &pub_key;
         let handles: Vec<_> = chunks
             .chunks(chunks_per_thread)
             .map(|chunk_slice| {
-                scope.spawn(|| -> Result<Vec<u8>, CipherError> {
+                scope.spawn(move || -> Result<Vec<u8>, CipherError> {
                     let mut thread_results = Vec::with_capacity(chunk_slice.len() * RQ_BYTES);
                     for chunk in chunk_slice {
                         let r3: R3 = (*chunk).into();
-                        let hr = r3_encrypt(&r3, &pub_key);
+                        let hr = r3_encrypt(&r3, pub_key);
                         thread_results.extend_from_slice(&hr.to_bytes());
                     }
                     Ok(thread_results)
@@ -168,16 +171,19 @@ pub fn bytes_decrypt(cipher: &[u8], priv_key: PrivKey) -> Result<Vec<u8>, Cipher
 
     // Scoped threads borrow `priv_key` and the ciphertext directly.
     let ordered_results: Vec<Vec<[i8; P]>> = thread::scope(|scope| -> Result<_, CipherError> {
+        // Reborrows as a shared reference so each `move` closure copies the
+        // reference, not the non-`Copy` `PrivKey`.
+        let priv_key = &priv_key;
         let handles: Vec<_> = bytes_data
             .chunks(chunks_per_thread * RQ_BYTES)
             .map(|chunk_slice| {
-                scope.spawn(|| -> Result<Vec<[i8; P]>, CipherError> {
+                scope.spawn(move || -> Result<Vec<[i8; P]>, CipherError> {
                     let mut thread_results = Vec::with_capacity(chunk_slice.len() / RQ_BYTES);
                     for chunk in chunk_slice.chunks(RQ_BYTES) {
                         let rq_chunk: [u8; RQ_BYTES] =
                             chunk.try_into().or(Err(CipherError::InvalidRqChunkSize))?;
                         let rq: Rq = rq_chunk.into();
-                        let r3 = rq_decrypt(&rq, &priv_key);
+                        let r3 = rq_decrypt(&rq, priv_key);
                         thread_results.push(r3.coeffs);
                     }
                     Ok(thread_results)
